@@ -114,7 +114,7 @@
 <section id="acessos" hidden><h1>Acessos</h1>
 <article><h2>Conceder ou alterar acesso</h2><form id="access-form">
 <label>E-mail do usuário<input name="email" required type="email" maxlength="254" autocomplete="off"></label>
-<label>Perfil<select name="role"><option value="viewer">Consulta e relatórios</option><option value="engineer">Engenheiro · somente históricos</option><option value="manager">Gestão de cadastros e checklists</option></select></label>
+<label>Perfil<select name="role"><option value="viewer">Consulta e relatórios</option><option value="engineer">Engenheiro · cadastros, históricos e Excel</option><option value="manager">Gestão de cadastros e checklists</option></select></label>
 <label id="access-scope">Viatura para consulta<select name="prefix"><option value="">Toda a frota</option></select></label>
 <button class="primary">Salvar permissão</button></form></article>
 <article><h2>Usuários com acesso adicional</h2><div id="access-list" aria-live="polite"></div></article></section>
@@ -247,7 +247,8 @@ function page(name) {
     byId('history-title').textContent=historyKind==='daily'?'Histórico de trocas de turno':'Histórico quinzenal';
     byId('attendance-panel').hidden=byId('fortnight-records').hidden=historyKind==='daily';
     byId('records').hidden=historyKind==='fortnight';
-    byId('history-exports').hidden=window.checklistCloud?.canReport===false;
+    byId('prepare-report').hidden=window.checklistCloud?.canReport===false;
+    byId('export-excel').hidden=window.checklistCloud?.canExportExcel===false;
     if(historyKind==='daily') historyView(); else refreshFortnightHistory();
   }
   if(name==='quinzenal') refreshFortnightChoices();

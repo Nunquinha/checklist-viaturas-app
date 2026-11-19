@@ -53,17 +53,20 @@
   const write = next => localStorage.setItem('checklist-cloud-data-v1'+suffix(),JSON.stringify(next));
   const active = () => Boolean(session && session.expires>Date.now());
   const readingOnly = () => ['viewer','engineer'].includes(session?.user.role);
+  const catalogPages = ['viaturas','cadastros','operadores'];
+  const canEditCatalog = () => Boolean(session?.user.admin || session?.user.role==='engineer');
   const canOpen = page => {
     if (!active()) return false;
     if (page==='acessos') return Boolean(session.user.owner);
     if (readingOnly()) return ['historico','historico-quinzenal'].includes(page) ||
+      (session.user.role==='engineer' && catalogPages.includes(page)) ||
       (page==='ocorrencias' && session.user.role==='viewer');
-    return session.user.admin || !['viaturas','cadastros','operadores'].includes(page);
+    return canEditCatalog() || !catalogPages.includes(page);
   };
   function persist(previous,next) {
     if (!active()) throw new Error('Entre novamente para registrar ou editar.');
     const changed = ['vehicles','items','operators'].some(key=>previous[key]!==next[key]);
-    if (changed && !session.user.admin) throw new Error('Apenas a administração pode alterar cadastros.');
+    if (changed && !canEditCatalog()) throw new Error('Este perfil não pode atualizar cadastros.');
     next.dirty = Boolean(previous.dirty || changed);
     write(next);
     schedule();
@@ -78,6 +81,7 @@
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,
     get canReport(){ return active() && session.user.role!=='engineer'; },
+    get canExportExcel(){ return active(); },
     get canDeleteCatalog(){ return active() && Boolean(session.user.owner); },
     get canFileIncident(){ return active() && !readingOnly(); },
     get vehicle(){ return active() ? session.user.prefix : null; },
@@ -151,7 +155,8 @@
       } else {
         const central = await rpc('catalog');
         if (!state.dirty) {
-          const catalogChanged = central.version!==state.version || !state.catalogLoaded;
+          const catalogChanged = central.version!==state.version || !state.catalogLoaded ||
+            ['vehicles','items','operators'].some(key=>central[key]?.length!==state[key]?.length);
           const next = {...state,...central,catalogLoaded:true};
           write(next);
           state = next;

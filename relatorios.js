@@ -117,7 +117,7 @@ byId('close-report').onclick = () => {
 byId('print-report').onclick = () => window.print();
 
 byId('export-excel').onclick = async event => {
-  if(window.checklistCloud?.canReport===false)return;
+  if(window.checklistCloud?.canExportExcel===false)return;
   const button = event.currentTarget;
   button.disabled = true;
   try {
