@@ -1,5 +1,8 @@
-const cacheName = 'der-checklist-shell-v15';
-const appFiles = ['./index.html','./quinzenal.js','./relatorios.js','./xlsx.js','./ocorrencias.js','./cloud.js','./instalar.js','./logo-der.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const cacheName = 'der-checklist-shell-v16';
+const version = cacheName.split('-').at(-1);
+const scripts = ['quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
+const appFiles = ['./index.html',...scripts.map(name=>'./'+name+'?v='+version),
+  './logo-der.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(appFiles)).then(()=>self.skipWaiting()));
@@ -16,12 +19,24 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (event.request.mode === 'navigate') {
-    event.respondWith(caches.open(cacheName).then(async cache =>
-      (await cache.match('./index.html')) || fetch(event.request)
-    ));
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request,{cache:'no-cache',signal:AbortSignal.timeout(4000)});
+        if (response.ok) return response;
+      } catch { /* The last installed version is available without a connection. */ }
+      const cache = await caches.open(cacheName);
+      return (await cache.match('./index.html')) || Response.error();
+    })());
     return;
   }
-  event.respondWith(caches.open(cacheName).then(async cache =>
-    (await cache.match(event.request)) || fetch(event.request)
-  ));
+  event.respondWith(caches.open(cacheName).then(async cache => {
+    const cached = await cache.match(event.request);
+    if (cached) return cached;
+    const file = url.pathname.split('/').at(-1);
+    if (!url.search && scripts.includes(file)) {
+      const current = await cache.match('./'+file+'?v='+version);
+      if (current) return current;
+    }
+    return fetch(event.request);
+  }));
 });

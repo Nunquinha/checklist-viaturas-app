@@ -71,7 +71,7 @@
 <div id="resuming" class="tag" hidden>Conferência após a troca</div></article>
 <article id="inspection"><div class="split"><h2>2. Confiram juntos</h2><span id="progress" class="tag"></span></div>
 <div class="grid"><label>Quilometragem<input name="km" type="number" min="0" step="1" inputmode="numeric"></label><label>Combustível<select name="fuel"><option value="">Selecione</option><option>Cheio</option><option>¾</option><option>½</option><option>¼</option><option>Reserva</option></select></label></div>
-<div id="checks"></div><p id="critical" class="warning" hidden>Atenção: problema registrado em item crítico.</p></article>
+<h3 id="daily-items-title">Itens da viatura</h3><div id="checks" role="group" aria-labelledby="daily-items-title"></div><p id="critical" class="warning" hidden>Atenção: problema registrado em item crítico.</p></article>
 <article id="signatures"><h2>3. Validem o registro</h2><p>Assinem com o dedo ou caneta.</p><div class="grid" id="pads"></div></article>
 <button class="primary" id="submit">Salvar passagem</button>
 </form></section>
@@ -252,6 +252,7 @@ function page(name) {
     if(historyKind==='daily') historyView(); else refreshFortnightHistory();
   }
   if(name==='quinzenal') refreshFortnightChoices();
+  if(name==='troca') renderChecks();
   if(name==='ocorrencias') { refreshIncidentChoices(); refreshIncidentHistory(); }
   if(name==='acessos') window.checklistCloud?.showAccess();
   window.scrollTo(0,0);
@@ -269,9 +270,10 @@ matchMedia('(max-width:760px)').addEventListener('change',event=>{if(!event.matc
 document.querySelectorAll('nav button').forEach(button => button.onclick=()=>{if(byId('shell').classList.contains('menu-open'))setMenu(false);byId('notice').textContent='';page(button.dataset.page);});
 function refresh() {
   const prior=fields.vehicle.value;
-  fields.vehicle.innerHTML=option('','Selecione o prefixo')+state.vehicles.filter(vehicle=>vehicle.active||vehicle.prefix===resumed?.prefix).map(vehicle=>option(vehicle.prefix,vehicle.prefix+' · '+services[vehicle.prefix[5]])).join('');
-  fields.vehicle.value=[...fields.vehicle.options].some(choice=>choice.value===prior)?prior:'';
-  if(window.checklistCloud?.vehicle)fields.vehicle.value=window.checklistCloud.vehicle;
+  const available=state.vehicles.filter(vehicle=>vehicle.active||vehicle.prefix===resumed?.prefix);
+  fields.vehicle.innerHTML=option('','Selecione o prefixo')+available.map(vehicle=>option(vehicle.prefix,vehicle.prefix+' · '+services[vehicle.prefix[5]])).join('');
+  const selected=available.find(vehicle=>vehicle.prefix===prior)?.prefix;
+  fields.vehicle.value=window.checklistCloud?.vehicle||selected||(available.length===1?available[0].prefix:'');
   renderScopes();
   renderOperatorAdmin();
   refreshOperatorChoices();
@@ -393,8 +395,11 @@ function renderChecks() {
   const prefix=fields.vehicle.value;
   const prior=shown.map(item=>({id:item.id,value:fields['check-'+item.id]?.value,note:fields['note-'+item.id]?.value,found:fields['found-'+item.id]?.value}));
   byId('vehicle-info').textContent=decode(prefix);
+  const emptyMessage=prefix?'Nenhum item ativo para '+prefix+'. Verifique a abrangência no Cadastro do Checklist.':
+    state.vehicles.some(vehicle=>vehicle.active)?'Selecione a viatura acima para carregar os itens cadastrados para ela.':
+      'Cadastre ou reative uma viatura no menu Viaturas para carregar os itens.';
   shown=prefix?state.items.filter(item=>item.active&&itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))):[];
-  byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?' · Crítico':'')+'</legend><div class="choices">'+['OK','Problema','Não se aplica'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+'</div><label hidden>Descreva o problema<input name="note-'+item.id+'" maxlength="300"></label></fieldset>').join(''):'<p>'+(prefix?'Nenhum item ativo para esta viatura. Configure em Cadastros.':'Selecione uma viatura para ver os itens.')+'</p>';
+  byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?' · Crítico':'')+'</legend><div class="choices">'+['OK','Problema','Não se aplica'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+'</div><label hidden>Descreva o problema<input name="note-'+item.id+'" maxlength="300"></label></fieldset>').join(''):'<p>'+escape(emptyMessage)+'</p>';
   prior.forEach(result=>{
     const control=fields['check-'+result.id];
     if(control){control.value=result.value;fields['note-'+result.id].value=result.note;}
@@ -526,15 +531,15 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js"></script>
-<script src="relatorios.js"></script>
-<script src="xlsx.js"></script>
-<script src="ocorrencias.js"></script>
-<script src="cloud.js"></script>
-<script src="instalar.js"></script>
+<script src="quinzenal.js?v=v16"></script>
+<script src="relatorios.js?v=v16"></script>
+<script src="xlsx.js?v=v16"></script>
+<script src="ocorrencias.js?v=v16"></script>
+<script src="cloud.js?v=v16"></script>
+<script src="instalar.js?v=v16"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Cache offline indisponível',error));
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
 }
 </script>
 </html>
