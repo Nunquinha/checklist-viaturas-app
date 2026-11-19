@@ -324,7 +324,6 @@
   });
   byId('cloud-panel').hidden = false;
   byId('local-mode').hidden = true;
-  byId('sidebar-status').textContent = 'Checklist de frota · CGR.02';
   byId('vehicle-email-hint').textContent = 'O código de acesso é enviado ao e-mail vinculado ao prefixo.';
   changeSession(load(SESSION_KEY,null));
 })();
