@@ -16,6 +16,13 @@
 .report-record{margin:0 0 9px;padding:9px 12px;border:1px solid #dfe5df;overflow-wrap:anywhere}.report-record p{margin:4px 0;color:#26382e}
 .report-section-title{margin:24px 0 9px;font-size:1.1em}.report-footer{text-align:right;border-top:1px solid #dfe5df;margin-top:22px;padding-top:9px;font-size:.8em;color:#52655a}
 .sidebar{overflow-y:auto;scrollbar-width:none}.sidebar::-webkit-scrollbar{display:none}.sidebar nav{flex:none}.sidebar-foot{padding-top:12px}
+.operator-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+.signature{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;align-content:start}.signature-name{overflow-wrap:anywhere;color:var(--muted);margin:0}.signature-preview{width:100%;height:64px;object-fit:contain;object-position:left}.signature .primary{margin:0}
+#signature-dialog{width:min(94vw,860px);height:min(90dvh,620px);max-width:none;max-height:none;margin:auto;padding:18px;background:#fff}
+#signature-dialog[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px}#signature-dialog h2{margin:0}#signature-dialog p{margin:4px 0 0}
+#signature-dialog canvas{width:100%;height:100%;display:block;margin:0;background:#fff;touch-action:none}
+#signature-dialog .actions{display:grid;grid-template-columns:1fr 1fr 1.4fr}#signature-dialog .primary{margin:0}#signature-dialog .primary:disabled{opacity:.55}
+@media(max-width:600px){.operator-fields{grid-template-columns:1fr;gap:0}.signature{flex-basis:100%}#signature-dialog{width:100%;height:100dvh;margin:0;border:0;border-radius:0;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));}.operator-fields label{margin-bottom:10px}}
 .topbar #install-app{margin-left:auto;white-space:nowrap;min-height:38px;padding:7px 12px}.topbar #install-app:not([hidden])+span{margin-left:0}
 @page{size:A4;margin:16mm}
 @media print{body{background:white}body.reporting .shell,body.reporting .report-tools{display:none!important}#report-print{padding:0;margin:0;max-width:none;font-size:10pt;print-color-adjust:exact;-webkit-print-color-adjust:exact}.report-heading h1{font-size:21pt}.report-heading,.report-stat,.report-record{break-inside:avoid}.report-section-title{break-after:avoid}}
@@ -60,7 +67,7 @@
 <form id="handover">
 <article><h2>1. Identifique a troca</h2>
 <label>Viatura<select name="vehicle" required></select></label><p id="vehicle-info"></p>
-<div class="grid"><label>Quem entrega<select name="outgoing" required></select></label><label>Quem recebe<select name="incoming" required></select></label></div>
+<div class="operator-fields"><label>Quem entrega<select name="outgoing" required></select></label><label>Quem recebe<select name="incoming" required></select></label></div>
 <label class="scope-choice"><input type="checkbox" name="coverage"> Mostrar outros operadores para cobertura</label>
 <p class="muted" id="operator-hint"></p>
 <details id="exceptions"><summary>Registrar exceção</summary><label>Situação<select name="mode"><option value="normal">Conferência em dupla</option><option value="absent">Um operador ausente</option></select></label>
@@ -72,7 +79,7 @@
 <article id="inspection"><div class="split"><h2>2. Confiram juntos</h2><span id="progress" class="tag"></span></div>
 <div class="grid"><label>Quilometragem<input name="km" type="number" min="0" step="1" inputmode="numeric"></label><label>Combustível<select name="fuel"><option value="">Selecione</option><option>Cheio</option><option>¾</option><option>½</option><option>¼</option><option>Reserva</option></select></label></div>
 <h3 id="daily-items-title">Itens da viatura</h3><div id="checks" role="group" aria-labelledby="daily-items-title"></div><p id="critical" class="warning" hidden>Atenção: problema registrado em item crítico.</p></article>
-<article id="signatures"><h2>3. Validem o registro</h2><p>Assinem com o dedo ou caneta.</p><div class="grid" id="pads"></div></article>
+<article id="signatures"><h2>3. Assinaturas</h2><p>Toquem em Assinar para abrir a tela de assinatura.</p><div class="grid" id="pads"></div></article>
 <button class="primary" id="submit">Salvar passagem</button>
 </form></section>
 <section id="quinzenal" hidden>
@@ -121,6 +128,11 @@
 </main></div></div>
 <section id="report-print" hidden><div class="actions report-tools"><button type="button" id="close-report">Voltar ao histórico</button><button type="button" id="print-report">Imprimir / salvar em PDF</button></div><div id="report-content"></div></section>
 <dialog id="photo-dialog" aria-labelledby="photo-title"><div class="split"><strong id="photo-title"></strong><form method="dialog"><button>Fechar</button></form></div><img id="photo-full" alt=""></dialog>
+<dialog id="signature-dialog" aria-labelledby="signature-title" aria-describedby="signature-help">
+<div><h2 id="signature-title">Assinatura</h2><p id="signature-person" hidden></p><p id="signature-help">Assine com o dedo ou caneta.</p></div>
+<canvas id="signature-canvas" width="900" height="400" aria-label="Área de assinatura"></canvas>
+<div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
+</dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
 <script>
 const services = {0:'Inspeção',1:'Apoio',2:'Guincho leve',4:'Guincho pesado',6:'Boiadeiro',7:'Combate a incêndio'};
@@ -182,7 +194,7 @@ function refreshOperatorChoices(reset=false) {
   for(const role of ['outgoing','incoming']){
     const select=fields[role], prior=reset?'':select.value, recorded=resumed?.[role];
     const names=eligible.map(operator=>operator.name);
-    select.innerHTML=option('','Selecione o operador')+eligible.map(operator=>option(operator.name,operator.name+(linked.includes(operator)?'':' · Cobertura'))).join('')+
+    select.innerHTML=option('','Selecione')+eligible.map(operator=>option(operator.name,operator.name+(linked.includes(operator)?'':' · Cobertura'))).join('')+
       (recorded&&!names.includes(recorded)?option(recorded,recorded+' · Registro original'):'');
     select.value=prior||recorded||'';
   }
@@ -453,20 +465,80 @@ function signaturePads(container,roles) {
   roles.forEach(role=>{
     const wrapper=document.createElement('div');
     wrapper.className='signature';
-    const caption=captions[role];
-    wrapper.innerHTML='<strong>'+caption+'</strong><canvas width="600" height="220" aria-label="Assinatura: '+caption+'"></canvas><button type="button">Limpar assinatura</button>';
+    const caption=captions[role], name=fields[role]?.value||'';
+    const title=document.createElement('strong'), person=document.createElement('p'), preview=document.createElement('img');
+    const button=document.createElement('button'), pad={canvas:null,ink:false};
+    title.textContent=caption;
+    person.className='signature-name';
+    person.textContent=name;
+    person.hidden=!name;
+    preview.className='signature-preview';
+    preview.alt='Assinatura confirmada de '+(name||caption);
+    preview.hidden=true;
+    button.type='button';button.className='primary';button.textContent='Assinar';
+    button.setAttribute('aria-label','Assinar · '+caption);
+    button.onclick=()=>openSignature(pad,caption,name,()=>{
+      preview.src=pad.canvas.toDataURL();
+      preview.hidden=false;
+      button.textContent='Refazer assinatura';
+      button.setAttribute('aria-label','Refazer assinatura · '+caption);
+    });
+    wrapper.append(title,person,preview,button);
     container.append(wrapper);
-    const canvas=wrapper.querySelector('canvas'), ctx=canvas.getContext('2d'), pad={canvas,ink:false};
-    let pointer=null;
-    const point=event=>{const box=canvas.getBoundingClientRect(); return [(event.clientX-box.left)*canvas.width/box.width,(event.clientY-box.top)*canvas.height/box.height];};
-    ctx.lineWidth=4;ctx.lineCap='round';ctx.strokeStyle='#10253d';
-    canvas.onpointerdown=event=>{if(pointer!==null||event.button!==0)return;pointer=event.pointerId;canvas.setPointerCapture(pointer);ctx.beginPath();ctx.moveTo(...point(event));};
-    canvas.onpointermove=event=>{if(event.pointerId===pointer){ctx.lineTo(...point(event));ctx.stroke();pad.ink=true;}};
-    canvas.onlostpointercapture=()=>pointer=null;
-    wrapper.querySelector('button').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);pad.ink=false;};
     result[role]=pad;
   });
   return result;
+}
+function openSignature(pad,caption,name,onConfirm) {
+  const dialog=byId('signature-dialog'), canvas=byId('signature-canvas'), ctx=canvas.getContext('2d');
+  const confirmButton=byId('signature-confirm'), person=byId('signature-person');
+  byId('signature-title').textContent='Assinatura · '+caption;
+  person.textContent=name;
+  person.hidden=!name;
+  let ink=pad.ink, pointer=null;
+  confirmButton.disabled=!ink;
+  dialog.showModal();
+  const resize=source=>{
+    const box=canvas.getBoundingClientRect();
+    const scale=Math.min(devicePixelRatio||1,1000/Math.max(box.width,box.height));
+    const width=Math.max(1,Math.round(box.width*scale)), height=Math.max(1,Math.round(box.height*scale));
+    if(!source&&canvas.width===width&&canvas.height===height)return;
+    const copy=source||document.createElement('canvas');
+    if(!source){copy.width=canvas.width;copy.height=canvas.height;copy.getContext('2d').drawImage(canvas,0,0);}
+    canvas.width=width;canvas.height=height;
+    if(ink&&copy.width&&copy.height){
+      const factor=Math.min(width/copy.width,height/copy.height);
+      const w=copy.width*factor,h=copy.height*factor;
+      ctx.drawImage(copy,(width-w)/2,(height-h)/2,w,h);
+    }
+    ctx.lineWidth=2.6*scale;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#26382e';
+    pointer=null;
+  };
+  if(!pad.canvas)ctx.clearRect(0,0,canvas.width,canvas.height);
+  resize(pad.canvas);
+  const watcher=new ResizeObserver(()=>resize());
+  watcher.observe(canvas);
+  const point=event=>{const box=canvas.getBoundingClientRect();return [
+    (event.clientX-box.left)*canvas.width/box.width,(event.clientY-box.top)*canvas.height/box.height
+  ];};
+  canvas.onpointerdown=event=>{
+    if(pointer!==null||event.button!==0)return;
+    pointer=event.pointerId;canvas.setPointerCapture(pointer);ctx.beginPath();ctx.moveTo(...point(event));
+  };
+  canvas.onpointermove=event=>{
+    if(event.pointerId!==pointer)return;
+    ctx.lineTo(...point(event));ctx.stroke();ink=true;confirmButton.disabled=false;
+  };
+  canvas.onlostpointercapture=()=>{pointer=null;};
+  byId('signature-clear').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ink=false;confirmButton.disabled=true;};
+  byId('signature-cancel').onclick=()=>dialog.close();
+  confirmButton.onclick=()=>{
+    if(!ink)return;
+    pad.canvas=document.createElement('canvas');pad.canvas.width=canvas.width;pad.canvas.height=canvas.height;
+    pad.canvas.getContext('2d').drawImage(canvas,0,0);
+    pad.ink=true;onConfirm();dialog.close();
+  };
+  dialog.onclose=()=>watcher.disconnect();
 }
 function buildPads(roles) { pads=signaturePads(byId('pads'),roles); }
 const padImages = signatures => Object.fromEntries(Object.entries(signatures).map(([role,pad])=>[role,pad.canvas.toDataURL()]));
@@ -531,12 +603,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v17"></script>
-<script src="relatorios.js?v=v17"></script>
-<script src="xlsx.js?v=v17"></script>
-<script src="ocorrencias.js?v=v17"></script>
-<script src="cloud.js?v=v17"></script>
-<script src="instalar.js?v=v17"></script>
+<script src="quinzenal.js?v=v18"></script>
+<script src="relatorios.js?v=v18"></script>
+<script src="xlsx.js?v=v18"></script>
+<script src="ocorrencias.js?v=v18"></script>
+<script src="cloud.js?v=v18"></script>
+<script src="instalar.js?v=v18"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
