@@ -8,6 +8,7 @@
 <title>DER · Checklist de viaturas</title>
 <style>
 #report-print{max-width:960px;margin:28px auto;padding:24px;background:#fff}#report-print li{margin-bottom:10px}#report-print h2{margin-top:18px}
+.sidebar{overflow-y:auto}.sidebar nav{flex:none}.sidebar-foot{padding-top:12px}
 @media print{body{background:white}body.reporting .shell,body.reporting #report-print button{display:none!important}#report-print{padding:0;margin:0;max-width:none}#report-print li{break-inside:avoid}}
 :root{color-scheme:light;--navy:#10253d;--blue:#185f9a;--line:#d5e0eb;--muted:#50677e}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#f3f6fa;color:var(--navy);font:16px/1.5 system-ui,sans-serif}header{background:var(--navy);color:white;border-bottom:4px solid #f4dc32}.brand,main{max-width:760px;margin:auto;padding:16px}.brand{display:flex;align-items:center;gap:14px}.logo{background:#f4dc32;color:var(--navy);padding:8px;font-weight:900}.brand small{display:block;color:#d9e4f2}h1{margin:12px 0 0;font-size:clamp(1.65rem,5vw,2rem)}h2{font-size:1.14rem;margin:0 0 12px}p{margin:5px 0 14px;color:var(--muted)}nav,.grid,.actions,.choices{display:flex;gap:8px;flex-wrap:wrap}nav button,.grid>*{flex:1 1 140px}button,input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;background:white;padding:10px;min-height:46px}button{font-weight:700;cursor:pointer}button.primary,nav button[aria-current=true]{background:var(--blue);color:white;border-color:var(--blue)}button.primary{width:100%;margin-top:10px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:3px solid #ac7200;outline-offset:2px}label{display:grid;gap:4px;font-weight:650;margin:8px 0}input,select,textarea{width:100%;min-width:0}article,fieldset,details{background:white;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}fieldset{min-width:0}legend,summary{font-weight:750}summary{cursor:pointer}.tag{display:inline-block;background:#fff4c5;color:#624500;border-radius:6px;padding:3px 8px;font-size:.85rem;font-weight:750}.warning{color:#9e2222;font-weight:750}.choices label{display:flex;align-items:center;justify-content:center;flex:1 1 100px;min-height:46px;padding:6px;margin:0;border:1px solid var(--line);border-radius:8px;cursor:pointer}.choices label:has(:checked){background:#dbeeff;border-color:var(--blue)}input[type=radio],input[type=checkbox]{width:auto;min-height:0;accent-color:var(--blue)}canvas{display:block;border:1px dashed #8ba2b8;border-radius:8px;width:100%;height:110px;touch-action:none;background:#f7faff;margin-bottom:6px}.signature{min-width:0}.record-image{width:min(100%,260px);border:1px solid var(--line);display:block}.muted{color:var(--muted);font-size:.9rem}.split{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .reference{display:flex;align-items:center;gap:10px;margin:0 0 10px}.reference img{width:72px;height:54px;object-fit:cover;border-radius:6px;display:block}dialog{max-width:min(92vw,700px);border:1px solid var(--line);border-radius:12px;color:var(--navy);padding:14px}dialog::backdrop{background:#10253dbb}dialog img{display:block;max-width:100%;max-height:68vh;margin:10px auto;object-fit:contain}
@@ -22,7 +23,9 @@
 <div class="nav-label">OPERAÇÃO</div>
 <nav aria-label="Menu principal">
 <button type="button" data-page="troca" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h15l-4-4M20 17H5l4 4M19 7l-4 4M5 17l4-4"/></svg>Troca de turno</button>
-<button type="button" data-page="historico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico</button>
+<button type="button" data-page="historico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico de trocas</button>
+<button type="button" data-page="historico-quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico quinzenal</button>
+<button type="button" data-page="ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3zm0 6v5m0 3v.1"/></svg>Ocorrências no turno</button>
 <button type="button" data-page="viaturas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v-5l2-5h12l2 5v5M4 13h16M6 17v2m12-2v2M7 15h1m8 0h1"/></svg>Viaturas</button>
 <button type="button" data-page="cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>Cadastro do Checklist</button>
 <button type="button" data-page="operadores"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>Cadastro de Operador</button>
@@ -78,10 +81,20 @@
 <article><h2>Assinaturas</h2><div class="grid" id="fortnight-pads"></div></article>
 <button class="primary" id="save-fortnight">Salvar vistoria quinzenal</button>
 </form></section>
-<section id="historico" hidden><h1>Histórico</h1><p>Registros salvos neste navegador.</p>
-<article><h2>Acompanhamento do engenheiro</h2><div class="grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label></div><div id="attendance-summary" aria-live="polite"></div></article>
+<section id="historico" hidden><h1 id="history-title">Histórico de trocas</h1>
+<article><div class="grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label></div><div id="attendance-panel" hidden><h2>Acompanhamento do engenheiro</h2><div id="attendance-summary" aria-live="polite"></div></div></article>
 <button type="button" id="prepare-report">Gerar relatório do período</button>
-<h2>Trocas de turno</h2><div id="records"></div><h2>Vistorias quinzenais</h2><div id="fortnight-records"></div></section>
+<div id="records"></div><div id="fortnight-records" hidden></div></section>
+<section id="ocorrencias" hidden><h1>Ocorrências no turno</h1>
+<form id="incident-form">
+<article><h2>Relatar problema</h2><div class="grid"><label>Viatura<select name="vehicle" required></select></label><label>Operador<select name="operator" required></select></label></div>
+<label class="scope-choice"><input type="checkbox" name="coverage"> Mostrar outros operadores para cobertura</label>
+<label>Situação<select name="impact" required><option value="">Selecione</option><option>Viatura pode operar</option><option>Operação com restrição</option><option>Viatura parada</option></select></label>
+<label>O que aconteceu?<textarea name="description" maxlength="1500" required></textarea></label>
+<label>Fotos (opcionais)<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label></article>
+<article><h2>Assinatura</h2><div class="grid" id="incident-pads"></div></article>
+<button class="primary" id="save-incident">Salvar ocorrência</button></form>
+<h2>Ocorrências registradas</h2><div id="incident-records" aria-live="polite"></div></section>
 <section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
 <article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
 <section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
@@ -92,7 +105,7 @@
 <section id="acessos" hidden><h1>Acessos</h1>
 <article><h2>Conceder ou alterar acesso</h2><form id="access-form">
 <label>E-mail do usuário<input name="email" required type="email" maxlength="254" autocomplete="off"></label>
-<label>Perfil<select name="role"><option value="viewer">Consulta do histórico</option><option value="manager">Gestão de cadastros e checklists</option></select></label>
+<label>Perfil<select name="role"><option value="viewer">Consulta e relatórios</option><option value="engineer">Engenheiro · somente históricos</option><option value="manager">Gestão de cadastros e checklists</option></select></label>
 <label id="access-scope">Viatura para consulta<select name="prefix"><option value="">Toda a frota</option></select></label>
 <button class="primary">Salvar permissão</button></form></article>
 <article><h2>Usuários com acesso adicional</h2><div id="access-list" aria-live="polite"></div></article></section>
@@ -208,15 +221,25 @@ function resetCatalog() {
   byId('save-item').textContent='Adicionar item';byId('cancel-item').hidden=true;
 }
 byId('cancel-item').onclick=()=>{resetCatalog();byId('catalog-status').textContent='Edição cancelada.';};
+let historyKind='daily';
 function page(name) {
   if(window.checklistCloud?.enabled&&!window.checklistCloud.canOpen(name))return;
-  document.querySelectorAll('main > section').forEach(section => section.hidden=section.id!==name);
+  const sectionId=name==='historico-quinzenal'?'historico':name;
+  document.querySelectorAll('main > section').forEach(section => section.hidden=section.id!==sectionId);
   document.querySelectorAll('nav button').forEach(button=>{
     if(button.dataset.page===name){button.setAttribute('aria-current','true');byId('area-title').textContent=button.textContent.trim();}
     else button.removeAttribute('aria-current');
   });
-  if(name==='historico') { historyView(); refreshFortnightHistory(); }
+  if(sectionId==='historico') {
+    historyKind=name==='historico'?'daily':'fortnight';
+    byId('history-title').textContent=historyKind==='daily'?'Histórico de trocas de turno':'Histórico quinzenal';
+    byId('attendance-panel').hidden=byId('fortnight-records').hidden=historyKind==='daily';
+    byId('records').hidden=historyKind==='fortnight';
+    byId('prepare-report').hidden=window.checklistCloud?.canReport===false;
+    if(historyKind==='daily') historyView(); else refreshFortnightHistory();
+  }
   if(name==='quinzenal') refreshFortnightChoices();
+  if(name==='ocorrencias') { refreshIncidentChoices(); refreshIncidentHistory(); }
   if(name==='acessos') window.checklistCloud?.showAccess();
   window.scrollTo(0,0);
 }
@@ -489,6 +512,7 @@ function historyView() {
 refresh();renderChecks();
 </script>
 <script src="quinzenal.js"></script>
+<script src="ocorrencias.js"></script>
 <script src="cloud.js"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {

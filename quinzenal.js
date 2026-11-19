@@ -9,9 +9,15 @@ let database;
 function openInspectionStore() {
   if (!database) {
     database = new Promise((resolve,reject) => {
-      const request = indexedDB.open('der-fortnightly-inspections'+(window.checklistCloud?.storageSuffix||''),1);
-      request.onupgradeneeded = () => request.result.createObjectStore('inspections',{keyPath:'id'});
-      request.onsuccess = () => resolve(request.result);
+      const request = indexedDB.open('der-fortnightly-inspections'+(window.checklistCloud?.storageSuffix||''),2);
+      request.onupgradeneeded = event => {
+        if (event.oldVersion < 1) request.result.createObjectStore('inspections',{keyPath:'id'});
+        if (event.oldVersion < 2) request.result.createObjectStore('incidents',{keyPath:'id'});
+      };
+      request.onsuccess = () => {
+        request.result.onversionchange = () => { request.result.close(); database = undefined; };
+        resolve(request.result);
+      };
       request.onerror = () => reject(request.error);
     }).catch(error => {
       database = undefined;
@@ -21,16 +27,17 @@ function openInspectionStore() {
   return database;
 }
 
-async function inspections(record) {
+async function evidenceRecords(name,record) {
   const db = await openInspectionStore();
   return new Promise((resolve,reject) => {
-    const transaction = db.transaction('inspections',record?'readwrite':'readonly');
-    const store = transaction.objectStore('inspections');
+    const transaction = db.transaction(name,record?'readwrite':'readonly');
+    const store = transaction.objectStore(name);
     const request = record ? store.put(record) : store.getAll();
     transaction.oncomplete = () => resolve(request.result);
     transaction.onabort = () => reject(transaction.error);
   });
 }
+const inspections = record => evidenceRecords('inspections',record);
 
 function refreshFortnightChoices() {
   const prefix = fortnightFields.vehicle.value;
@@ -85,6 +92,7 @@ fortnight.onsubmit = async event => {
   if (groups.some(([,files])=>files.length===0)) return alert('Inclua uma foto em cada categoria.');
   if (groups.some(([,files])=>files.length>12)) return alert('Selecione até 12 fotos por categoria.');
   const completedAt = Date.now();
+  const storageSuffix = window.checklistCloud?.storageSuffix;
   const signatures = padImages(fortnightPads);
   button.disabled = true;
   try {
@@ -95,6 +103,7 @@ fortnight.onsubmit = async event => {
     }
     const at = new Date(completedAt).toISOString();
     if (JSON.stringify(photos).length>7000000) throw new Error('Vistoria muito grande. Reduza a quantidade de fotos.');
+    if (storageSuffix!==window.checklistCloud?.storageSuffix) throw Error('A sessão mudou. Reabra o formulário.');
     await inspections({
       id: at+'-'+(globalThis.crypto?.randomUUID?.()||Math.random().toString(36).slice(2)), at, prefix: values.get('vehicle')||window.checklistCloud?.vehicle, operator: values.get('operator'),
       attended, engineer, notes: values.get('notes').trim(), signatures, photos,
@@ -105,7 +114,7 @@ fortnight.onsubmit = async event => {
     fortnightStarted = null;
     refreshFortnightChoices();
     refreshFortnightPads();
-    page('historico');
+    page('historico-quinzenal');
     byId('notice').textContent = 'Vistoria quinzenal salva neste navegador.';
   } catch (error) {
     alert(error.message || 'Não foi possível salvar a vistoria. Tente novamente.');
@@ -170,7 +179,7 @@ async function refreshFortnightHistory() {
 }
 
 for (const id of ['history-from','history-to']) {
-  byId(id).onchange = () => { historyView(); refreshFortnightHistory(); };
+  byId(id).onchange = () => { if(historyKind==='daily') historyView(); else refreshFortnightHistory(); };
 }
 refreshFortnightPads();
 
@@ -180,7 +189,9 @@ function reportDuration(records) {
 }
 
 byId('prepare-report').onclick = async event => {
+  if(window.checklistCloud?.canReport===false)return;
   const button = event.currentTarget;
+  const kind = historyKind;
   button.disabled = true;
   try {
     const daily = state.records.filter(record=>historyIncludes(record.inspected||record.exchange));
@@ -203,11 +214,12 @@ byId('prepare-report').onclick = async event => {
     const fortnightRows = fortnightly.map(record=>'<strong>'+escape(record.prefix)+' · '+time(record.at)+'</strong><br>'+
       escape(record.operator)+' · '+duration(record.durationMs)+' · '+(record.attended?escape(record.engineer):'Sem engenheiro'));
     const rate = fortnightly.length ? (attended/fortnightly.length).toLocaleString('pt-BR',{style:'percent',maximumFractionDigits:1}) : 'Sem vistorias';
-    byId('report-content').innerHTML = '<h1>Relatório de Checklist de Viaturas DER</h1><p>'+escape(period)+'</p>'+
-      '<p>Trocas de turno: '+daily.length+' · Tempo médio: '+reportDuration(daily)+'</p>'+
-      '<p>Vistorias quinzenais: '+fortnightly.length+' · Tempo médio: '+reportDuration(fortnightly)+'</p>'+
-      '<p>Acompanhamento do engenheiro: '+attended+' de '+fortnightly.length+' ('+rate+')</p>'+
-      '<h2>Trocas de turno</h2>'+list(dailyRows)+'<h2>Vistorias quinzenais</h2>'+list(fortnightRows);
+    const content=kind==='daily'
+      ? '<p>Trocas de turno: '+daily.length+' · Tempo médio: '+reportDuration(daily)+'</p><h2>Trocas de turno</h2>'+list(dailyRows)
+      : '<p>Vistorias quinzenais: '+fortnightly.length+' · Tempo médio: '+reportDuration(fortnightly)+'</p>'+
+        '<p>Acompanhamento do engenheiro: '+attended+' de '+fortnightly.length+' ('+rate+')</p>'+
+        '<h2>Vistorias quinzenais</h2>'+list(fortnightRows);
+    byId('report-content').innerHTML = '<h1>Relatório de Checklist de Viaturas DER</h1><p>'+escape(period)+'</p>'+content;
     byId('shell').hidden = true;
     byId('report-print').hidden = false;
     document.body.classList.add('reporting');

@@ -52,10 +52,12 @@
   const suffix = () => session ? ':'+session.user.email+':'+(session.user.prefix || '')+':'+session.user.role : '';
   const write = next => localStorage.setItem('checklist-cloud-data-v1'+suffix(),JSON.stringify(next));
   const active = () => Boolean(session && session.expires>Date.now());
+  const readingOnly = () => ['viewer','engineer'].includes(session?.user.role);
   const canOpen = page => {
     if (!active()) return false;
     if (page==='acessos') return Boolean(session.user.owner);
-    if (session.user.role==='viewer') return page==='historico';
+    if (readingOnly()) return ['historico','historico-quinzenal'].includes(page) ||
+      (page==='ocorrencias' && session.user.role==='viewer');
     return session.user.admin || !['viaturas','cadastros','operadores'].includes(page);
   };
   function persist(previous,next) {
@@ -75,6 +77,8 @@
 
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,
+    get canReport(){ return active() && session.user.role!=='engineer'; },
+    get canFileIncident(){ return active() && !readingOnly(); },
     get vehicle(){ return active() ? session.user.prefix : null; },
     get storageSuffix(){ return suffix(); }
   };
@@ -90,6 +94,7 @@
     fields.vehicle.disabled = fortnightFields.vehicle.disabled = Boolean(session?.user.prefix);
     // A disabled input is omitted by FormData; the record also uses the locked VTR.
     handover.reset();
+    resetIncident();
     handoverStarted = fortnightStarted = null;
     resumed = null;
     shown = [];
@@ -102,10 +107,10 @@
     renderChecks();
     for (const section of document.querySelectorAll('main > section')) section.hidden = true;
     if (active()) {
-      const roles = {owner:'Administração',manager:'Gestão',viewer:'Consulta'};
+      const roles = {owner:'Administração',manager:'Gestão',viewer:'Consulta',engineer:'Engenheiro'};
       byId('cloud-identity').textContent = [roles[session.user.role],session.user.prefix].filter(Boolean).join(' · ');
       byId('cloud-status').textContent = 'Aguardando sincronização';
-      page(session.user.role==='viewer'?'historico':'troca');
+      page(readingOnly()?'historico':'troca');
       schedule();
     }
   }
@@ -151,6 +156,7 @@
             refresh();
             renderChecks();
             refreshFortnightChoices();
+            if (!incidentFields.description.value) refreshIncidentChoices();
           }
         } else again = true;
       }
@@ -167,12 +173,18 @@
         await rpc('saveRecord',{kind:'fortnight',record:body});
         await inspections({...record,cloudSaved:true});
       }
+      for (const record of (await incidents()).filter(record=>!record.cloudSaved)) {
+        const {cloudSaved,...body} = record;
+        await rpc('saveRecord',{kind:'incident',record:body});
+        await incidents({...record,cloudSaved:true});
+      }
 
       let cursor, head, reachedCheckpoint = false;
       const checkpoint = state.historyCheckpoint;
       do {
         const dailyIds = new Set(state.records.map(record=>record.id));
         const fortnightIds = new Set((await inspections()).map(record=>record.id));
+        const incidentIds = new Set((await incidents()).map(record=>record.id));
         const batch = await rpc('listRecords',{cursor:cursor ?? null});
         head ??= batch.records[0]?.record.id;
         const daily = [];
@@ -180,6 +192,7 @@
           if (record.id===checkpoint) { reachedCheckpoint = true; break; }
           if (kind==='daily' && !dailyIds.has(record.id)) daily.push({...record,cloudSaved:true});
           if (kind==='fortnight' && !fortnightIds.has(record.id)) await inspections({...record,cloudSaved:true});
+          if (kind==='incident' && !incidentIds.has(record.id)) await incidents({...record,cloudSaved:true});
         }
         if (daily.length) {
           const next = {...state,records:[...daily,...state.records].sort((a,b)=>b.id.localeCompare(a.id))};
@@ -195,8 +208,9 @@
       }
       updateStatus('Dados sincronizados');
       if (!byId('historico').hidden) { historyView(); refreshFortnightHistory(); }
+      if (!byId('ocorrencias').hidden) refreshIncidentHistory();
       again ||= state.dirty || state.records.some(record=>!record.cloudSaved) ||
-        (await inspections()).some(record=>!record.cloudSaved);
+        (await inspections()).some(record=>!record.cloudSaved) || (await incidents()).some(record=>!record.cloudSaved);
     } catch (failure) {
       updateStatus('Sincronização pendente');
       if (failure.message==='Acesso expirado ou removido.') {
@@ -220,7 +234,8 @@
       const row = document.createElement('div');
       const details = document.createElement('p');
       const revoke = document.createElement('button');
-      details.textContent = entry.email+' · '+(entry.role==='manager'?'Gestão':'Consulta')+
+      const labels = {manager:'Gestão',viewer:'Consulta e relatórios',engineer:'Engenheiro'};
+      details.textContent = entry.email+' · '+labels[entry.role]+
         (entry.prefix?' · '+entry.prefix:' · Toda a frota');
       revoke.textContent = 'Revogar';
       revoke.type = 'button';
