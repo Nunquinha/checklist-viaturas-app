@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="checklist-endpoint" content="https://script.google.com/macros/s/AKfycbyZqFLXii8qI7q8tE1xBdm_AdPsVGboEwwFUxyZFiHYQZz5e4zOGKSEz1IoDH3FFrN_1A/exec">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#202e25">
+<link rel="manifest" href="manifest.webmanifest">
+<title>DER · Checklist de viaturas</title>
+<style>
+#report-print{max-width:960px;margin:28px auto;padding:24px;background:#fff}#report-print li{margin-bottom:10px}#report-print h2{margin-top:18px}
+@media print{body{background:white}body.reporting .shell,body.reporting #report-print button{display:none!important}#report-print{padding:0;margin:0;max-width:none}#report-print li{break-inside:avoid}}
+:root{color-scheme:light;--navy:#10253d;--blue:#185f9a;--line:#d5e0eb;--muted:#50677e}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#f3f6fa;color:var(--navy);font:16px/1.5 system-ui,sans-serif}header{background:var(--navy);color:white;border-bottom:4px solid #f4dc32}.brand,main{max-width:760px;margin:auto;padding:16px}.brand{display:flex;align-items:center;gap:14px}.logo{background:#f4dc32;color:var(--navy);padding:8px;font-weight:900}.brand small{display:block;color:#d9e4f2}h1{margin:12px 0 0;font-size:clamp(1.65rem,5vw,2rem)}h2{font-size:1.14rem;margin:0 0 12px}p{margin:5px 0 14px;color:var(--muted)}nav,.grid,.actions,.choices{display:flex;gap:8px;flex-wrap:wrap}nav button,.grid>*{flex:1 1 140px}button,input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;background:white;padding:10px;min-height:46px}button{font-weight:700;cursor:pointer}button.primary,nav button[aria-current=true]{background:var(--blue);color:white;border-color:var(--blue)}button.primary{width:100%;margin-top:10px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:3px solid #ac7200;outline-offset:2px}label{display:grid;gap:4px;font-weight:650;margin:8px 0}input,select,textarea{width:100%;min-width:0}article,fieldset,details{background:white;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}fieldset{min-width:0}legend,summary{font-weight:750}summary{cursor:pointer}.tag{display:inline-block;background:#fff4c5;color:#624500;border-radius:6px;padding:3px 8px;font-size:.85rem;font-weight:750}.warning{color:#9e2222;font-weight:750}.choices label{display:flex;align-items:center;justify-content:center;flex:1 1 100px;min-height:46px;padding:6px;margin:0;border:1px solid var(--line);border-radius:8px;cursor:pointer}.choices label:has(:checked){background:#dbeeff;border-color:var(--blue)}input[type=radio],input[type=checkbox]{width:auto;min-height:0;accent-color:var(--blue)}canvas{display:block;border:1px dashed #8ba2b8;border-radius:8px;width:100%;height:110px;touch-action:none;background:#f7faff;margin-bottom:6px}.signature{min-width:0}.record-image{width:min(100%,260px);border:1px solid var(--line);display:block}.muted{color:var(--muted);font-size:.9rem}.split{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.reference{display:flex;align-items:center;gap:10px;margin:0 0 10px}.reference img{width:72px;height:54px;object-fit:cover;border-radius:6px;display:block}dialog{max-width:min(92vw,700px);border:1px solid var(--line);border-radius:12px;color:var(--navy);padding:14px}dialog::backdrop{background:#10253dbb}dialog img{display:block;max-width:100%;max-height:68vh;margin:10px auto;object-fit:contain}
+ :root{--navy:#26382e;--blue:#243d32;--line:#dfe5df;--muted:#52655a}body{background:#f3f5f3;font-family:Arial,Helvetica,sans-serif}.shell{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}.sidebar{position:sticky;top:0;height:100dvh;background:#202e25;color:#f8faf7;padding:24px 18px;display:flex;flex-direction:column}.brand{padding:0;margin:0 0 32px}.brand img{width:54px;height:54px;object-fit:contain;border-radius:8px;background:white}.brand small{color:#bdcbbb;margin-top:3px}.sidebar nav{display:grid;gap:6px}.sidebar nav button{display:flex;align-items:center;gap:11px;text-align:left;background:transparent;border:1px solid transparent;color:#edf2eb;padding-inline:12px}.sidebar nav button[aria-current=true]{background:#35483b;border-left:3px solid #ffe500}.sidebar nav button:hover{background:#35483b}.sidebar svg{width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.nav-label{letter-spacing:.12em;font-size:.76rem;color:#bdcbbb;margin:0 12px 8px}.sidebar-foot{margin-top:auto;color:#bdcbbb;font-size:.85rem}.workspace{min-width:0}.topbar{min-height:65px;background:white;border:0;border-bottom:1px solid var(--line);color:var(--navy);display:flex;align-items:center;gap:12px;padding:12px clamp(16px,4vw,42px)}.topbar span{margin-left:auto}.menu-toggle{display:none}.workspace main{max-width:1040px;padding:22px clamp(14px,4vw,42px) 44px}.workspace section>h1{margin-top:0}.workspace article{padding:clamp(14px,3vw,24px);box-shadow:0 2px 8px #202e2508}.workspace fieldset{background:#fafbf9}.choices label:has(:checked){background:#e3eee5;border-color:var(--blue)}.choices label:has([value=Problema]:checked){background:#fff1d2;border-color:#95670a}.prototype-note{margin:0 0 16px}.sidebar[hidden]{display:none}
+@media(max-width:760px){.shell{display:block}.menu-toggle{display:block}.topbar{position:sticky;top:0;z-index:2}.topbar span{display:none}.sidebar{display:none;position:fixed;z-index:4;inset:0 auto 0 0;width:min(82vw,285px);box-shadow:0 0 0 100vmax #18251c88}.shell.menu-open .sidebar{display:flex}.sidebar .menu-toggle{margin-bottom:16px;background:#35483b;color:white;border-color:#6b8172}}
+.scope-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:6px;margin:6px 0 14px}.scope-choice{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--line);border-radius:8px;background:white;margin:0;min-height:44px}.scope-choice:has(:checked){background:#e3eee5;border-color:#567161}#catalog-status:empty{display:none}.delete-button{color:#9e2222;border-color:#d8a9a9}
+</style>
+<div class="shell" id="shell">
+<aside class="sidebar" id="sidebar">
+<button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
+<div class="brand"><img src="logo-der.jpg" alt="DER"><div><strong>Checklist de Viaturas</strong><small>Operação de campo · CGR.02</small></div></div>
+<div class="nav-label">OPERAÇÃO</div>
+<nav aria-label="Menu principal">
+<button type="button" data-page="troca" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h15l-4-4M20 17H5l4 4M19 7l-4 4M5 17l4-4"/></svg>Troca de turno</button>
+<button type="button" data-page="historico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico</button>
+<button type="button" data-page="viaturas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v-5l2-5h12l2 5v5M4 13h16M6 17v2m12-2v2M7 15h1m8 0h1"/></svg>Viaturas</button>
+<button type="button" data-page="cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>Cadastro do Checklist</button>
+<button type="button" data-page="operadores"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>Cadastro de Operador</button>
+<button type="button" data-page="quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4m8-4v4m-7 8 2 2 4-4"/></svg>Checklist Quinzenal</button>
+<button type="button" data-page="acessos" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></svg>Acessos</button>
+</nav><div class="sidebar-foot" id="sidebar-status">Checklist de frota · Prévia local</div>
+</aside>
+<div class="workspace" id="workspace">
+<header class="topbar"><button class="menu-toggle" type="button" id="open-menu" aria-controls="sidebar" aria-expanded="false">☰ Menu</button><strong id="area-title">Troca de turno</strong><span class="muted">DER · Operação de campo</span></header>
+<main>
+<p class="muted" id="local-mode">Protótipo local · Use dados de teste. Não sincroniza entre aparelhos.</p>
+<div id="cloud-panel" hidden>
+<article id="cloud-login"><h1>Entrar no Checklist DER</h1>
+<form id="request-code"><label>E-mail da viatura ou da administração<input name="email" type="email" maxlength="254" required autocomplete="email"></label><button class="primary">Enviar código</button></form>
+<form id="verify-code" hidden><label>Código de 6 dígitos<input name="code" required minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"></label><button class="primary">Entrar</button><button type="button" id="change-email">Trocar e-mail</button></form>
+</article>
+<article id="cloud-account" hidden><div class="split"><div><strong id="cloud-identity"></strong><p id="cloud-status" role="status"></p></div><div class="actions"><button type="button" id="sync-cloud">Sincronizar</button><button type="button" id="cloud-logout">Sair</button></div></div></article>
+<p id="cloud-error" class="warning" role="alert" hidden></p>
+</div>
+<div id="notice" role="status"></div>
+<section id="troca">
+<h1>Passar a viatura</h1><p>Uma conferência conjunta. Duas assinaturas. Meta: até 10 min.</p>
+<form id="handover">
+<article><h2>1. Identifique a troca</h2>
+<label>Viatura<select name="vehicle" required></select></label><p id="vehicle-info"></p>
+<div class="grid"><label>Quem entrega<select name="outgoing" required></select></label><label>Quem recebe<select name="incoming" required></select></label></div>
+<label class="scope-choice"><input type="checkbox" name="coverage"> Mostrar outros operadores para cobertura</label>
+<p class="muted" id="operator-hint"></p>
+<details id="exceptions"><summary>Registrar exceção</summary><label>Situação<select name="mode"><option value="normal">Conferência em dupla</option><option value="absent">Um operador ausente</option></select></label>
+<label id="missing" hidden>Quem está ausente<select name="missing"><option value="incoming">Quem recebe</option><option value="outgoing">Quem entrega</option></select></label>
+<label id="reason" hidden>Justificativa da ausência<textarea name="reason" maxlength="500"></textarea></label>
+<label class="scope-choice"><input type="checkbox" name="late"> Conferência realizada depois da troca</label>
+<div id="late-fields" hidden><label>Data e hora da troca (horário de Brasília)<input type="datetime-local" name="exchange"></label><label>Justificativa do atraso<textarea name="lateReason" maxlength="500"></textarea></label></div></details>
+<div id="resuming" class="tag" hidden>Conferência após a troca</div></article>
+<article id="inspection"><div class="split"><h2>2. Confiram juntos</h2><span id="progress" class="tag"></span></div>
+<div class="grid"><label>Quilometragem<input name="km" type="number" min="0" step="1" inputmode="numeric"></label><label>Combustível<select name="fuel"><option value="">Selecione</option><option>Cheio</option><option>¾</option><option>½</option><option>¼</option><option>Reserva</option></select></label></div>
+<div id="checks"></div><p id="critical" class="warning" hidden>Atenção: problema registrado em item crítico.</p></article>
+<article id="signatures"><h2>3. Validem o registro</h2><p>Assinem com o dedo ou mouse.</p><div class="grid" id="pads"></div></article>
+<button class="primary" id="submit">Salvar passagem</button>
+</form></section>
+<section id="quinzenal" hidden>
+<h1>Checklist Quinzenal</h1>
+<form id="fortnight-form">
+<article><h2>Identificação</h2><div class="grid"><label>Viatura<select name="vehicle" required></select></label><label>Operador<select name="operator" required></select></label></div>
+<label class="scope-choice"><input type="checkbox" name="coverage"> Mostrar outros operadores para cobertura</label>
+<label>Acompanhamento do engenheiro<select name="attendance" required><option value="">Selecione</option><option value="yes">Sim</option><option value="no">Não</option></select></label>
+<label id="engineer-name" hidden>Nome do engenheiro<input name="engineer" maxlength="100"></label></article>
+<article><h2>Fotos da vistoria</h2><p>Fotografe os pneus, os cones e o ferramental da viatura.</p>
+<label>Pneus<input type="file" name="tires" accept="image/jpeg,image/png,image/webp" multiple required></label>
+<label>Cones<input type="file" name="cones" accept="image/jpeg,image/png,image/webp" multiple required></label>
+<label>Ferramental<input type="file" name="tools" accept="image/jpeg,image/png,image/webp" multiple required></label>
+<label>Observações<textarea name="notes" maxlength="1000"></textarea></label></article>
+<article><h2>Assinaturas</h2><div class="grid" id="fortnight-pads"></div></article>
+<button class="primary" id="save-fortnight">Salvar vistoria quinzenal</button>
+</form></section>
+<section id="historico" hidden><h1>Histórico</h1><p>Registros salvos neste navegador.</p>
+<article><h2>Acompanhamento do engenheiro</h2><div class="grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label></div><div id="attendance-summary" aria-live="polite"></div></article>
+<button type="button" id="prepare-report">Gerar relatório do período</button>
+<h2>Trocas de turno</h2><div id="records"></div><h2>Vistorias quinzenais</h2><div id="fortnight-records"></div></section>
+<section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
+<article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
+<section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
+<article><h2>Itens do checklist</h2><form id="catalog"><label>Nome do item<input name="title" maxlength="100" required></label><label>Quantidade esperada (opcional)<input name="expected" type="number" min="1" max="9999" step="1" inputmode="numeric"></label><fieldset><legend>Em quais viaturas este item aparece?</legend><label class="scope-choice"><input type="checkbox" name="all" checked> Toda a frota</label><div id="scope-options" hidden><p>Marque um ou mais serviços, prefixos ou uma combinação dos dois.</p><strong>Tipos de serviço</strong><div class="scope-grid" id="service-scopes"></div><strong>Viaturas específicas</strong><div class="scope-grid" id="vehicle-scopes"></div></div></fieldset><label>Foto de referência (opcional)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label><p class="muted">Use uma foto do equipamento ou do local onde ele fica. JPG, PNG ou WebP.</p><label style="display:block"><input type="checkbox" name="critical"> Marcar como item crítico</label><div class="actions"><button id="save-item">Adicionar item</button><button type="button" id="cancel-item" hidden>Cancelar edição</button></div><p id="catalog-status" role="status"></p></form><div id="items"></div></article></section>
+<section id="operadores" hidden><h1>Cadastro de Operador</h1><p>Vincule cada operador às viaturas que ele costuma assumir. Na troca, a cobertura não muda esse vínculo.</p>
+<article><form id="operator-form"><label>Nome do operador<input name="operatorName" required maxlength="80"></label><fieldset><legend>Viaturas habituais</legend><div id="operator-vehicles" class="scope-grid"></div></fieldset><div class="actions"><button id="operator-save">Adicionar operador</button><button type="button" id="operator-cancel" hidden>Cancelar edição</button></div></form></article>
+<div id="operator-list"></div></section>
+<section id="acessos" hidden><h1>Acessos</h1>
+<article><h2>Conceder ou alterar acesso</h2><form id="access-form">
+<label>E-mail do usuário<input name="email" required type="email" maxlength="254" autocomplete="off"></label>
+<label>Perfil<select name="role"><option value="viewer">Consulta do histórico</option><option value="manager">Gestão de cadastros e checklists</option></select></label>
+<label id="access-scope">Viatura para consulta<select name="prefix"><option value="">Toda a frota</option></select></label>
+<button class="primary">Salvar permissão</button></form></article>
+<article><h2>Usuários com acesso adicional</h2><div id="access-list" aria-live="polite"></div></article></section>
+</main></div></div>
+<section id="report-print" hidden><div class="actions"><button type="button" id="close-report">Voltar ao histórico</button><button type="button" id="print-report">Imprimir / salvar em PDF</button></div><div id="report-content"></div></section>
+<dialog id="photo-dialog" aria-labelledby="photo-title"><div class="split"><strong id="photo-title"></strong><form method="dialog"><button>Fechar</button></form></div><img id="photo-full" alt=""></dialog>
+<script>
+const services = {0:'Inspeção',1:'Apoio',2:'Guincho leve',4:'Guincho pesado',6:'Boiadeiro',7:'Combate a incêndio'};
+const byId = id => document.getElementById(id);
+const handover = byId('handover'), fields = handover.elements, fleet = byId('fleet'), catalog = byId('catalog');
+const escape = value => String(value ?? '').replace(/[&<>"']/g, symbol => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[symbol]);
+const key = 'der-field-checklist-v1';
+function referencePhoto(item) {
+  const source=item.photo;
+  if(!source)return null;
+  const button=document.createElement('button'), thumbnail=document.createElement('img');
+  button.type='button';button.className='reference';
+  thumbnail.src=source;thumbnail.alt='';
+  button.append(thumbnail,item.photo?'Ver foto de referência':'Ver foto ilustrativa');
+  button.onclick=()=>{
+    byId('photo-title').textContent=item.title+(item.photo?'':' · Foto ilustrativa');
+    byId('photo-full').src=source;byId('photo-full').alt='Foto de referência: '+item.title;
+    byId('photo-dialog').showModal();
+  };
+  return button;
+}
+const initial = {
+  vehicles:[{prefix:'ITG-324',plate:'',active:true}],
+  items:[{id:'1',title:'Pneus — exemplo',scope:'all',critical:true,active:true},{id:'2',title:'Luzes e sinalização — exemplo',scope:'all',critical:true,active:true},{id:'3',title:'Cabo e gancho — exemplo',scope:'s:2',critical:true,active:true}],
+  records:[]
+};
+let state, resumed = null, shown = [], pads = {};
+try { state = JSON.parse(localStorage.getItem(key)) || initial; } catch { state = initial; }
+function save(next) {
+  try {
+    const cloud=window.checklistCloud, previous=state;
+    if (cloud?.enabled) cloud.persist(previous,next);
+    else localStorage.setItem(key,JSON.stringify(next));
+    state=next;
+    return true;
+  }
+  catch (error) { alert(error.message || 'Não foi possível gravar no navegador. O formulário foi mantido.'); return false; }
+}
+const decode = prefix => /^ITG-[0-9][012467][0-9]$/.test(prefix) ? 'Base '+prefix[4]+' · '+services[prefix[5]]+' · Sequencial '+prefix[6] : '';
+const time = date => new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}).format(new Date(date));
+const option = (value,label) => '<option value="'+escape(value)+'">'+escape(label)+'</option>';
+const itemScopes = item => item.scopes || [item.scope];
+const scopeLabel = scope => scope==='all'?'Toda a frota':scope.startsWith('s:')?services[scope.slice(2)]:scope.slice(2);
+const selectedScopes = () => [...catalog.querySelectorAll('[name="target"]:checked')].map(input=>input.value);
+let editingItem=null, editingVehicle=null;
+function resetFleet() {
+  editingVehicle=null;fleet.reset();fleet.elements.prefix.readOnly=false;
+  byId('decoded').textContent='';byId('fleet-save').textContent='Adicionar viatura';byId('fleet-cancel').hidden=true;
+}
+byId('fleet-cancel').onclick=resetFleet;
+let editingOperator=null;
+const operatorForm=byId('operator-form');
+const operators=()=>state.operators||[];
+function refreshOperatorChoices(reset=false) {
+  const prefix=fields.vehicle.value;
+  const linked=operators().filter(operator=>operator.vehicles.includes(prefix));
+  const eligible=prefix?(fields.coverage.checked?[...linked,...operators().filter(operator=>!linked.includes(operator))]:linked):[];
+  for(const role of ['outgoing','incoming']){
+    const select=fields[role], prior=reset?'':select.value, recorded=resumed?.[role];
+    const names=eligible.map(operator=>operator.name);
+    select.innerHTML=option('','Selecione o operador')+eligible.map(operator=>option(operator.name,operator.name+(linked.includes(operator)?'':' · Cobertura'))).join('')+
+      (recorded&&!names.includes(recorded)?option(recorded,recorded+' · Registro original'):'');
+    select.value=prior||recorded||'';
+  }
+  byId('operator-hint').textContent=prefix&&!linked.length?'Sem operadores vinculados. Use a opção de cobertura ou faça o vínculo no Cadastro de Operador.':'';
+}
+function renderOperatorAdmin(selected=[...operatorForm.querySelectorAll('[name="usualVehicle"]:checked')].map(input=>input.value)) {
+  byId('operator-vehicles').innerHTML=state.vehicles.map(vehicle=>'<label class="scope-choice"><input type="checkbox" name="usualVehicle" value="'+escape(vehicle.prefix)+'" '+(selected.includes(vehicle.prefix)?'checked':'')+'> '+escape(vehicle.prefix)+(vehicle.active?'':' · Inativa')+'</label>').join('')||'<p>Cadastre uma viatura no menu Viaturas. Você também pode deixar o operador sem vínculo para cobertura.</p>';
+  const entries=operators();
+  byId('operator-list').innerHTML=entries.map((operator,index)=>'<details><summary>'+escape(operator.name)+'</summary><p>'+escape(operator.vehicles.join(', ')||'Sem viatura habitual')+'</p><div class="actions"><button type="button" data-edit="'+index+'">Editar</button><button type="button" class="delete-button" data-remove="'+index+'">Excluir</button></div></details>').join('')||'<article>Nenhum operador cadastrado.</article>';
+  byId('operator-list').querySelectorAll('[data-edit]').forEach(button=>button.onclick=()=>{
+    const operator=entries[Number(button.dataset.edit)];editingOperator=operator.id;
+    operatorForm.elements.operatorName.value=operator.name;renderOperatorAdmin(operator.vehicles);
+    byId('operator-save').textContent='Salvar alterações';byId('operator-cancel').hidden=false;
+    operatorForm.elements.operatorName.focus();
+  });
+  byId('operator-list').querySelectorAll('[data-remove]').forEach(button=>button.onclick=()=>{
+    const operator=entries[Number(button.dataset.remove)];
+    if(confirm('Excluir '+operator.name+' do cadastro? O histórico será mantido.')&&save({...state,operators:operators().filter(entry=>entry.id!==operator.id)})){
+      if(editingOperator===operator.id)resetOperatorForm();
+      buildPads([]);refresh();
+    }
+  });
+}
+function resetOperatorForm(){
+  editingOperator=null;operatorForm.reset();renderOperatorAdmin([]);
+  byId('operator-save').textContent='Adicionar operador';byId('operator-cancel').hidden=true;
+}
+byId('operator-cancel').onclick=resetOperatorForm;
+operatorForm.onsubmit=event=>{
+  event.preventDefault();
+  const name=operatorForm.elements.operatorName.value.trim(), vehicles=new FormData(operatorForm).getAll('usualVehicle');
+  if(!name)return alert('Informe o nome do operador.');
+  if(operators().some(operator=>operator.id!==editingOperator&&operator.name.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR')))return alert('Já existe um operador com esse nome. Diferencie os nomes para identificar cada pessoa.');
+  const operator={id:editingOperator||String(Date.now()),name,vehicles};
+  const entries=editingOperator?operators().map(entry=>entry.id===editingOperator?operator:entry):[...operators(),operator];
+  if(save({...state,operators:entries})){resetOperatorForm();buildPads([]);refresh();}
+};
+function renderScopes(scopes=selectedScopes()) {
+  const choices=values=>values.map(value=>'<label class="scope-choice"><input type="checkbox" name="target" value="'+escape(value)+'" '+(scopes.includes(value)?'checked':'')+'> '+escape(scopeLabel(value))+'</label>').join('');
+  byId('service-scopes').innerHTML=choices(Object.keys(services).map(code=>'s:'+code));
+  byId('vehicle-scopes').innerHTML=choices(state.vehicles.map(vehicle=>'v:'+vehicle.prefix))||'<p>Nenhuma viatura cadastrada.</p>';
+  byId('scope-options').hidden=catalog.elements.all.checked;
+}
+catalog.elements.all.onchange=()=>{byId('scope-options').hidden=catalog.elements.all.checked;};
+function resetCatalog() {
+  editingItem=null;catalog.reset();renderScopes([]);
+  byId('save-item').textContent='Adicionar item';byId('cancel-item').hidden=true;
+}
+byId('cancel-item').onclick=()=>{resetCatalog();byId('catalog-status').textContent='Edição cancelada.';};
+function page(name) {
+  if(window.checklistCloud?.enabled&&!window.checklistCloud.canOpen(name))return;
+  document.querySelectorAll('main > section').forEach(section => section.hidden=section.id!==name);
+  document.querySelectorAll('nav button').forEach(button=>{
+    if(button.dataset.page===name){button.setAttribute('aria-current','true');byId('area-title').textContent=button.textContent.trim();}
+    else button.removeAttribute('aria-current');
+  });
+  if(name==='historico') { historyView(); refreshFortnightHistory(); }
+  if(name==='quinzenal') refreshFortnightChoices();
+  if(name==='acessos') window.checklistCloud?.showAccess();
+  window.scrollTo(0,0);
+}
+function setMenu(open) {
+  byId('shell').classList.toggle('menu-open',open);
+  byId('open-menu').setAttribute('aria-expanded',String(open));
+  byId('workspace').inert=open;
+  (open?byId('close-menu'):byId('open-menu')).focus();
+}
+byId('open-menu').onclick=()=>setMenu(true);
+byId('close-menu').onclick=()=>setMenu(false);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&byId('shell').classList.contains('menu-open'))setMenu(false);});
+matchMedia('(max-width:760px)').addEventListener('change',event=>{if(!event.matches&&byId('shell').classList.contains('menu-open'))setMenu(false);});
+document.querySelectorAll('nav button').forEach(button => button.onclick=()=>{if(byId('shell').classList.contains('menu-open'))setMenu(false);byId('notice').textContent='';page(button.dataset.page);});
+function refresh() {
+  const prior=fields.vehicle.value;
+  fields.vehicle.innerHTML=option('','Selecione o prefixo')+state.vehicles.filter(vehicle=>vehicle.active||vehicle.prefix===resumed?.prefix).map(vehicle=>option(vehicle.prefix,vehicle.prefix+' · '+services[vehicle.prefix[5]])).join('');
+  fields.vehicle.value=[...fields.vehicle.options].some(choice=>choice.value===prior)?prior:'';
+  if(window.checklistCloud?.vehicle)fields.vehicle.value=window.checklistCloud.vehicle;
+  renderScopes();
+  renderOperatorAdmin();
+  refreshOperatorChoices();
+  for(const [area,list] of [['vehicles',state.vehicles],['items',state.items]]) {
+    byId(area).innerHTML=list.map((entry,index)=>'<details><summary>'+escape(entry.prefix||entry.title)+(entry.active?'':' · inativo')+'</summary><p>'+escape(entry.prefix?[decode(entry.prefix),entry.plate].filter(Boolean).join(' · '):itemScopes(entry).map(scopeLabel).join(', '))+(entry.critical?' · Crítico':'')+'</p><button type="button" data-index="'+index+'">'+(entry.active?'Desativar':'Reativar')+'</button></details>').join('');
+    byId(area).querySelectorAll('button').forEach(button=>button.onclick=()=>{
+      const next={...state,[area]:list.map((entry,index)=>index===Number(button.dataset.index)?{...entry,active:!entry.active}:entry)};
+      if(save(next)){refresh(); renderChecks();}
+    });
+    byId(area).querySelectorAll('details').forEach((entry,index)=>{
+      const target=list[index], remove=document.createElement('button');
+      remove.type='button';remove.className='delete-button';remove.textContent='Excluir';
+      remove.onclick=()=>deleteCatalogEntry(area,target);
+      entry.append(' ',remove);
+      if(area==='vehicles'){
+        const edit=document.createElement('button'), email=document.createElement('p');
+        email.textContent=target.email?'E-mail da VTR: '+target.email:'E-mail da VTR ainda não vinculado';
+        entry.querySelector('p').after(email);
+        edit.type='button';edit.textContent='Editar vínculo';
+        edit.onclick=()=>{
+          editingVehicle=target.prefix;fleet.elements.prefix.value=target.prefix;fleet.elements.prefix.readOnly=true;
+          fleet.elements.plate.value=target.plate||'';fleet.elements.vehicleEmail.value=target.email||'';
+          byId('decoded').textContent=decode(target.prefix);byId('fleet-save').textContent='Salvar alterações';byId('fleet-cancel').hidden=false;
+          fleet.elements.vehicleEmail.focus();
+        };
+        entry.append(' ',edit);
+      }
+    });
+    if(area==='items')byId(area).querySelectorAll('details').forEach((entry,index)=>{
+      const item=list[index], label=document.createElement('label'), input=document.createElement('input'), edit=document.createElement('button');
+      edit.type='button';edit.textContent='Editar item';
+      edit.onclick=()=>{
+        editingItem=item.id;catalog.elements.title.value=item.title;catalog.elements.critical.checked=item.critical;
+        catalog.elements.expected.value=item.expected??'';
+        catalog.elements.all.checked=itemScopes(item).includes('all');catalog.elements.photo.value='';renderScopes(itemScopes(item));
+        byId('save-item').textContent='Salvar alterações';byId('cancel-item').hidden=false;
+        byId('catalog-status').textContent='Editando: '+item.title;
+        catalog.elements.title.focus();
+      };
+      entry.append(' ',edit);
+      const preview=referencePhoto(item);
+      if(preview)entry.querySelector('p').after(preview);
+      label.textContent=item.photo?'Trocar foto de referência':preview?'Substituir foto ilustrativa':'Adicionar foto de referência';
+      input.type='file';input.accept='image/jpeg,image/png,image/webp';
+      input.onchange=async()=>{
+        const file=input.files[0];
+        if(!file)return;
+        input.disabled=true;
+        try {
+          const photo=await preparePhoto(file);
+          if(save({...state,items:state.items.map(current=>current.id===item.id?{...current,photo}:current)})){refresh();renderChecks();}
+        } catch(error){alert(error.message);}
+        finally{input.disabled=false;input.value='';}
+      };
+      label.append(input);entry.append(label);
+    });
+  }
+}
+function deleteCatalogEntry(area,target) {
+  const isVehicle=area==='vehicles', name=isVehicle?target.prefix:target.title;
+  if(isVehicle) {
+    const pending=state.records.some(record=>record.prefix===name&&record.mode==='deferred'&&!state.records.some(other=>other.prior===record.id));
+    if(pending)return alert('Conclua o checklist adiado desta viatura antes de excluí-la.');
+    if(state.items.some(item=>itemScopes(item).includes('v:'+name)))return alert('Há itens associados a este prefixo. Edite ou exclua esses itens antes de excluir a viatura.');
+  }
+  if(!confirm('Excluir definitivamente do cadastro: '+name+'? O histórico será mantido.'))return;
+  const remaining=state[area].filter(entry=>isVehicle?entry.prefix!==target.prefix:entry.id!==target.id);
+  const next={...state,[area]:remaining};
+  if(isVehicle)next.operators=operators().map(operator=>({...operator,vehicles:operator.vehicles.filter(prefix=>prefix!==target.prefix)}));
+  if(!save(next))return;
+  if(!isVehicle&&editingItem===target.id)resetCatalog();
+  if(isVehicle&&editingVehicle===target.prefix)resetFleet();
+  buildPads([]);refresh();renderChecks();
+  byId('notice').textContent=(isVehicle?'Viatura excluída':'Item excluído')+' do cadastro.';
+}
+fleet.elements.prefix.oninput=()=>byId('decoded').textContent=decode(fleet.elements.prefix.value.trim().toUpperCase());
+fleet.onsubmit=event=>{
+  event.preventDefault();
+  const prefix=fleet.elements.prefix.value.trim().toUpperCase();
+  if(!decode(prefix)) return alert('Use ITG-XYS, com um código de serviço válido (0, 1, 2, 4, 6 ou 7).');
+  const email=fleet.elements.vehicleEmail.value.trim().toLowerCase(), plate=fleet.elements.plate.value.trim().toUpperCase();
+  if(state.vehicles.some(vehicle=>vehicle.prefix===prefix&&vehicle.prefix!==editingVehicle))return alert('Este prefixo já está cadastrado.');
+  if(email&&state.vehicles.some(vehicle=>vehicle.prefix!==editingVehicle&&vehicle.email?.toLowerCase()===email))return alert('Este e-mail já está vinculado a outra viatura.');
+  const vehicles=editingVehicle?state.vehicles.map(vehicle=>vehicle.prefix===editingVehicle?{...vehicle,email,plate}:vehicle):[...state.vehicles,{prefix,email,plate,active:true}];
+  if(save({...state,vehicles})){resetFleet();refresh();byId('notice').textContent='Cadastro da viatura salvo neste navegador.';}
+};
+async function preparePhoto(file) {
+  if(!file)return '';
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>15*1024*1024)throw new Error('Escolha uma imagem JPG, PNG ou WebP de até 15 MB.');
+  const url=URL.createObjectURL(file), photo=new Image();
+  try {
+    photo.src=url;
+    try{await photo.decode();}catch{throw new Error('Não foi possível abrir a foto. Escolha outra imagem.');}
+    const scale=Math.min(1,800/Math.max(photo.width,photo.height)), canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(photo.width*scale));canvas.height=Math.max(1,Math.round(photo.height*scale));
+    const context=canvas.getContext('2d');context.fillStyle='white';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(photo,0,0,canvas.width,canvas.height);
+    return canvas.toDataURL('image/jpeg',.75);
+  }finally{URL.revokeObjectURL(url);}
+}
+catalog.onsubmit=async event=>{
+  event.preventDefault();
+  const title=catalog.elements.title.value.trim();
+  if(!title)return alert('Informe o nome do item.');
+  const scopes=catalog.elements.all.checked?['all']:selectedScopes();
+  if(!scopes.length)return alert('Marque ao menos um serviço ou prefixo, ou selecione Toda a frota.');
+  const original=state.items.find(entry=>entry.id===editingItem);
+  const expected = catalog.elements.expected.value==='' ? null : catalog.elements.expected.valueAsNumber;
+  if(expected!==null&&(!Number.isInteger(expected)||expected<1||expected>9999))return alert('Informe uma quantidade esperada entre 1 e 9999.');
+  const item={...original,id:original?.id||String(Date.now()),title,scopes,expected,critical:catalog.elements.critical.checked,active:original?.active??true};
+  const button=byId('save-item'), file=catalog.elements.photo.files[0];
+  byId('cancel-item').disabled=true;
+  button.disabled=true;
+  try{if(file)item.photo=await preparePhoto(file);}catch(error){alert(error.message);return;}finally{button.disabled=false;byId('cancel-item').disabled=false;}
+  const items=original?state.items.map(entry=>entry.id===item.id?{...entry,title:item.title,scopes:item.scopes,expected:item.expected,critical:item.critical,...(file?{photo:item.photo}:{})}:entry):[...state.items,item];
+  if(save({...state,items})){resetCatalog();refresh();renderChecks();byId('catalog-status').textContent=original?'Alterações salvas.':'Item adicionado.';}
+};
+function renderChecks() {
+  const prefix=fields.vehicle.value;
+  const prior=shown.map(item=>({id:item.id,value:fields['check-'+item.id]?.value,note:fields['note-'+item.id]?.value,found:fields['found-'+item.id]?.value}));
+  byId('vehicle-info').textContent=decode(prefix);
+  shown=prefix?state.items.filter(item=>item.active&&itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))):[];
+  byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?' · Crítico':'')+'</legend><div class="choices">'+['OK','Problema','Não se aplica'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+'</div><label hidden>Descreva o problema<input name="note-'+item.id+'" maxlength="300"></label></fieldset>').join(''):'<p>'+(prefix?'Nenhum item ativo para esta viatura. Configure em Cadastros.':'Selecione uma viatura para ver os itens.')+'</p>';
+  prior.forEach(result=>{
+    const control=fields['check-'+result.id];
+    if(control){control.value=result.value;fields['note-'+result.id].value=result.note;}
+  });
+  byId('checks').querySelectorAll('fieldset').forEach((group,index)=>{
+    const item=shown[index], previous=prior.find(result=>result.id===item.id);
+    if(item.expected!=null) {
+      const label=document.createElement('label'), found=document.createElement('input');
+      label.textContent='Quantidade encontrada · Esperada: '+item.expected;
+      found.name='found-'+item.id;
+      found.type='number';found.min='0';found.max='9999';found.step='1';found.inputMode='numeric';
+      found.value=previous?.found||'';
+      label.append(found);
+      group.append(label);
+    }
+    const preview=referencePhoto(item);
+    if(preview)group.querySelector('legend').after(preview);
+  });
+  update();
+}
+function update() {
+  const mode=fields.mode.value;
+  byId('missing').hidden=mode!=='absent';
+  byId('late-fields').hidden=!fields.late.checked;
+  fields.exchange.required=fields.lateReason.required=fields.late.checked;
+  byId('reason').hidden=mode==='normal';
+  fields.reason.required=mode!=='normal';
+  fields.km.required=fields.fuel.required=true;
+  let answered=0, critical=false;
+  shown.forEach(item=>{
+    const controls=[...handover.querySelectorAll('[name="check-'+item.id+'"]')];
+    const value=controls.find(control=>control.checked)?.value;
+    const note=fields['note-'+item.id], found=fields['found-'+item.id];
+    controls[0].required=true;
+    if(found){found.disabled=value==='Não se aplica';found.required=!found.disabled;}
+    const different=found&&!found.disabled&&found.value!==''&&found.valueAsNumber!==item.expected;
+    note.parentElement.hidden=value!=='Problema'&&!different;
+    note.required=value==='Problema'||Boolean(different);
+    if(value)answered++;
+    if(item.critical&&value==='Problema')critical=true;
+  });
+  byId('progress').textContent=answered+' de '+shown.length+' conferidos';
+  byId('critical').hidden=!critical;
+  const roles=['outgoing','incoming'].filter(role=>mode!=='absent'||role!==fields.missing.value);
+  if(roles.join()!==Object.keys(pads).join()) buildPads(roles);
+}
+function signaturePads(container,roles) {
+  const result={};
+  container.replaceChildren();
+  const captions={outgoing:'Quem entrega',incoming:'Quem recebe',operator:'Operador',engineer:'Engenheiro'};
+  roles.forEach(role=>{
+    const wrapper=document.createElement('div');
+    wrapper.className='signature';
+    const caption=captions[role];
+    wrapper.innerHTML='<strong>'+caption+'</strong><canvas width="600" height="220" aria-label="Assinatura: '+caption+'"></canvas><button type="button">Limpar assinatura</button>';
+    container.append(wrapper);
+    const canvas=wrapper.querySelector('canvas'), ctx=canvas.getContext('2d'), pad={canvas,ink:false};
+    let pointer=null;
+    const point=event=>{const box=canvas.getBoundingClientRect(); return [(event.clientX-box.left)*canvas.width/box.width,(event.clientY-box.top)*canvas.height/box.height];};
+    ctx.lineWidth=4;ctx.lineCap='round';ctx.strokeStyle='#10253d';
+    canvas.onpointerdown=event=>{if(pointer!==null||event.button!==0)return;pointer=event.pointerId;canvas.setPointerCapture(pointer);ctx.beginPath();ctx.moveTo(...point(event));};
+    canvas.onpointermove=event=>{if(event.pointerId===pointer){ctx.lineTo(...point(event));ctx.stroke();pad.ink=true;}};
+    canvas.onlostpointercapture=()=>pointer=null;
+    wrapper.querySelector('button').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);pad.ink=false;};
+    result[role]=pad;
+  });
+  return result;
+}
+function buildPads(roles) { pads=signaturePads(byId('pads'),roles); }
+const padImages = signatures => Object.fromEntries(Object.entries(signatures).map(([role,pad])=>[role,pad.canvas.toDataURL()]));
+let handoverStarted=null;
+handover.addEventListener('input',()=>{handoverStarted??=Date.now();});
+handover.addEventListener('input',event=>{if(event.target.name?.startsWith('found-'))update();});
+fields.vehicle.onchange=()=>{fields.coverage.checked=false;refreshOperatorChoices(true);byId('checks').replaceChildren();shown=[];buildPads([]);renderChecks();};
+fields.coverage.onchange=()=>refreshOperatorChoices();
+handover.addEventListener('change',event=>{if(event.target!==fields.vehicle){if(!event.target.name?.startsWith('note-'))buildPads([]);update();}});
+handover.onsubmit=event=>{
+  event.preventDefault();
+  const data=Object.fromEntries(new FormData(handover)), now=new Date().toISOString();
+  const absent=data.mode==='absent';
+  if(!data.outgoing.trim()||!data.incoming.trim()||data.outgoing.trim().toLowerCase()===data.incoming.trim().toLowerCase())return alert('Informe dois operadores diferentes.');
+  if(absent&&!data.reason.trim())return alert('Informe a justificativa da ausência.');
+  const exchange=data.late?new Date(data.exchange+'-03:00'):null;
+  if(data.late&&(!data.lateReason.trim()||!Number.isFinite(exchange.getTime())||exchange.getTime()>Date.now()))return alert('Informe a justificativa e o horário da troca, sem usar uma data futura.');
+  if(!shown.length)return alert('Cadastre pelo menos um item para esta viatura.');
+  if(Object.values(pads).some(pad=>!pad.ink))return alert('Colete as assinaturas antes de salvar.');
+  const results=shown.map(({photo,...item})=>{
+    const value=data['check-'+item.id], found=item.expected!=null&&value!=='Não se aplica'?Number(data['found-'+item.id]):null;
+    const needsNote=value==='Problema'||(found!==null&&found!==item.expected);
+    return {...item,value,found,note:needsNote?data['note-'+item.id].trim():''};
+  });
+  if(results.some(item=>(item.value==='Problema'||(item.found!==null&&item.found!==item.expected))&&!item.note))return alert('Descreva os problemas e as diferenças de quantidade.');
+  const startedAt=handoverStarted??Date.now();
+  const record={prefix:data.vehicle||window.checklistCloud?.vehicle||resumed?.prefix,outgoing:data.outgoing.trim(),incoming:data.incoming.trim(),exchange:resumed?.exchange||exchange?.toISOString()||new Date(startedAt).toISOString(),inspected:now,durationMs:Math.max(0,Date.parse(now)-startedAt),mode:data.mode,reason:data.reason.trim(),lateReason:data.late?data.lateReason.trim():'',missing:absent?data.missing:null,prior:resumed?.id||null,results,km:data.km,fuel:data.fuel,signatures:padImages(pads),id:now+'-'+(globalThis.crypto?.randomUUID?.()||Math.random().toString(36).slice(2))};
+  record.coverage=['outgoing','incoming'].filter(role=>{
+    const operator=operators().find(entry=>entry.name===record[role]);
+    return operator&&!operator.vehicles.includes(record.prefix)&&(record.mode!=='absent'||role!==record.missing);
+  });
+  if(!save({...state,records:[record,...state.records]}))return;
+  handover.reset();handoverStarted=null;resumed=null;fields.vehicle.disabled=Boolean(window.checklistCloud?.vehicle);byId('resuming').hidden=true;byId('exceptions').open=false;
+  shown=[];buildPads([]);refresh();renderChecks();page('historico');byId('notice').textContent='Passagem salva neste navegador.';
+};
+function historyView() {
+  const visible=state.records.map((record,index)=>({record,index})).filter(({record})=>historyIncludes(record.inspected||record.exchange));
+  byId('records').innerHTML=visible.length?visible.map(({record,index})=>{
+    const done=state.records.some(other=>other.prior===record.id);
+    const status=record.mode==='deferred'?(done?'Checklist registrado depois':'Aguardando checklist'):record.mode==='absent'?'Pendente de ciência':'Concluído';
+    return '<details><summary>'+escape(record.prefix)+' · '+status+'<br><span class="muted">'+time(record.exchange)+'</span></summary><p>Entrega: '+escape(record.outgoing)+'<br>Recebe: '+escape(record.incoming)+'</p>'+
+      (record.inspected?'<p>Conferência: '+time(record.inspected)+' · '+escape(record.km)+' km · '+escape(record.fuel)+'</p>':'')+
+      (record.coverage?.length?'<p>Cobertura: '+record.coverage.map(role=>escape(record[role])).join(', ')+'</p>':'')+
+      (record.reason?'<p>Justificativa: '+escape(record.reason)+'</p>':'')+
+      (record.lateReason?'<p>Conferência após a troca · '+escape(record.lateReason)+'</p>':'')+
+      (record.inspected?'<p>Tempo de conclusão: '+duration(record.durationMs)+'</p>':'')+
+      (record.responsible?'<p>Responsável: '+escape(record.responsible)+'</p>':'')+
+      (record.missing?'<p>Ausente: '+(record.missing==='outgoing'?'quem entrega':'quem recebe')+'</p>':'')+
+      (record.results.some(item=>item.critical&&item.value==='Problema')?'<p class="warning">Problema em item crítico</p>':'')+
+      (record.results.length?'<ul>'+record.results.map(item=>'<li>'+escape(item.title)+' — '+escape(item.value)+(item.found!=null?' · '+escape(item.found)+' de '+escape(item.expected):'')+(item.note?' · '+escape(item.note):'')+'</li>').join('')+'</ul>':'')+
+      Object.entries(record.signatures).map(([role,url])=>'<p>'+ (role==='outgoing'?'Quem entrega':'Quem recebe')+'<img class="record-image" alt="Assinatura registrada" src="'+escape(url)+'"></p>').join('')+
+      (record.mode==='deferred'&&!done?'<button type="button" data-record="'+index+'">Fazer checklist agora</button>':'')+'</details>';
+  }).join(''):'<article>Nenhuma passagem registrada.</article>';
+  byId('records').querySelectorAll('button').forEach(button=>button.onclick=()=>{
+    if(!confirm('Abrir a pendência? O formulário atual será substituído.'))return;
+    resumed=state.records[Number(button.dataset.record)];
+    handover.reset();handoverStarted=null;refresh();fields.vehicle.value=resumed.prefix;fields.vehicle.disabled=true;
+    refreshOperatorChoices(true);
+    byId('resuming').hidden=false;shown=[];buildPads([]);renderChecks();page('troca');
+  });
+}
+refresh();renderChecks();
+</script>
+<script src="quinzenal.js"></script>
+<script src="cloud.js"></script>
+<script>
+if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Cache offline indisponível',error));
+}
+</script>
+</html>
