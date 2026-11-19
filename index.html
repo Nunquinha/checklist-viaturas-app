@@ -273,7 +273,7 @@ function refresh() {
   const available=state.vehicles.filter(vehicle=>vehicle.active||vehicle.prefix===resumed?.prefix);
   fields.vehicle.innerHTML=option('','Selecione o prefixo')+available.map(vehicle=>option(vehicle.prefix,vehicle.prefix+' · '+services[vehicle.prefix[5]])).join('');
   const selected=available.find(vehicle=>vehicle.prefix===prior)?.prefix;
-  fields.vehicle.value=window.checklistCloud?.vehicle||selected||(available.length===1?available[0].prefix:'');
+  fields.vehicle.value=window.checklistCloud?.vehicle||selected||'';
   renderScopes();
   renderOperatorAdmin();
   refreshOperatorChoices();
@@ -531,12 +531,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v16"></script>
-<script src="relatorios.js?v=v16"></script>
-<script src="xlsx.js?v=v16"></script>
-<script src="ocorrencias.js?v=v16"></script>
-<script src="cloud.js?v=v16"></script>
-<script src="instalar.js?v=v16"></script>
+<script src="quinzenal.js?v=v17"></script>
+<script src="relatorios.js?v=v17"></script>
+<script src="xlsx.js?v=v17"></script>
+<script src="ocorrencias.js?v=v17"></script>
+<script src="cloud.js?v=v17"></script>
+<script src="instalar.js?v=v17"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
