@@ -16,6 +16,7 @@
 .report-record{margin:0 0 9px;padding:9px 12px;border:1px solid #dfe5df;overflow-wrap:anywhere}.report-record p{margin:4px 0;color:#26382e}
 .report-section-title{margin:24px 0 9px;font-size:1.1em}.report-footer{text-align:right;border-top:1px solid #dfe5df;margin-top:22px;padding-top:9px;font-size:.8em;color:#52655a}
 .sidebar{overflow-y:auto}.sidebar nav{flex:none}.sidebar-foot{padding-top:12px}
+.topbar #install-app{margin-left:auto;white-space:nowrap;min-height:38px;padding:7px 12px}.topbar #install-app:not([hidden])+span{margin-left:0}
 @page{size:A4;margin:16mm}
 @media print{body{background:white}body.reporting .shell,body.reporting .report-tools{display:none!important}#report-print{padding:0;margin:0;max-width:none;font-size:10pt;print-color-adjust:exact;-webkit-print-color-adjust:exact}.report-heading h1{font-size:21pt}.report-heading,.report-stat,.report-record{break-inside:avoid}.report-section-title{break-after:avoid}}
 :root{color-scheme:light;--navy:#10253d;--blue:#185f9a;--line:#d5e0eb;--muted:#50677e}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#f3f6fa;color:var(--navy);font:16px/1.5 system-ui,sans-serif}header{background:var(--navy);color:white;border-bottom:4px solid #f4dc32}.brand,main{max-width:760px;margin:auto;padding:16px}.brand{display:flex;align-items:center;gap:14px}.logo{background:#f4dc32;color:var(--navy);padding:8px;font-weight:900}.brand small{display:block;color:#d9e4f2}h1{margin:12px 0 0;font-size:clamp(1.65rem,5vw,2rem)}h2{font-size:1.14rem;margin:0 0 12px}p{margin:5px 0 14px;color:var(--muted)}nav,.grid,.actions,.choices{display:flex;gap:8px;flex-wrap:wrap}nav button,.grid>*{flex:1 1 140px}button,input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;background:white;padding:10px;min-height:46px}button{font-weight:700;cursor:pointer}button.primary,nav button[aria-current=true]{background:var(--blue);color:white;border-color:var(--blue)}button.primary{width:100%;margin-top:10px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:3px solid #ac7200;outline-offset:2px}label{display:grid;gap:4px;font-weight:650;margin:8px 0}input,select,textarea{width:100%;min-width:0}article,fieldset,details{background:white;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}fieldset{min-width:0}legend,summary{font-weight:750}summary{cursor:pointer}.tag{display:inline-block;background:#fff4c5;color:#624500;border-radius:6px;padding:3px 8px;font-size:.85rem;font-weight:750}.warning{color:#9e2222;font-weight:750}.choices label{display:flex;align-items:center;justify-content:center;flex:1 1 100px;min-height:46px;padding:6px;margin:0;border:1px solid var(--line);border-radius:8px;cursor:pointer}.choices label:has(:checked){background:#dbeeff;border-color:var(--blue)}input[type=radio],input[type=checkbox]{width:auto;min-height:0;accent-color:var(--blue)}canvas{display:block;border:1px dashed #8ba2b8;border-radius:8px;width:100%;height:110px;touch-action:none;background:#f7faff;margin-bottom:6px}.signature{min-width:0}.record-image{width:min(100%,260px);border:1px solid var(--line);display:block}.muted{color:var(--muted);font-size:.9rem}.split{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -42,7 +43,7 @@
 </nav><div class="sidebar-foot" id="sidebar-status">Checklist de frota · Prévia local</div>
 </aside>
 <div class="workspace" id="workspace">
-<header class="topbar"><button class="menu-toggle" type="button" id="open-menu" aria-controls="sidebar" aria-expanded="false">☰ Menu</button><strong id="area-title">Troca de turno</strong><span class="muted">DER · Operação de campo</span></header>
+<header class="topbar"><button class="menu-toggle" type="button" id="open-menu" aria-controls="sidebar" aria-expanded="false">☰ Menu</button><strong id="area-title">Troca de turno</strong><button type="button" id="install-app" hidden>Instalar app</button><span class="muted">DER · Operação de campo</span></header>
 <main>
 <p class="muted" id="local-mode">Protótipo local · Use dados de teste. Não sincroniza entre aparelhos.</p>
 <div id="cloud-panel" hidden>
@@ -120,6 +121,7 @@
 </main></div></div>
 <section id="report-print" hidden><div class="actions report-tools"><button type="button" id="close-report">Voltar ao histórico</button><button type="button" id="print-report">Imprimir / salvar em PDF</button></div><div id="report-content"></div></section>
 <dialog id="photo-dialog" aria-labelledby="photo-title"><div class="split"><strong id="photo-title"></strong><form method="dialog"><button>Fechar</button></form></div><img id="photo-full" alt=""></dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
 <script>
 const services = {0:'Inspeção',1:'Apoio',2:'Guincho leve',4:'Guincho pesado',6:'Boiadeiro',7:'Combate a incêndio'};
 const byId = id => document.getElementById(id);
@@ -528,6 +530,7 @@ refresh();renderChecks();
 <script src="xlsx.js"></script>
 <script src="ocorrencias.js"></script>
 <script src="cloud.js"></script>
+<script src="instalar.js"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Cache offline indisponível',error));
