@@ -7,9 +7,17 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
 <style>
-#report-print{max-width:960px;margin:28px auto;padding:24px;background:#fff}#report-print li{margin-bottom:10px}#report-print h2{margin-top:18px}
+#report-print{max-width:900px;margin:24px auto;padding:clamp(18px,5vw,52px);background:#fff;color:#26382e}
+#report-print .report-tools{margin-bottom:28px}.report-heading{display:flex;align-items:center;gap:20px;padding:0 0 18px;border-bottom:4px solid #f4db00;background:white;color:#26382e}
+.report-heading img{width:78px;height:60px;object-fit:contain;flex:none}.report-heading h1{font-size:clamp(20px,4vw,30px);line-height:1.2;margin:3px 0}
+.report-eyebrow,.report-metadata dt,.report-stat span{font-size:.72em;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:#52655a}
+.report-metadata,.report-stats{display:flex;gap:14px 24px;flex-wrap:wrap;margin:22px 0}.report-metadata dd{margin:4px 0 0}.report-metadata>div{min-width:130px}
+.report-stat{border:1px solid #dfe5df;padding:10px 14px;flex:1 1 140px}.report-stat strong{display:block;font-size:1.15em}
+.report-record{margin:0 0 9px;padding:9px 12px;border:1px solid #dfe5df;overflow-wrap:anywhere}.report-record p{margin:4px 0;color:#26382e}
+.report-section-title{margin:24px 0 9px;font-size:1.1em}.report-footer{text-align:right;border-top:1px solid #dfe5df;margin-top:22px;padding-top:9px;font-size:.8em;color:#52655a}
 .sidebar{overflow-y:auto}.sidebar nav{flex:none}.sidebar-foot{padding-top:12px}
-@media print{body{background:white}body.reporting .shell,body.reporting #report-print button{display:none!important}#report-print{padding:0;margin:0;max-width:none}#report-print li{break-inside:avoid}}
+@page{size:A4;margin:16mm}
+@media print{body{background:white}body.reporting .shell,body.reporting .report-tools{display:none!important}#report-print{padding:0;margin:0;max-width:none;font-size:10pt;print-color-adjust:exact;-webkit-print-color-adjust:exact}.report-heading h1{font-size:21pt}.report-heading,.report-stat,.report-record{break-inside:avoid}.report-section-title{break-after:avoid}}
 :root{color-scheme:light;--navy:#10253d;--blue:#185f9a;--line:#d5e0eb;--muted:#50677e}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#f3f6fa;color:var(--navy);font:16px/1.5 system-ui,sans-serif}header{background:var(--navy);color:white;border-bottom:4px solid #f4dc32}.brand,main{max-width:760px;margin:auto;padding:16px}.brand{display:flex;align-items:center;gap:14px}.logo{background:#f4dc32;color:var(--navy);padding:8px;font-weight:900}.brand small{display:block;color:#d9e4f2}h1{margin:12px 0 0;font-size:clamp(1.65rem,5vw,2rem)}h2{font-size:1.14rem;margin:0 0 12px}p{margin:5px 0 14px;color:var(--muted)}nav,.grid,.actions,.choices{display:flex;gap:8px;flex-wrap:wrap}nav button,.grid>*{flex:1 1 140px}button,input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;background:white;padding:10px;min-height:46px}button{font-weight:700;cursor:pointer}button.primary,nav button[aria-current=true]{background:var(--blue);color:white;border-color:var(--blue)}button.primary{width:100%;margin-top:10px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:3px solid #ac7200;outline-offset:2px}label{display:grid;gap:4px;font-weight:650;margin:8px 0}input,select,textarea{width:100%;min-width:0}article,fieldset,details{background:white;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}fieldset{min-width:0}legend,summary{font-weight:750}summary{cursor:pointer}.tag{display:inline-block;background:#fff4c5;color:#624500;border-radius:6px;padding:3px 8px;font-size:.85rem;font-weight:750}.warning{color:#9e2222;font-weight:750}.choices label{display:flex;align-items:center;justify-content:center;flex:1 1 100px;min-height:46px;padding:6px;margin:0;border:1px solid var(--line);border-radius:8px;cursor:pointer}.choices label:has(:checked){background:#dbeeff;border-color:var(--blue)}input[type=radio],input[type=checkbox]{width:auto;min-height:0;accent-color:var(--blue)}canvas{display:block;border:1px dashed #8ba2b8;border-radius:8px;width:100%;height:110px;touch-action:none;background:#f7faff;margin-bottom:6px}.signature{min-width:0}.record-image{width:min(100%,260px);border:1px solid var(--line);display:block}.muted{color:var(--muted);font-size:.9rem}.split{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .reference{display:flex;align-items:center;gap:10px;margin:0 0 10px}.reference img{width:72px;height:54px;object-fit:cover;border-radius:6px;display:block}dialog{max-width:min(92vw,700px);border:1px solid var(--line);border-radius:12px;color:var(--navy);padding:14px}dialog::backdrop{background:#10253dbb}dialog img{display:block;max-width:100%;max-height:68vh;margin:10px auto;object-fit:contain}
  :root{--navy:#26382e;--blue:#243d32;--line:#dfe5df;--muted:#52655a}body{background:#f3f5f3;font-family:Arial,Helvetica,sans-serif}.shell{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}.sidebar{position:sticky;top:0;height:100dvh;background:#202e25;color:#f8faf7;padding:24px 18px;display:flex;flex-direction:column}.brand{padding:0;margin:0 0 32px}.brand img{width:54px;height:54px;object-fit:contain;border-radius:8px;background:white}.brand small{color:#bdcbbb;margin-top:3px}.sidebar nav{display:grid;gap:6px}.sidebar nav button{display:flex;align-items:center;gap:11px;text-align:left;background:transparent;border:1px solid transparent;color:#edf2eb;padding-inline:12px}.sidebar nav button[aria-current=true]{background:#35483b;border-left:3px solid #ffe500}.sidebar nav button:hover{background:#35483b}.sidebar svg{width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.nav-label{letter-spacing:.12em;font-size:.76rem;color:#bdcbbb;margin:0 12px 8px}.sidebar-foot{margin-top:auto;color:#bdcbbb;font-size:.85rem}.workspace{min-width:0}.topbar{min-height:65px;background:white;border:0;border-bottom:1px solid var(--line);color:var(--navy);display:flex;align-items:center;gap:12px;padding:12px clamp(16px,4vw,42px)}.topbar span{margin-left:auto}.menu-toggle{display:none}.workspace main{max-width:1040px;padding:22px clamp(14px,4vw,42px) 44px}.workspace section>h1{margin-top:0}.workspace article{padding:clamp(14px,3vw,24px);box-shadow:0 2px 8px #202e2508}.workspace fieldset{background:#fafbf9}.choices label:has(:checked){background:#e3eee5;border-color:var(--blue)}.choices label:has([value=Problema]:checked){background:#fff1d2;border-color:#95670a}.prototype-note{margin:0 0 16px}.sidebar[hidden]{display:none}
@@ -82,8 +90,8 @@
 <button class="primary" id="save-fortnight">Salvar vistoria quinzenal</button>
 </form></section>
 <section id="historico" hidden><h1 id="history-title">Histórico de trocas</h1>
-<article><div class="grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label></div><div id="attendance-panel" hidden><h2>Acompanhamento do engenheiro</h2><div id="attendance-summary" aria-live="polite"></div></div></article>
-<button type="button" id="prepare-report">Gerar relatório do período</button>
+<article><div class="grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label><label>Viatura<select id="history-vehicle"><option value="">Todas as viaturas</option></select></label><label>Operador<select id="history-operator"><option value="">Todos os operadores</option></select></label></div><div id="attendance-panel" hidden><h2>Acompanhamento do engenheiro</h2><div id="attendance-summary" aria-live="polite"></div></div></article>
+<div class="actions" id="history-exports"><button type="button" id="prepare-report">Gerar relatório PDF</button><button type="button" id="export-excel">Baixar Excel</button></div>
 <div id="records"></div><div id="fortnight-records" hidden></div></section>
 <section id="ocorrencias" hidden><h1>Ocorrências no turno</h1>
 <form id="incident-form">
@@ -110,7 +118,7 @@
 <button class="primary">Salvar permissão</button></form></article>
 <article><h2>Usuários com acesso adicional</h2><div id="access-list" aria-live="polite"></div></article></section>
 </main></div></div>
-<section id="report-print" hidden><div class="actions"><button type="button" id="close-report">Voltar ao histórico</button><button type="button" id="print-report">Imprimir / salvar em PDF</button></div><div id="report-content"></div></section>
+<section id="report-print" hidden><div class="actions report-tools"><button type="button" id="close-report">Voltar ao histórico</button><button type="button" id="print-report">Imprimir / salvar em PDF</button></div><div id="report-content"></div></section>
 <dialog id="photo-dialog" aria-labelledby="photo-title"><div class="split"><strong id="photo-title"></strong><form method="dialog"><button>Fechar</button></form></div><img id="photo-full" alt=""></dialog>
 <script>
 const services = {0:'Inspeção',1:'Apoio',2:'Guincho leve',4:'Guincho pesado',6:'Boiadeiro',7:'Combate a incêndio'};
@@ -233,11 +241,11 @@ function page(name) {
     else button.removeAttribute('aria-current');
   });
   if(sectionId==='historico') {
-    historyKind=name==='historico'?'daily':'fortnight';
+    switchHistory(name==='historico'?'daily':'fortnight');
     byId('history-title').textContent=historyKind==='daily'?'Histórico de trocas de turno':'Histórico quinzenal';
     byId('attendance-panel').hidden=byId('fortnight-records').hidden=historyKind==='daily';
     byId('records').hidden=historyKind==='fortnight';
-    byId('prepare-report').hidden=window.checklistCloud?.canReport===false;
+    byId('history-exports').hidden=window.checklistCloud?.canReport===false;
     if(historyKind==='daily') historyView(); else refreshFortnightHistory();
   }
   if(name==='quinzenal') refreshFortnightChoices();
@@ -487,7 +495,8 @@ handover.onsubmit=event=>{
   shown=[];buildPads([]);refresh();renderChecks();page('historico');byId('notice').textContent='Passagem salva neste navegador.';
 };
 function historyView() {
-  const visible=state.records.map((record,index)=>({record,index})).filter(({record})=>historyIncludes(record.inspected||record.exchange));
+  refreshHistoryOptions('daily',state.records);
+  const visible=state.records.map((record,index)=>({record,index})).filter(({record})=>historyIncludes(record,'daily'));
   byId('records').innerHTML=visible.length?visible.map(({record,index})=>{
     const done=state.records.some(other=>other.prior===record.id);
     const status=record.mode==='deferred'?(done?'Checklist registrado depois':'Aguardando checklist'):record.mode==='absent'?'Pendente de ciência':'Concluído';
@@ -515,6 +524,8 @@ function historyView() {
 refresh();renderChecks();
 </script>
 <script src="quinzenal.js"></script>
+<script src="relatorios.js"></script>
+<script src="xlsx.js"></script>
 <script src="ocorrencias.js"></script>
 <script src="cloud.js"></script>
 <script>

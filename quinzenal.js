@@ -129,21 +129,15 @@ function duration(ms) {
   return Math.floor(seconds/60)+' min '+(seconds%60)+' s';
 }
 
-const historyDay = new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'});
-function historyIncludes(iso) {
-  const day = historyDay.format(new Date(iso));
-  const from = byId('history-from').value;
-  const to = byId('history-to').value;
-  return (!from || day>=from) && (!to || day<=to);
-}
-
 async function refreshFortnightHistory() {
   const version = ++historyRequest;
   const summary = byId('attendance-summary');
   const list = byId('fortnight-records');
   try {
-    const records = (await inspections()).filter(record=>historyIncludes(record.at)).reverse();
-    if (version !== historyRequest) return;
+    const all = await inspections();
+    if (version !== historyRequest || historyKind!=='fortnight') return;
+    refreshHistoryOptions('fortnight',all);
+    const records = all.filter(record=>historyIncludes(record,'fortnight')).reverse();
     const totals = new Map();
     let attended = 0;
     for (const record of records) {
@@ -178,60 +172,4 @@ async function refreshFortnightHistory() {
   }
 }
 
-for (const id of ['history-from','history-to']) {
-  byId(id).onchange = () => { if(historyKind==='daily') historyView(); else refreshFortnightHistory(); };
-}
 refreshFortnightPads();
-
-function reportDuration(records) {
-  const values = records.map(record=>record.durationMs).filter(Number.isFinite);
-  return duration(values.length ? values.reduce((sum,value)=>sum+value,0)/values.length : null);
-}
-
-byId('prepare-report').onclick = async event => {
-  if(window.checklistCloud?.canReport===false)return;
-  const button = event.currentTarget;
-  const kind = historyKind;
-  button.disabled = true;
-  try {
-    const daily = state.records.filter(record=>historyIncludes(record.inspected||record.exchange));
-    const fortnightly = (await inspections()).filter(record=>historyIncludes(record.at)).reverse();
-    const attended = fortnightly.filter(record=>record.attended).length;
-    const from = byId('history-from').value;
-    const to = byId('history-to').value;
-    const formattedDate = value => value.split('-').reverse().join('/');
-    const period = [from?'De '+formattedDate(from):'',to?'Até '+formattedDate(to):''].filter(Boolean).join(' · ') || 'Todo o período disponível';
-    const list = rows => rows.length ? '<ul>'+rows.map(row=>'<li>'+row+'</li>').join('')+'</ul>' : '<p>Sem registros.</p>';
-    const dailyRows = daily.map(record=>{
-      const discrepancies = (record.results||[]).filter(item=>item.found!=null && item.found!==item.expected);
-      return '<strong>'+escape(record.prefix)+' · '+time(record.inspected||record.exchange)+'</strong><br>'+
-        escape(record.outgoing)+' → '+escape(record.incoming)+' · '+duration(record.durationMs)+
-        (record.reason?'<br>Ausência: '+escape(record.reason):'')+
-        (record.lateReason?'<br>Atraso: '+escape(record.lateReason):'')+
-        (discrepancies.length?'<br>Diferenças: '+discrepancies.map(item=>escape(item.title)+' ('+
-          escape(item.found)+' de '+escape(item.expected)+')'+(item.note?' — '+escape(item.note):'')).join(', '):'');
-    });
-    const fortnightRows = fortnightly.map(record=>'<strong>'+escape(record.prefix)+' · '+time(record.at)+'</strong><br>'+
-      escape(record.operator)+' · '+duration(record.durationMs)+' · '+(record.attended?escape(record.engineer):'Sem engenheiro'));
-    const rate = fortnightly.length ? (attended/fortnightly.length).toLocaleString('pt-BR',{style:'percent',maximumFractionDigits:1}) : 'Sem vistorias';
-    const content=kind==='daily'
-      ? '<p>Trocas de turno: '+daily.length+' · Tempo médio: '+reportDuration(daily)+'</p><h2>Trocas de turno</h2>'+list(dailyRows)
-      : '<p>Vistorias quinzenais: '+fortnightly.length+' · Tempo médio: '+reportDuration(fortnightly)+'</p>'+
-        '<p>Acompanhamento do engenheiro: '+attended+' de '+fortnightly.length+' ('+rate+')</p>'+
-        '<h2>Vistorias quinzenais</h2>'+list(fortnightRows);
-    byId('report-content').innerHTML = '<h1>Relatório de Checklist de Viaturas DER</h1><p>'+escape(period)+'</p>'+content;
-    byId('shell').hidden = true;
-    byId('report-print').hidden = false;
-    document.body.classList.add('reporting');
-    byId('print-report').focus();
-  } catch {
-    byId('notice').textContent = 'Não foi possível preparar o relatório. Tente novamente.';
-  } finally { button.disabled = false; }
-};
-byId('close-report').onclick = () => {
-  byId('report-print').hidden = true;
-  document.body.classList.remove('reporting');
-  byId('shell').hidden = false;
-  byId('prepare-report').focus();
-};
-byId('print-report').onclick = () => window.print();

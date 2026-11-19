@@ -88,6 +88,8 @@
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
+    historyFilters.daily = {};
+    historyFilters.fortnight = {};
     state = active() ? load('checklist-cloud-data-v1'+suffix(),blank()) : blank();
     login.hidden = active();
     account.hidden = !active();
