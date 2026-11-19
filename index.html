@@ -164,6 +164,7 @@ byId('fleet-cancel').onclick=resetFleet;
 let editingOperator=null;
 const operatorForm=byId('operator-form');
 const operators=()=>state.operators||[];
+const canDeleteCatalog=()=>window.checklistCloud?.canDeleteCatalog!==false;
 function refreshOperatorChoices(reset=false) {
   const prefix=fields.vehicle.value;
   const linked=operators().filter(operator=>operator.vehicles.includes(prefix));
@@ -187,13 +188,14 @@ function renderOperatorAdmin(selected=[...operatorForm.querySelectorAll('[name="
     byId('operator-save').textContent='Salvar alterações';byId('operator-cancel').hidden=false;
     operatorForm.elements.operatorName.focus();
   });
-  byId('operator-list').querySelectorAll('[data-remove]').forEach(button=>button.onclick=()=>{
+  byId('operator-list').querySelectorAll('[data-remove]').forEach(button=>{button.hidden=!canDeleteCatalog();button.onclick=()=>{
+    if(!canDeleteCatalog())return;
     const operator=entries[Number(button.dataset.remove)];
     if(confirm('Excluir '+operator.name+' do cadastro? O histórico será mantido.')&&save({...state,operators:operators().filter(entry=>entry.id!==operator.id)})){
       if(editingOperator===operator.id)resetOperatorForm();
       buildPads([]);refresh();
     }
-  });
+  };});
 }
 function resetOperatorForm(){
   editingOperator=null;operatorForm.reset();renderOperatorAdmin([]);
@@ -272,7 +274,7 @@ function refresh() {
       const target=list[index], remove=document.createElement('button');
       remove.type='button';remove.className='delete-button';remove.textContent='Excluir';
       remove.onclick=()=>deleteCatalogEntry(area,target);
-      entry.append(' ',remove);
+      if(canDeleteCatalog())entry.append(' ',remove);
       if(area==='vehicles'){
         const edit=document.createElement('button'), email=document.createElement('p');
         email.textContent=target.email?'E-mail da VTR: '+target.email:'E-mail da VTR ainda não vinculado';
@@ -318,6 +320,7 @@ function refresh() {
   }
 }
 function deleteCatalogEntry(area,target) {
+  if(!canDeleteCatalog())return;
   const isVehicle=area==='vehicles', name=isVehicle?target.prefix:target.title;
   if(isVehicle) {
     const pending=state.records.some(record=>record.prefix===name&&record.mode==='deferred'&&!state.records.some(other=>other.prior===record.id));

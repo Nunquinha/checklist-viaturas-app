@@ -1,4 +1,4 @@
-const cacheName = 'der-checklist-shell-v5';
+const cacheName = 'der-checklist-shell-v6';
 const appFiles = ['./index.html','./quinzenal.js','./ocorrencias.js','./cloud.js','./logo-der.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install', event => {

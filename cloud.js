@@ -78,6 +78,7 @@
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,
     get canReport(){ return active() && session.user.role!=='engineer'; },
+    get canDeleteCatalog(){ return active() && Boolean(session.user.owner); },
     get canFileIncident(){ return active() && !readingOnly(); },
     get vehicle(){ return active() ? session.user.prefix : null; },
     get storageSuffix(){ return suffix(); }
