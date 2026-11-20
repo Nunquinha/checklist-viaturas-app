@@ -53,8 +53,10 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       </div>
       <div class="table-head">
         <h2 id="pending-title">Pendências por viatura <span id="result-count"></span></h2>
+        <button id="download-pdf" type="button" disabled>Baixar PDF de todas as viaturas</button>
         <div class="toolbar" id="pagination" hidden><button id="previous" type="button" aria-label="Página anterior">‹</button><span id="pager"></span><button id="next" type="button" aria-label="Próxima página">›</button></div>
       </div>
+      <p class="empty stale" id="pdf-error" role="alert" hidden></p>
       <div class="table-scroll">
         <table id="table"><thead><tr><th scope="col">Viatura</th><th scope="col">O que precisa de atenção</th><th scope="col">Desde quando</th><th scope="col">Repetição</th></tr></thead><tbody id="rows"></tbody></table>
       </div>
@@ -78,9 +80,9 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <div class="table-scroll"><table id="resolved-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Item</th><th scope="col">Conforme em</th><th scope="col">Tempo em aberto</th></tr></thead><tbody id="resolved-rows"></tbody></table></div>
     </details>
     <details id="mileage" class="panel mileage">
-      <summary>Quilometragem por troca de turno</summary>
+      <summary>Quilometragem por troca de turno <span id="km-month" class="muted"></span></summary>
       <div class="filters">
-        <label>Período<select id="km-period"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="0">Todo o histórico</option></select></label>
+        <label>Período<select id="km-period"><option value="month" selected>Mês atual</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="0">Todo o histórico</option></select></label>
         <p id="km-total" role="status"></p>
       </div>
       <div class="table-scroll"><table id="km-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Total rodado</th><th scope="col">Trechos calculados</th><th scope="col">Último trecho no período</th></tr></thead><tbody id="km-rows"></tbody></table></div>
@@ -97,6 +99,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <section><p id="vehicle-summary"></p><h3>Itens conferidos</h3><ul id="vehicle-results"></ul></section>
   </dialog>
 </main>
-<script src="tv.js?v=6"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
+<script defer src="tv.js?v=7"></script>
 </body>
 </html>

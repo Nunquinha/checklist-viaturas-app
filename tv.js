@@ -91,7 +91,100 @@ function demonstrationRecords(now) {
   ];
 }
 
-if (typeof module!=='undefined') module.exports = {openNonconformities,nonconformityHistory,materialsToReplace,shiftMileage,demonstrationRecords};
+function nonconformityPdf(Pdf, pending, {logo, now, demo, date}) {
+  const doc = new Pdf({format:'a4',unit:'mm',compress:true});
+  const grouped = new Map();
+  for (const item of pending) {
+    if (!grouped.has(item.prefix)) grouped.set(item.prefix,[]);
+    grouped.get(item.prefix).push(item);
+  }
+  const font = (size, bold=false, color='#26382e')=>{
+    doc.setFont('helvetica',bold?'bold':'normal');
+    doc.setFontSize(size);
+    doc.setTextColor(color);
+  };
+  const header = () => {
+    doc.addImage(logo,'JPEG',15,12,21,16,'der');
+    font(9,true,'#52655a');
+    doc.text('DER · CGR.02 | CHECKLIST DE VIATURAS',42,16);
+    font(18,true);
+    doc.text('Relatório de não conformidades',42,25);
+    doc.setFillColor('#f4db00');
+    doc.rect(15,32,180,1.2,'F');
+    font(9,false,'#52655a');
+    doc.text('Emitido em '+date(now)+' · Horário de Brasília',15,40);
+    doc.text(grouped.size+' viaturas com pendências · '+pending.length+' itens em aberto · '+
+      pending.filter(item=>item.critical).length+' críticos',15,46);
+    if (demo) {
+      font(9,true,'#8a4b16');
+      doc.text('DEMONSTRAÇÃO · REGISTROS FICTÍCIOS',15,52);
+    }
+  };
+  const vehicle = (prefix,y,continuation=false)=>{
+    doc.setFillColor('#e9eee9');
+    doc.rect(15,y,180,8,'F');
+    font(11,true);
+    doc.text(prefix+(continuation?' (continuação)':''),18,y+5.4);
+    return y+12;
+  };
+  let y = 58;
+  header();
+  for (const [prefix,items] of grouped) {
+    let first = true;
+    for (const item of items) {
+      font(11,true);
+      const title = doc.splitTextToSize((item.title || 'Item sem nome')+(item.critical?' · Crítico':''),172);
+      font(9);
+      const count = item.count===1?'Primeiro registro':item.count+' checklists seguidos';
+      const age = elapsedTime(now-item.first);
+      const dates = 'Em aberto há '+age+' · Desde '+date(item.first)+' · Último registro '+date(item.last);
+      const amount = item.found!=null
+        ? ' · '+(item.expected==null?item.found+' encontrados':item.found+' de '+item.expected+' exigidos')
+        : '';
+      const notes = doc.splitTextToSize('Justificativa: '+(item.note || 'Sem justificativa no registro'),172);
+      const height = 8+title.length*4.6+(notes.length+2)*4;
+      if (y+height+(first?12:0)>278) {
+        doc.addPage();
+        header();
+        y = 58;
+        if (!first) y = vehicle(prefix,y,true);
+      }
+      if (first) { y = vehicle(prefix,y); first = false; }
+      font(11,true,item.critical?'#8e302a':'#26382e');
+      doc.text(title,19,y);
+      y += title.length*4.6;
+      font(9);
+      doc.text(dates,19,y);
+      doc.text(count+amount+(shortage(item)?' · '+shortage(item)+' a repor':''),19,y+4);
+      doc.text(notes,19,y+8,{lineHeightFactor:1.26});
+      y += (notes.length+2)*4+3;
+      doc.setDrawColor('#dfe5df');
+      doc.line(19,y-2,191,y-2);
+      y += 5;
+    }
+  }
+  const pages = doc.getNumberOfPages();
+  for (let page=1;page<=pages;page++) {
+    doc.setPage(page);
+    doc.setDrawColor('#dfe5df');
+    doc.line(15,283,195,283);
+    font(8,false,'#52655a');
+    doc.text('Fonte: Checklist Diário · Desenvolvido por Vinicius Vaz Vieira',15,288);
+    doc.text(page+' / '+pages,195,288,{align:'right'});
+  }
+  return doc;
+}
+
+function elapsedTime(ms) {
+  const minutes = Math.max(0,Math.floor(ms/60000));
+  if (minutes<60) return minutes+' min';
+  const hours = Math.floor(minutes/60);
+  const days = Math.floor(hours/24);
+  return days ? days+(days===1?' dia':' dias') : hours+' h';
+}
+
+if (typeof module!=='undefined') module.exports = {openNonconformities,nonconformityHistory,materialsToReplace,
+  shiftMileage,demonstrationRecords,nonconformityPdf};
 if (typeof document!=='undefined') startPanel();
 
 function startPanel() {
@@ -154,13 +247,7 @@ function startPanel() {
     get('retry').hidden = action!=='retry';
   }
 
-  function elapsed(ms) {
-    const minutes = Math.max(0,Math.floor(ms/60000));
-    if (minutes<60) return minutes+' min';
-    const hours = Math.floor(minutes/60);
-    const days = Math.floor(hours/24);
-    return days ? days+(days===1?' dia':' dias') : hours+' h';
-  }
+  const elapsed = elapsedTime;
 
   function addText(parent, tag, value, className) {
     const element = document.createElement(tag);
@@ -230,8 +317,15 @@ function startPanel() {
   }
 
   function renderMileage() {
-    const days = Number(get('km-period').value);
-    const {totals,skipped} = shiftMileage(records.values(),days?Date.now()-days*86400000:0);
+    const period = get('km-period').value;
+    const now = Date.now();
+    const month = new Intl.DateTimeFormat('sv-SE',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now).slice(0,7);
+    const monthly = shiftMileage(records.values(),Date.parse(month+'-01T00:00:00-03:00'));
+    const kilometers = totals => totals.reduce((sum,entry)=>sum+entry.total,0);
+    get('km-month').textContent = monthly.totals.length ? ' · '+number.format(kilometers(monthly.totals))+' km neste mês'
+      : ' · Sem trechos calculáveis neste mês';
+    const days = Number(period);
+    const {totals,skipped} = period==='month'?monthly:shiftMileage(records.values(),days?now-days*86400000:0);
     const rows = document.createDocumentFragment();
     for (const entry of totals) {
       const row = rows.appendChild(document.createElement('tr'));
@@ -242,7 +336,7 @@ function startPanel() {
     }
     get('km-rows').replaceChildren(rows);
     get('km-table').hidden = totals.length===0;
-    get('km-total').textContent = totals.length ? number.format(totals.reduce((sum,entry)=>sum+entry.total,0))+' km no período'
+    get('km-total').textContent = totals.length ? number.format(kilometers(totals))+' km no período'
       : 'Sem trechos calculáveis no período';
     get('km-note').textContent = 'Diferença entre odômetros consecutivos da mesma viatura, atribuída à data da última leitura.'+
       (skipped?' '+skipped+' '+(skipped===1?'trecho sem leituras válidas':'trechos sem leituras válidas')+'.':'');
@@ -316,6 +410,7 @@ function startPanel() {
   }
 
   function render() {
+    get('download-pdf').disabled = pending.length===0;
     get('affected').textContent = new Set(pending.map(item=>item.prefix)).size;
     get('pending').textContent = pending.length;
     get('critical').textContent = pending.filter(item=>item.critical).length;
@@ -444,6 +539,37 @@ function startPanel() {
     requestForm.elements.email.focus();
   };
   get('retry').onclick = refresh;
+  get('download-pdf').onclick = async () => {
+    const button = get('download-pdf'), error = get('pdf-error');
+    const items = pending;
+    button.disabled = true;
+    error.hidden = true;
+    try {
+      const Pdf = window.jspdf?.jsPDF;
+      if (!Pdf) throw Error('O gerador de PDF não carregou. Atualize a página e tente novamente.');
+      const logo = document.querySelector('.brand img');
+      await logo.decode();
+      if (items!==pending && get('dashboard').hidden) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = 200;
+      canvas.height = 152;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#fff';
+      context.fillRect(0,0,200,152);
+      const scale = Math.min(200/logo.naturalWidth,152/logo.naturalHeight);
+      const width = logo.naturalWidth*scale, height = logo.naturalHeight*scale;
+      context.drawImage(logo,(200-width)/2,(152-height)/2,width,height);
+      const now = Date.now();
+      const pdf = nonconformityPdf(Pdf,items,{logo:canvas.toDataURL('image/jpeg',0.94),now,demo,date:value=>date.format(value)});
+      const day = new Intl.DateTimeFormat('sv-SE',{timeZone:zone}).format(now);
+      pdf.save((demo?'DEMO-':'')+'DER-nao-conformidades-'+day+'.pdf');
+    } catch (cause) {
+      error.textContent = cause.message || 'Não foi possível gerar o PDF.';
+      error.hidden = false;
+    } finally {
+      button.disabled = !pending.length;
+    }
+  };
   get('refresh-now').onclick = refresh;
   get('previous').onclick = () => { page--; renderRows(); };
   get('next').onclick = () => { page++; renderRows(); };
