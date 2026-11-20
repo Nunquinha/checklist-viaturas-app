@@ -10,15 +10,21 @@ function openInspectionStore() {
   if (!database) {
     database = new Promise((resolve,reject) => {
       const request = indexedDB.open('der-fortnightly-inspections'+(window.checklistCloud?.storageSuffix||''),2);
+      let blocked = false;
       request.onupgradeneeded = event => {
         if (event.oldVersion < 1) request.result.createObjectStore('inspections',{keyPath:'id'});
         if (event.oldVersion < 2) request.result.createObjectStore('incidents',{keyPath:'id'});
       };
       request.onsuccess = () => {
+        if (blocked) { request.result.close(); return; }
         request.result.onversionchange = () => { request.result.close(); database = undefined; };
         resolve(request.result);
       };
       request.onerror = () => reject(request.error);
+      request.onblocked = () => {
+        blocked = true;
+        reject(new Error('Feche as outras abas antigas do Checklist e toque em Sincronizar.'));
+      };
     }).catch(error => {
       database = undefined;
       throw error;

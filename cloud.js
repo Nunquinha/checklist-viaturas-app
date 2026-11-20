@@ -14,7 +14,7 @@
   const logoutButton = byId('cloud-logout');
   const accessForm = byId('access-form');
   const accessList = byId('access-list');
-  let session, email, syncing = false, scheduled = false;
+  let session, email, syncing = false, scheduled = false, syncRequested = false;
 
   function rpc(action,body = {},token = session?.token) {
     const request = {action,body,token:token || null};
@@ -73,7 +73,9 @@
   }
 
   function schedule() {
-    if (!active() || scheduled) return;
+    if (!active()) return;
+    if (syncing) { syncRequested=true; return; }
+    if (scheduled) return;
     scheduled = true;
     setTimeout(() => { scheduled = false; sync(); },250);
   }
@@ -88,13 +90,17 @@
     get storageSuffix(){ return suffix(); }
   };
 
-  function changeSession(next) {
+  function changeSession(next,initialCatalog) {
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
     historyFilters.daily = {};
     historyFilters.fortnight = {};
     state = active() ? load('checklist-cloud-data-v1'+suffix(),blank()) : blank();
+    if(initialCatalog&&!state.dirty) {
+      state = {...state,...initialCatalog,catalogLoaded:true};
+      try { write(state); } catch { /* The active session can still use this catalog in memory. */ }
+    }
     login.hidden = active();
     account.hidden = !active();
     nav.forEach(button => button.hidden = !canOpen(button.dataset.page));
@@ -131,12 +137,14 @@
       return;
     }
     syncing = true;
+    syncRequested = false;
     syncButton.disabled = logoutButton.disabled = true;
     updateStatus('Sincronizando com o Drive…');
     error();
     let again = false;
     try {
-      const user = await rpc('me');
+      const version = state.catalogLoaded?state.version:null;
+      const {user,catalog:central} = await rpc('bootstrap',{version});
       if (session.user.role!==user.role || session.user.prefix!==user.prefix) {
         const updated = {...session,user};
         localStorage.setItem(SESSION_KEY,JSON.stringify(updated));
@@ -153,8 +161,7 @@
         write(next);
         state = next;
       } else {
-        const central = await rpc('catalog');
-        if (!state.dirty) {
+        if (!state.dirty && central) {
           const catalogChanged = central.version!==state.version || !state.catalogLoaded ||
             ['vehicles','items','operators'].some(key=>central[key]?.length!==state[key]?.length);
           const next = {...state,...central,catalogLoaded:true};
@@ -166,7 +173,7 @@
             refreshFortnightChoices();
             if (!incidentFields.description.value) refreshIncidentChoices();
           }
-        } else again = true;
+        } else if(state.dirty) again = true;
       }
 
       for (const record of state.records.filter(record=>!record.cloudSaved)) {
@@ -176,12 +183,13 @@
         write(next);
         state = next;
       }
-      for (const record of (await inspections()).filter(record=>!record.cloudSaved)) {
+      const [localFortnight,localIncident] = await Promise.all([inspections(),incidents()]);
+      for (const record of localFortnight.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
         await rpc('saveRecord',{kind:'fortnight',record:body});
         await inspections({...record,cloudSaved:true});
       }
-      for (const record of (await incidents()).filter(record=>!record.cloudSaved)) {
+      for (const record of localIncident.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
         await rpc('saveRecord',{kind:'incident',record:body});
         await incidents({...record,cloudSaved:true});
@@ -189,18 +197,24 @@
 
       let cursor, head, reachedCheckpoint = false;
       const checkpoint = state.historyCheckpoint;
+      const fortnightIds = new Set(localFortnight.map(record=>record.id));
+      const incidentIds = new Set(localIncident.map(record=>record.id));
       do {
         const dailyIds = new Set(state.records.map(record=>record.id));
-        const fortnightIds = new Set((await inspections()).map(record=>record.id));
-        const incidentIds = new Set((await incidents()).map(record=>record.id));
-        const batch = await rpc('listRecords',{cursor:cursor ?? null});
+        const batch = await rpc('listRecords',{cursor:cursor ?? null,checkpoint:checkpoint ?? null});
         head ??= batch.records[0]?.record.id;
         const daily = [];
         for (const {kind,record} of batch.records) {
           if (record.id===checkpoint) { reachedCheckpoint = true; break; }
           if (kind==='daily' && !dailyIds.has(record.id)) daily.push({...record,cloudSaved:true});
-          if (kind==='fortnight' && !fortnightIds.has(record.id)) await inspections({...record,cloudSaved:true});
-          if (kind==='incident' && !incidentIds.has(record.id)) await incidents({...record,cloudSaved:true});
+          if (kind==='fortnight' && !fortnightIds.has(record.id)) {
+            await inspections({...record,cloudSaved:true});
+            fortnightIds.add(record.id);
+          }
+          if (kind==='incident' && !incidentIds.has(record.id)) {
+            await incidents({...record,cloudSaved:true});
+            incidentIds.add(record.id);
+          }
         }
         if (daily.length) {
           const next = {...state,records:[...daily,...state.records].sort((a,b)=>b.id.localeCompare(a.id))};
@@ -217,8 +231,7 @@
       updateStatus('Dados sincronizados');
       if (!byId('historico').hidden) { historyView(); refreshFortnightHistory(); }
       if (!byId('ocorrencias').hidden) refreshIncidentHistory();
-      again ||= state.dirty || state.records.some(record=>!record.cloudSaved) ||
-        (await inspections()).some(record=>!record.cloudSaved) || (await incidents()).some(record=>!record.cloudSaved);
+      again ||= state.dirty || state.records.some(record=>!record.cloudSaved);
     } catch (failure) {
       updateStatus('Sincronização pendente');
       if (failure.message==='Acesso expirado ou removido.') {
@@ -231,7 +244,7 @@
     } finally {
       syncing = false;
       syncButton.disabled = logoutButton.disabled = false;
-      if (again) schedule();
+      if (again || syncRequested) schedule();
     }
   }
 
@@ -305,10 +318,10 @@
     const button = verifyForm.querySelector('button');
     button.disabled = true;
     try {
-      const next = await rpc('verifyCode',{email,code:verifyForm.elements.code.value});
+      const {catalog,...next} = await rpc('verifyCode',{email,code:verifyForm.elements.code.value});
       localStorage.setItem(SESSION_KEY,JSON.stringify(next));
       verifyForm.reset();
-      changeSession(next);
+      changeSession(next,catalog);
     } catch (failure) { error(failure.message); }
     finally { button.disabled = false; }
   };
