@@ -64,7 +64,7 @@ function createWorkbook(title,headers,rows) {
     return '<row r="'+number+'">'+columns.join('')+'</row>';
   }).join('');
   const widths = headers.map((label,index)=>'<col min="'+(index+1)+'" max="'+(index+1)+'" width="'+
-    (/Observações|Diferenças|Atraso|Ausência/.test(label)?44:/Operador|recebeu|entregou|Engenheiro/.test(label)?26:21)+'" customWidth="1"/>').join('');
+    (/Observações|Não conformidades|Atraso|Ausência/.test(label)?44:/Operador|recebeu|entregou|Engenheiro/.test(label)?26:21)+'" customWidth="1"/>').join('');
   const types = 'application/vnd.openxmlformats-officedocument.spreadsheetml.';
   const relations = 'http://schemas.openxmlformats.org/package/2006/relationships';
   return workbookZip({

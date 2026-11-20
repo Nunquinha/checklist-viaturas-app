@@ -56,19 +56,22 @@ async function selectedReport() {
     title:daily?'Trocas de turno':'Vistorias quinzenais'};
 }
 
-function quantityDifferences(record) {
-  return (record.results||[]).filter(item=>item.found!=null&&item.found!==item.expected)
-    .map(item=>item.title+' ('+item.found+' de '+item.expected+')'+(item.note?' — '+item.note:'')).join(', ');
+function itemIssues(record) {
+  return (record.results||[]).filter(item=>isNonconforming(item.value)||
+    (item.found!=null&&item.expected!=null&&item.found!==item.expected)).map(item=>{
+    const count=item.found==null?'':item.expected==null?' ('+item.found+' encontrados)':' ('+item.found+' de '+item.expected+')';
+    return item.title+count+(item.note?' — '+item.note:'');
+  }).join(', ');
 }
 
 function reportRecord(record,daily) {
   const date = time(daily?record.inspected||record.exchange:record.at);
   const names = daily?[record.outgoing,record.incoming].filter(Boolean).join(' → '):record.operator;
-  const discrepancies = daily?quantityDifferences(record):'';
+  const discrepancies = daily?itemIssues(record):'';
   const details = daily ? [
     record.reason&&'Ausência: '+record.reason,
     record.lateReason&&'Atraso: '+record.lateReason,
-    discrepancies&&'Diferenças: '+discrepancies
+    discrepancies&&'Não conformidades: '+discrepancies
   ] : [record.attended?'Engenheiro: '+record.engineer:'Sem acompanhamento do engenheiro', record.notes];
   return '<article class="report-record"><strong>'+escape(record.prefix)+' · '+date+'</strong>'+
     '<p>'+escape(names||'Operador não registrado')+' · '+duration(record.durationMs)+'</p>'+
@@ -123,13 +126,13 @@ byId('export-excel').onclick = async event => {
   try {
     const {daily,records,title} = await selectedReport();
     const headers = daily
-      ? ['Viatura','Troca','Conferência','Quem entregou','Quem recebeu','Duração (s)','Quilometragem','Combustível','Ausência','Atraso','Diferenças']
+      ? ['Viatura','Troca','Conferência','Quem entregou','Quem recebeu','Duração (s)','Quilometragem','Combustível','Ausência','Atraso','Não conformidades']
       : ['Viatura','Vistoria','Operador','Duração (s)','Acompanhamento','Engenheiro','Observações'];
     const seconds = record => Number.isFinite(record.durationMs)?Math.round(record.durationMs/1000):null;
     const rows = records.map(record=>daily ? [
       record.prefix,time(record.exchange),record.inspected?time(record.inspected):'',record.outgoing,record.incoming,
       seconds(record),record.km===''||record.km==null?null:Number(record.km),record.fuel,
-      record.reason,record.lateReason,quantityDifferences(record)
+      record.reason,record.lateReason,itemIssues(record)
     ] : [record.prefix,time(record.at),record.operator,seconds(record),record.attended?'Sim':'Não',record.engineer,record.notes]);
     const bytes = createWorkbook(title,headers,rows);
     const url = URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
