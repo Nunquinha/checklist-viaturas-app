@@ -16,6 +16,7 @@ header,.brand,.toolbar,.table-head,footer{display:flex;align-items:center;gap:14
 .filters{display:flex;flex-wrap:wrap;align-items:end;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}.filters label{display:grid;gap:5px;font-size:14px;color:var(--muted)}.filters label:first-child{flex:1 1 250px}.filters input,.filters select{min-height:43px;border:1px solid #3b5971;border-radius:8px;background:#0d2234;padding:8px 12px;color:var(--ink);font:inherit}.filters button{min-height:43px}.table-head h2 span{font-size:14px;color:var(--muted);font-weight:500;margin-left:8px}footer p{margin-top:4px}.vehicle-link{color:var(--blue);font-weight:700;padding:4px 9px}.vehicle-link:hover{background:#254a68}
 dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b5971;border-radius:14px;background:#10283c;color:var(--ink);padding:0}dialog::backdrop{background:#071221bb}dialog header{position:sticky;top:0;background:#10283c;padding:18px 22px;border-bottom:1px solid var(--line)}dialog h2,dialog h3{margin:0}dialog section{padding:18px 22px}dialog ul{padding:0;margin:12px 0 0;list-style:none}dialog li{padding:11px 0;border-top:1px solid var(--line)}dialog li strong{display:block}
 .mileage{margin-top:18px}.mileage summary{padding:16px 20px;cursor:pointer;font-weight:700}.mileage .filters p{padding:8px 0}.mileage td:nth-child(2){width:auto}dialog h3{margin-top:14px}
+.demo-notice{margin-top:12px;padding:12px 16px;border:1px solid #765d3c;border-radius:8px;background:#3c2e20;color:#ffd18b}.demo-notice a{display:inline-block;margin-left:8px}
 @media(max-width:720px){.kpis{gap:6px}.kpi{padding:9px;font-size:12px}.intro{margin-top:22px}table{min-width:620px}}
 </style>
 </head>
@@ -24,7 +25,9 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
   <header>
     <div class="brand"><img src="logo-der.jpg" alt="DER"><div><strong>Checklist DER</strong><small>Painel de conformidade</small></div></div>
   </header>
-  <div class="intro"><h1>Não conformidades da frota</h1></div>
+  <div class="intro"><h1>Não conformidades da frota</h1>
+    <p id="demo-notice" class="demo-notice" hidden><strong>Demonstração</strong> · Viaturas e registros fictícios. <a href="./painel-tv/">Abrir painel de produção</a></p>
+  </div>
   <section id="gate" class="panel" hidden>
     <p id="gate-message" role="status"></p>
     <form id="request-code" hidden><label>E-mail autorizado<input name="email" type="email" autocomplete="email" required></label><button type="submit">Enviar código</button></form>
@@ -72,6 +75,6 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <section><p id="vehicle-summary"></p><h3>Itens conferidos</h3><ul id="vehicle-results"></ul></section>
   </dialog>
 </main>
-<script src="tv.js?v=3"></script>
+<script src="tv.js?v=4"></script>
 </body>
 </html>

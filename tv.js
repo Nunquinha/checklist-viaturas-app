@@ -45,13 +45,33 @@ function shiftMileage(records, since) {
   return {totals:[...totals.values()].sort((a,b)=>b.total-a.total || a.prefix.localeCompare(b.prefix,'pt-BR')),skipped};
 }
 
-if (typeof module!=='undefined') module.exports = {openNonconformities,shiftMileage};
+function demonstrationRecords(now) {
+  const cones = found => ({id:'cones',title:'Cones',expected:20,found,value:found===20?'Conforme':'Não Conforme',
+    note:found===20?'':'Cones danificados foram retirados da viatura.'});
+  const signal = working => ({id:'signal',title:'Barra sinalizadora',critical:true,value:working?'Conforme':'Não Conforme',
+    note:working?'':'O módulo do lado esquerdo não acende.'});
+  const flashlight = {id:'light',title:'Lanterna de inspeção',value:'Não Conforme',note:'Bateria não mantém carga.'};
+  const row = (prefix,hours,km,...results) => {
+    const at = now-hours*3600000;
+    return {id:prefix+'-'+at,prefix,at,km,mode:'normal',results};
+  };
+  return [
+    row('DEMO-101',96,8100,signal(true),cones(20)), row('DEMO-101',72,8165,signal(false),cones(20)),
+    row('DEMO-101',48,8240,signal(false),cones(20)), row('DEMO-101',24,8290,signal(false),cones(20)),
+    row('DEMO-101',4,8320,signal(false),cones(20)),
+    row('DEMO-204',32,12040,cones(20),signal(true)), row('DEMO-204',2,12110,cones(17),signal(true)),
+    row('DEMO-308',31,6350,cones(19)), row('DEMO-308',6,6405,cones(20),flashlight)
+  ];
+}
+
+if (typeof module!=='undefined') module.exports = {openNonconformities,shiftMileage,demonstrationRecords};
 if (typeof document!=='undefined') startPanel();
 
 function startPanel() {
   const get = id => document.getElementById(id);
   const sessionKey = 'checklist-cloud-session-v1';
   const endpoint = document.querySelector('meta[name="checklist-endpoint"]').content;
+  const demo = new URLSearchParams(location.search).get('demo')==='1';
   const zone = 'America/Sao_Paulo';
   const date = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:zone});
   const clock = new Intl.DateTimeFormat('pt-BR',{timeStyle:'medium',timeZone:zone});
@@ -225,7 +245,7 @@ function startPanel() {
     get('critical').textContent = pending.filter(item=>item.critical).length;
     get('dashboard').hidden = false;
     get('gate').hidden = true;
-    get('refresh-now').hidden = false;
+    get('refresh-now').hidden = demo;
     if (!vehicleDialog.open) {
       renderRows();
       renderMileage();
@@ -235,6 +255,16 @@ function startPanel() {
   function status(message,stale = false) {
     get('sync-state').textContent = message;
     get('sync-state').classList.toggle('stale',stale);
+  }
+
+  function loadRecords(nextRecords) {
+    pending = openNonconformities(nextRecords.values());
+    latest = new Map();
+    for (const record of nextRecords.values()) {
+      const prior = latest.get(record.prefix);
+      if (record.mode!=='deferred' && (!prior || record.at>prior.at || (record.at===prior.at && record.id>prior.id))) latest.set(record.prefix,record);
+    }
+    records = nextRecords;
   }
 
   async function refresh() {
@@ -281,13 +311,7 @@ function startPanel() {
         }
         cursor = batch.cursor;
       } while (cursor>0);
-      pending = openNonconformities(nextRecords.values());
-      latest = new Map();
-      for (const record of nextRecords.values()) {
-        const prior = latest.get(record.prefix);
-        if (record.mode!=='deferred' && (!prior || record.at>prior.at || (record.at===prior.at && record.id>prior.id))) latest.set(record.prefix,record);
-      }
-      records = nextRecords;
+      loadRecords(nextRecords);
       checkpoint = head ?? checkpoint;
       syncedAt = Date.now();
       status('Atualizado às '+clock.format(syncedAt)+' · atualização automática a cada 60 s');
@@ -356,6 +380,13 @@ function startPanel() {
       renderMileage();
     }
   });
+  if (demo) {
+    get('demo-notice').hidden = false;
+    loadRecords(new Map(demonstrationRecords(Date.now()).map(record=>[record.id,record])));
+    status('Fonte da demonstração: registros fictícios.');
+    render();
+    return;
+  }
   window.addEventListener('storage',event=>{
     if (event.key!==null && event.key!==sessionKey) return;
     if (session()?.token!==sessionToken) hideData('A sessão mudou. Atualizando acesso…');
