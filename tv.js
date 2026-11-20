@@ -91,13 +91,8 @@ function demonstrationRecords(now) {
   ];
 }
 
-function nonconformityPdf(Pdf, pending, {logo, now, demo, date}) {
+function derPdf(Pdf, {logo, now, demo, date}, title, summary) {
   const doc = new Pdf({format:'a4',unit:'mm',compress:true});
-  const grouped = new Map();
-  for (const item of pending) {
-    if (!grouped.has(item.prefix)) grouped.set(item.prefix,[]);
-    grouped.get(item.prefix).push(item);
-  }
   const font = (size, bold=false, color='#26382e')=>{
     doc.setFont('helvetica',bold?'bold':'normal');
     doc.setFontSize(size);
@@ -108,18 +103,42 @@ function nonconformityPdf(Pdf, pending, {logo, now, demo, date}) {
     font(9,true,'#52655a');
     doc.text('DER · CGR.02 | CHECKLIST DE VIATURAS',42,16);
     font(18,true);
-    doc.text('Relatório de não conformidades',42,25);
+    doc.text(title,42,25);
     doc.setFillColor('#f4db00');
     doc.rect(15,32,180,1.2,'F');
     font(9,false,'#52655a');
     doc.text('Emitido em '+date(now)+' · Horário de Brasília',15,40);
-    doc.text(grouped.size+' viaturas com pendências · '+pending.length+' itens em aberto · '+
-      pending.filter(item=>item.critical).length+' críticos',15,46);
+    doc.text(summary,15,46);
     if (demo) {
       font(9,true,'#8a4b16');
       doc.text('DEMONSTRAÇÃO · REGISTROS FICTÍCIOS',15,52);
     }
   };
+  const finish = () => {
+    const pages = doc.getNumberOfPages();
+    for (let page=1;page<=pages;page++) {
+      doc.setPage(page);
+      doc.setDrawColor('#dfe5df');
+      doc.line(15,283,195,283);
+      font(8,false,'#52655a');
+      doc.text('Fonte: Checklist Diário · Desenvolvido por Vinicius Vaz Vieira',15,288);
+      doc.text(page+' / '+pages,195,288,{align:'right'});
+    }
+    return doc;
+  };
+  return {doc,font,header,finish};
+}
+
+function nonconformityPdf(Pdf, pending, options) {
+  const {now,date} = options;
+  const grouped = new Map();
+  for (const item of pending) {
+    if (!grouped.has(item.prefix)) grouped.set(item.prefix,[]);
+    grouped.get(item.prefix).push(item);
+  }
+  const {doc,font,header,finish} = derPdf(Pdf,options,'Relatório de não conformidades',
+    grouped.size+' viaturas com pendências · '+pending.length+' itens em aberto · '+
+    pending.filter(item=>item.critical).length+' críticos');
   const vehicle = (prefix,y,continuation=false)=>{
     doc.setFillColor('#e9eee9');
     doc.rect(15,y,180,8,'F');
@@ -163,16 +182,57 @@ function nonconformityPdf(Pdf, pending, {logo, now, demo, date}) {
       y += 5;
     }
   }
-  const pages = doc.getNumberOfPages();
-  for (let page=1;page<=pages;page++) {
-    doc.setPage(page);
-    doc.setDrawColor('#dfe5df');
-    doc.line(15,283,195,283);
+  return finish();
+}
+
+const kilometers = totals => totals.reduce((sum,entry)=>sum+entry.total,0);
+
+function mileagePdf(Pdf, {totals,skipped,label}, options) {
+  const {doc,font,header,finish} = derPdf(Pdf,options,'Resumo de quilometragem da frota','Período: '+label);
+  const number = new Intl.NumberFormat('pt-BR');
+  const km = value => number.format(value)+' km';
+  const count = totals.reduce((sum,entry)=>sum+entry.count,0);
+  const tableHeader = () => {
+    doc.setFillColor('#e9eee9');
+    doc.rect(15,82,180,9,'F');
+    font(9,true);
+    doc.text('Viatura',19,88);
+    doc.text('Total rodado',98,88,{align:'right'});
+    doc.text('Trechos calculados',147,88,{align:'right'});
+    doc.text('Último trecho',191,88,{align:'right'});
+  };
+  const startPage = () => {
+    header();
+    doc.setFillColor('#f1f5f1');
+    doc.roundedRect(15,57,180,19,2,2,'F');
+    font(15,true);
+    doc.text(km(kilometers(totals)),19,65);
     font(8,false,'#52655a');
-    doc.text('Fonte: Checklist Diário · Desenvolvido por Vinicius Vaz Vieira',15,288);
-    doc.text(page+' / '+pages,195,288,{align:'right'});
+    doc.text('TOTAL RODADO PELA FROTA',19,71);
+    font(10,true);
+    doc.text(totals.length+' viaturas · '+count+' trechos calculados',191,67,{align:'right'});
+    tableHeader();
+  };
+  let y = 97;
+  startPage();
+  for (const [index,entry] of totals.entries()) {
+    if (y>258) { doc.addPage(); startPage(); y = 97; }
+    if (index%2) {
+      doc.setFillColor('#f7f9f7');
+      doc.rect(15,y-5,180,8,'F');
+    }
+    font(10,true);
+    doc.text(entry.prefix,19,y);
+    doc.text(km(entry.total),98,y,{align:'right'});
+    font(9);
+    doc.text(number.format(entry.count),147,y,{align:'right'});
+    doc.text(km(entry.last),191,y,{align:'right'});
+    y += 8;
   }
-  return doc;
+  font(8,false,'#52655a');
+  doc.text('Diferenças entre odômetros de trocas consecutivas, atribuídas à data da última leitura.',15,y+4);
+  if (skipped) doc.text('Trechos excluídos por leituras ausentes ou inválidas: '+number.format(skipped)+'.',15,y+9);
+  return finish();
 }
 
 function elapsedTime(ms) {
@@ -184,7 +244,7 @@ function elapsedTime(ms) {
 }
 
 if (typeof module!=='undefined') module.exports = {openNonconformities,nonconformityHistory,materialsToReplace,
-  shiftMileage,demonstrationRecords,nonconformityPdf};
+  shiftMileage,demonstrationRecords,nonconformityPdf,mileagePdf};
 if (typeof document!=='undefined') startPanel();
 
 function startPanel() {
@@ -316,15 +376,22 @@ function startPanel() {
       : 'Nenhuma resolução para estes filtros.';
   }
 
+  function mileagePeriod(period, now) {
+    const month = new Intl.DateTimeFormat('sv-SE',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now).slice(0,7);
+    const days = Number(period);
+    const since = period==='month'?Date.parse(month+'-01T00:00:00-03:00'):days?now-days*86400000:0;
+    const calendar = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeZone:zone});
+    const label = since?calendar.format(since)+' a '+calendar.format(now):'Todo o histórico até '+calendar.format(now);
+    return {...shiftMileage(records.values(),since),label};
+  }
+
   function renderMileage() {
     const period = get('km-period').value;
     const now = Date.now();
-    const month = new Intl.DateTimeFormat('sv-SE',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now).slice(0,7);
-    const monthly = shiftMileage(records.values(),Date.parse(month+'-01T00:00:00-03:00'));
-    const kilometers = totals => totals.reduce((sum,entry)=>sum+entry.total,0);
+    const monthly = mileagePeriod('month',now);
     get('km-month').textContent = monthly.totals.length ? number.format(kilometers(monthly.totals))+' km' : '—';
-    const days = Number(period);
-    const {totals,skipped} = period==='month'?monthly:shiftMileage(records.values(),days?now-days*86400000:0);
+    const {totals,skipped} = period==='month'?monthly:mileagePeriod(period,now);
+    get('download-km-pdf').disabled = totals.length===0;
     const rows = document.createDocumentFragment();
     for (const entry of totals) {
       const row = rows.appendChild(document.createElement('tr'));
@@ -538,9 +605,8 @@ function startPanel() {
     requestForm.elements.email.focus();
   };
   get('retry').onclick = refresh;
-  get('download-pdf').onclick = async () => {
-    const button = get('download-pdf'), error = get('pdf-error');
-    const items = pending;
+  async function downloadReport(button, error, filename, create, hasData) {
+    const activeToken = sessionToken;
     button.disabled = true;
     error.hidden = true;
     try {
@@ -548,7 +614,7 @@ function startPanel() {
       if (!Pdf) throw Error('O gerador de PDF não carregou. Atualize a página e tente novamente.');
       const logo = document.querySelector('.brand img');
       await logo.decode();
-      if (items!==pending && get('dashboard').hidden) return;
+      if (get('dashboard').hidden || sessionToken!==activeToken) return;
       const canvas = document.createElement('canvas');
       canvas.width = 200;
       canvas.height = 152;
@@ -559,15 +625,25 @@ function startPanel() {
       const width = logo.naturalWidth*scale, height = logo.naturalHeight*scale;
       context.drawImage(logo,(200-width)/2,(152-height)/2,width,height);
       const now = Date.now();
-      const pdf = nonconformityPdf(Pdf,items,{logo:canvas.toDataURL('image/jpeg',0.94),now,demo,date:value=>date.format(value)});
+      const pdf = create(Pdf,{logo:canvas.toDataURL('image/jpeg',0.94),now,demo,date:value=>date.format(value)});
       const day = new Intl.DateTimeFormat('sv-SE',{timeZone:zone}).format(now);
-      pdf.save((demo?'DEMO-':'')+'DER-nao-conformidades-'+day+'.pdf');
+      pdf.save((demo?'DEMO-':'')+'DER-'+filename+'-'+day+'.pdf');
     } catch (cause) {
       error.textContent = cause.message || 'Não foi possível gerar o PDF.';
       error.hidden = false;
     } finally {
-      button.disabled = !pending.length;
+      button.disabled = !hasData();
     }
+  }
+  get('download-pdf').onclick = () => {
+    const items = pending;
+    return downloadReport(get('download-pdf'),get('pdf-error'),'nao-conformidades',
+      (Pdf,options)=>nonconformityPdf(Pdf,items,options),()=>pending.length);
+  };
+  get('download-km-pdf').onclick = () => {
+    const data = mileagePeriod(get('km-period').value,Date.now());
+    return downloadReport(get('download-km-pdf'),get('km-pdf-error'),'quilometragem-da-frota',
+      (Pdf,options)=>mileagePdf(Pdf,data,options),()=>mileagePeriod(get('km-period').value,Date.now()).totals.length);
   };
   get('refresh-now').onclick = refresh;
   get('previous').onclick = () => { page--; renderRows(); };
