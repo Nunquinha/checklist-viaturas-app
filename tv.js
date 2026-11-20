@@ -23,7 +23,29 @@ function openNonconformities(records) {
     a.first-b.first || a.prefix.localeCompare(b.prefix,'pt-BR'));
 }
 
-if (typeof module!=='undefined') module.exports = {openNonconformities};
+function shiftMileage(records, since) {
+  const previous = new Map(), totals = new Map();
+  let skipped = 0;
+  for (const record of [...records].sort((a,b)=>a.at-b.at || a.id.localeCompare(b.id))) {
+    if (record.solo || record.prior || ![undefined,'normal','deferred','absent'].includes(record.mode)) continue;
+    const before = previous.get(record.prefix);
+    const raw = record.mode==='deferred' || record.mode==='absent' ? null : record.km;
+    const number = typeof raw==='number' || (typeof raw==='string' && raw.trim()) ? Number(raw) : NaN;
+    const valid = Number.isSafeInteger(number) && number>=0;
+    previous.set(record.prefix,valid?number:null);
+    if (record.at<since || before===undefined) continue;
+    if (!valid || before===null || number<before) {
+      skipped++;
+      continue;
+    }
+    const summary = totals.get(record.prefix) || {prefix:record.prefix,total:0,count:0};
+    const delta = number-before;
+    totals.set(record.prefix,{...summary,total:summary.total+delta,count:summary.count+1,last:delta});
+  }
+  return {totals:[...totals.values()].sort((a,b)=>b.total-a.total || a.prefix.localeCompare(b.prefix,'pt-BR')),skipped};
+}
+
+if (typeof module!=='undefined') module.exports = {openNonconformities,shiftMileage};
 if (typeof document!=='undefined') startPanel();
 
 function startPanel() {
@@ -33,11 +55,16 @@ function startPanel() {
   const zone = 'America/Sao_Paulo';
   const date = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:zone});
   const clock = new Intl.DateTimeFormat('pt-BR',{timeStyle:'medium',timeZone:zone});
-  const pageSize = 5;
+  const number = new Intl.NumberFormat('pt-BR');
+  const pageSize = 12;
   let sessionToken, accessScope, checkpoint, refreshing = false, syncedAt = null;
-  let records = new Map(), pending = [], page = 0;
+  let records = new Map(), latest = new Map(), pending = [], page = 0;
   const requestForm = get('request-code'), verifyForm = get('verify-code');
-  const permitted = user => ['owner','manager','viewer'].includes(user?.role);
+  const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
+  const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
+  const normalize = value => String(value ?? '').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+  const shortage = item => Number.isFinite(item.expected) && Number.isFinite(item.found) && item.found<item.expected
+    ? item.expected-item.found : 0;
   let email;
 
   function session() {
@@ -60,12 +87,18 @@ function startPanel() {
 
   function hideData(message, action) {
     records = new Map();
+    latest = new Map();
     pending = [];
     checkpoint = null;
     syncedAt = null;
     page = 0;
     get('rows').replaceChildren();
-    ['affected','pending','critical','repeated'].forEach(id=>get(id).textContent='');
+    get('vehicle-results').replaceChildren();
+    get('vehicle-title').textContent = '';
+    get('vehicle-summary').textContent = '';
+    if (vehicleDialog.open) vehicleDialog.close();
+    get('refresh-now').hidden = true;
+    ['affected','pending','critical'].forEach(id=>get(id).textContent='');
     get('dashboard').hidden = true;
     get('gate-message').textContent = message;
     get('gate').hidden = false;
@@ -76,9 +109,11 @@ function startPanel() {
 
   function age(timestamp) {
     const minutes = Math.max(0,Math.floor((Date.now()-timestamp)/60000));
-    if (minutes<60) return minutes+' min';
+    if (minutes<1) return 'Agora';
+    if (minutes<60) return 'Há '+minutes+' min';
     const hours = Math.floor(minutes/60);
-    return hours<24 ? hours+' h' : Math.floor(hours/24)+' d '+hours%24+' h';
+    const days = Math.floor(hours/24);
+    return days ? 'Há '+days+(days===1?' dia':' dias') : 'Há '+hours+' h';
   }
 
   function addText(parent, tag, value, className) {
@@ -88,42 +123,113 @@ function startPanel() {
     parent.append(element);
   }
 
+  function vehicleButton(prefix) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'vehicle-link';
+    button.textContent = prefix;
+    button.setAttribute('aria-label','Abrir último checklist da viatura '+prefix);
+    button.onclick = () => showVehicle(prefix);
+    return button;
+  }
+
+  function renderMileage() {
+    const days = Number(get('km-period').value);
+    const {totals,skipped} = shiftMileage(records.values(),days?Date.now()-days*86400000:0);
+    const rows = document.createDocumentFragment();
+    for (const entry of totals) {
+      const row = rows.appendChild(document.createElement('tr'));
+      row.insertCell().append(vehicleButton(entry.prefix));
+      addText(row.insertCell(),'strong',number.format(entry.total)+' km');
+      addText(row.insertCell(),'span',entry.count);
+      addText(row.insertCell(),'span',number.format(entry.last)+' km');
+    }
+    get('km-rows').replaceChildren(rows);
+    get('km-table').hidden = totals.length===0;
+    get('km-total').textContent = totals.length ? number.format(totals.reduce((sum,entry)=>sum+entry.total,0))+' km no período'
+      : 'Sem trechos calculáveis no período';
+    get('km-note').textContent = 'Diferença entre odômetros consecutivos da mesma viatura, atribuída à data da última leitura.'+
+      (skipped?' '+skipped+' '+(skipped===1?'trecho sem leituras válidas':'trechos sem leituras válidas')+'.':'');
+  }
+
   function renderRows() {
-    const pages = Math.max(1,Math.ceil(pending.length/pageSize));
+    const query = normalize(search.value.trim());
+    const visible = pending.filter(item=>{
+      if (filter.value==='critical' && !item.critical) return false;
+      if (filter.value==='repeated' && item.count<2) return false;
+      if (filter.value==='shortage' && !shortage(item)) return false;
+      return !query || [item.prefix,item.title,item.note].some(value=>normalize(value).includes(query));
+    });
+    const pages = Math.max(1,Math.ceil(visible.length/pageSize));
     page = (page%pages+pages)%pages;
     const rows = document.createDocumentFragment();
-    for (const item of pending.slice(page*pageSize,(page+1)*pageSize)) {
+    for (const item of visible.slice(page*pageSize,(page+1)*pageSize)) {
       const row = rows.appendChild(document.createElement('tr'));
-      addText(row.insertCell(),'strong',item.prefix);
+      row.insertCell().append(vehicleButton(item.prefix));
       const details = row.insertCell();
       addText(details,'strong',item.title || 'Item sem nome');
       if (item.critical) addText(details,'span','Crítico','badge critical');
       if (item.found!=null) addText(details,'span',item.expected==null
-        ? item.found+' encontrados'
-        : item.found+' encontrados · '+item.expected+' exigidos','line');
+        ? 'Quantidade encontrada: '+item.found
+        : item.found+' de '+item.expected+' exigidos','line');
+      if (shortage(item)) addText(details,'span',shortage(item)+' a repor','line age');
       addText(details,'span',item.note || 'Registro sem justificativa','line');
       const first = row.insertCell();
       addText(first,'span',age(item.first),'age');
       addText(first,'time',date.format(item.first),'line');
-      addText(row.insertCell(),'time',date.format(item.last));
-      addText(row.insertCell(),'strong',item.count);
+      const repetition = row.insertCell();
+      if (item.count>1) {
+        addText(repetition,'strong',item.count+' checklists seguidos','repeat');
+        addText(repetition,'span','Último: '+date.format(item.last),'line');
+      } else {
+        addText(repetition,'span','Primeiro registro');
+      }
     }
     get('rows').replaceChildren(rows);
     get('pagination').hidden = pages===1;
     get('pager').textContent = (page+1)+' / '+pages;
+    get('result-count').textContent = visible.length===pending.length ? '' : '('+visible.length+' de '+pending.length+')';
+    get('table').hidden = visible.length===0;
+    get('empty').hidden = visible.length>0;
+    get('empty').textContent = pending.length ? 'Nenhuma pendência corresponde aos filtros.'
+      : records.size ? 'Nenhuma não conformidade em aberto.' : 'Nenhum checklist diário disponível para este acesso.';
+  }
+
+  function showVehicle(prefix) {
+    const record = latest.get(prefix);
+    if (!record) return;
+    const failed = item => ['Não Conforme','Problema'].includes(item.value);
+    get('vehicle-title').textContent = prefix;
+    const failures = record.results.filter(failed).length;
+    get('vehicle-summary').textContent = date.format(record.at)+' · '+record.results.length+' itens conferidos · '+
+      failures+' '+(failures===1?'não conformidade':'não conformidades')+
+      (String(record.km ?? '').trim() && Number.isSafeInteger(Number(record.km)) ? ' · Odômetro '+number.format(Number(record.km))+' km' : '');
+    const rows = document.createDocumentFragment();
+    for (const item of [...record.results].sort((a,b)=>Number(failed(b))-Number(failed(a)))) {
+      const entry = rows.appendChild(document.createElement('li'));
+      addText(entry,'strong',item.title || 'Item sem nome');
+      const value = failed(item)?'Não conforme':item.value==='OK'?'Conforme':item.value;
+      addText(entry,'span',value || 'Sem resultado',failed(item)?'line critical':'line');
+      if (item.found!=null) addText(entry,'span',item.expected==null ? 'Quantidade encontrada: '+item.found
+        : item.found+' de '+item.expected+' exigidos','line');
+      if (shortage(item)) addText(entry,'span',shortage(item)+' a repor','line age');
+      if (item.note) addText(entry,'span',item.note,'line');
+    }
+    get('vehicle-results').replaceChildren(rows);
+    if (!vehicleDialog.open) vehicleDialog.showModal();
   }
 
   function render() {
     get('affected').textContent = new Set(pending.map(item=>item.prefix)).size;
     get('pending').textContent = pending.length;
     get('critical').textContent = pending.filter(item=>item.critical).length;
-    get('repeated').textContent = pending.filter(item=>item.count>1).length;
-    get('table').hidden = pending.length===0;
-    get('empty').hidden = pending.length>0;
-    get('empty').textContent = records.size ? 'Nenhuma não conformidade em aberto.' : 'Nenhum checklist diário disponível para este acesso.';
     get('dashboard').hidden = false;
     get('gate').hidden = true;
-    renderRows();
+    get('refresh-now').hidden = false;
+    if (!vehicleDialog.open) {
+      renderRows();
+      renderMileage();
+    }
   }
 
   function status(message,stale = false) {
@@ -140,6 +246,7 @@ function startPanel() {
       return;
     }
     refreshing = true;
+    get('refresh-now').disabled = true;
     try {
       if (sessionToken!==active.token) {
         hideData('Validando a sessão do Checklist DER.');
@@ -170,11 +277,16 @@ function startPanel() {
           if (!Number.isFinite(at)) continue;
           const results = record.results.map(({id,title,critical,value,expected,found,note})=>
             ({id,title,critical,value,expected,found,note}));
-          nextRecords.set(record.id,{id:record.id,prefix:record.prefix,at,results});
+          nextRecords.set(record.id,{id:record.id,prefix:record.prefix,at,results,mode:record.mode,solo:record.solo,prior:record.prior,km:record.km});
         }
         cursor = batch.cursor;
       } while (cursor>0);
       pending = openNonconformities(nextRecords.values());
+      latest = new Map();
+      for (const record of nextRecords.values()) {
+        const prior = latest.get(record.prefix);
+        if (record.mode!=='deferred' && (!prior || record.at>prior.at || (record.at===prior.at && record.id>prior.id))) latest.set(record.prefix,record);
+      }
       records = nextRecords;
       checkpoint = head ?? checkpoint;
       syncedAt = Date.now();
@@ -190,6 +302,7 @@ function startPanel() {
       }
     } finally {
       refreshing = false;
+      get('refresh-now').disabled = false;
     }
   }
 
@@ -229,35 +342,25 @@ function startPanel() {
     requestForm.elements.email.focus();
   };
   get('retry').onclick = refresh;
+  get('refresh-now').onclick = refresh;
   get('previous').onclick = () => { page--; renderRows(); };
   get('next').onclick = () => { page++; renderRows(); };
-  const fullscreen = get('fullscreen');
-  fullscreen.hidden = !document.fullscreenEnabled;
-  fullscreen.onclick = async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen();
-    } catch {
-      fullscreen.textContent = 'Tela cheia indisponível';
+  const updateFilters = () => { page = 0; renderRows(); };
+  search.oninput = updateFilters;
+  filter.onchange = updateFilters;
+  get('km-period').onchange = renderMileage;
+  get('clear-filters').onclick = () => { search.value = ''; filter.value = 'all'; updateFilters(); search.focus(); };
+  vehicleDialog.addEventListener('close',()=>{
+    if (!get('dashboard').hidden) {
+      renderRows();
+      renderMileage();
     }
-  };
-  document.addEventListener('fullscreenchange',()=>{
-    fullscreen.textContent = document.fullscreenElement?'Sair da tela cheia':'Tela cheia';
   });
   window.addEventListener('storage',event=>{
     if (event.key!==null && event.key!==sessionKey) return;
     if (session()?.token!==sessionToken) hideData('A sessão mudou. Atualizando acesso…');
     refresh();
   });
-  const updateClock = () => { get('clock').textContent = clock.format(Date.now()); };
-  updateClock();
-  setInterval(updateClock,1000);
   setInterval(refresh,60000);
-  setInterval(()=>{
-    if (document.fullscreenElement && !get('dashboard').hidden && !get('pagination').hidden) {
-      page++;
-      renderRows();
-    }
-  },20000);
   refresh();
 }
