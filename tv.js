@@ -186,9 +186,12 @@ function nonconformityPdf(Pdf, pending, options) {
 }
 
 const kilometers = totals => totals.reduce((sum,entry)=>sum+entry.total,0);
+const bases = [['1','Itapetininga'],['2','Capão Bonito'],['4','Itapeva'],['5','Sorocaba'],['8','Tatuí']];
+const firstPrefixDigit = prefix => String(prefix ?? '').match(/\d/)?.[0];
 
 function mileagePdf(Pdf, {totals,skipped,label}, options) {
-  const {doc,font,header,finish} = derPdf(Pdf,options,'Resumo de quilometragem da frota','Período: '+label);
+  const {doc,font,header,finish} = derPdf(Pdf,options,'Resumo de quilometragem da frota',
+    'Período: '+label+ (options.base?' · Base: '+options.base:''));
   const number = new Intl.NumberFormat('pt-BR');
   const km = value => number.format(value)+' km';
   const count = totals.reduce((sum,entry)=>sum+entry.count,0);
@@ -262,6 +265,13 @@ function startPanel() {
   const requestForm = get('request-code'), verifyForm = get('verify-code');
   const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
+  const kmBase = get('km-base');
+  for (const [code,name] of bases) {
+    const option = document.createElement('option');
+    option.value = code;
+    option.textContent = name;
+    kmBase.append(option);
+  }
   let email;
 
   function session() {
@@ -376,21 +386,22 @@ function startPanel() {
       : 'Nenhuma resolução para estes filtros.';
   }
 
-  function mileagePeriod(period, now) {
+  function mileagePeriod(period, now, base = kmBase.value) {
     const month = new Intl.DateTimeFormat('sv-SE',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now).slice(0,7);
     const days = Number(period);
     const since = period==='month'?Date.parse(month+'-01T00:00:00-03:00'):days?now-days*86400000:0;
     const calendar = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeZone:zone});
     const label = since?calendar.format(since)+' a '+calendar.format(now):'Todo o histórico até '+calendar.format(now);
-    return {...shiftMileage(records.values(),since),label};
+    const selected = base ? [...records.values()].filter(record=>firstPrefixDigit(record.prefix)===base) : records.values();
+    return {...shiftMileage(selected,since),label};
   }
 
   function renderMileage() {
     const period = get('km-period').value;
     const now = Date.now();
-    const monthly = mileagePeriod('month',now);
+    const monthly = mileagePeriod('month',now,'');
     get('km-month').textContent = monthly.totals.length ? number.format(kilometers(monthly.totals))+' km' : '—';
-    const {totals,skipped} = period==='month'?monthly:mileagePeriod(period,now);
+    const {totals,skipped} = period==='month' && !kmBase.value ? monthly : mileagePeriod(period,now);
     get('download-km-pdf').disabled = totals.length===0;
     const rows = document.createDocumentFragment();
     for (const entry of totals) {
@@ -642,8 +653,9 @@ function startPanel() {
   };
   get('download-km-pdf').onclick = () => {
     const data = mileagePeriod(get('km-period').value,Date.now());
+    const base = bases.find(([code])=>code===kmBase.value)?.[1] || 'Todas as bases';
     return downloadReport(get('download-km-pdf'),get('km-pdf-error'),'quilometragem-da-frota',
-      (Pdf,options)=>mileagePdf(Pdf,data,options),()=>mileagePeriod(get('km-period').value,Date.now()).totals.length);
+      (Pdf,options)=>mileagePdf(Pdf,data,{...options,base}),()=>mileagePeriod(get('km-period').value,Date.now()).totals.length);
   };
   get('refresh-now').onclick = refresh;
   get('previous').onclick = () => { page--; renderRows(); };
@@ -652,8 +664,10 @@ function startPanel() {
   search.oninput = updateFilters;
   filter.onchange = updateFilters;
   get('km-period').onchange = renderMileage;
+  kmBase.onchange = renderMileage;
   get('open-km-month').onclick = () => {
     get('km-period').value = 'month';
+    kmBase.value = '';
     renderMileage();
     const mileage = get('mileage');
     mileage.open = true;
