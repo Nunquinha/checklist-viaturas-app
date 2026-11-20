@@ -15,6 +15,10 @@
 .report-stat{border:1px solid #dfe5df;padding:10px 14px;flex:1 1 140px}.report-stat strong{display:block;font-size:1.15em}
 .report-record{margin:0 0 9px;padding:9px 12px;border:1px solid #dfe5df;overflow-wrap:anywhere}.report-record p{margin:4px 0;color:#26382e}
 .report-section-title{margin:24px 0 9px;font-size:1.1em}.report-footer{text-align:right;border-top:1px solid #dfe5df;margin-top:22px;padding-top:9px;font-size:.8em;color:#52655a}
+.history-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 14px}.history-filter-grid label{margin:0}.history-filter-actions{margin-top:12px}
+.report-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}.report-evidence figure{margin:0;padding:8px;border:1px solid #dfe5df;break-inside:avoid}.report-evidence img{display:block;max-width:100%;height:160px;width:100%;object-fit:contain}.report-evidence figcaption{font-size:.82em;font-weight:650;margin-top:4px}.report-evidence-signatures img{height:80px}.report-people{font-size:1em;margin:18px 0 7px;break-after:avoid}
+@media(max-width:600px){.history-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.history-filter-grid label:nth-child(n+3){grid-column:1/-1}}
+@media print{.report-evidence{display:block}.report-evidence figure{display:inline-block;vertical-align:top;width:48%;margin:0 1% 6px 0}.report-evidence img{height:58mm}.report-evidence-signatures img{height:28mm}}
 .sidebar{overflow-y:auto;scrollbar-width:none}.sidebar::-webkit-scrollbar{display:none}.sidebar nav{flex:none}.sidebar-foot{padding-top:12px}
 .operator-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
 #checks{display:grid;gap:16px}#checks fieldset{margin:0;padding:12px 14px 14px;background:white}#checks legend{max-width:100%;padding:0 4px;overflow-wrap:anywhere}
@@ -103,7 +107,8 @@
 <button class="primary" id="save-fortnight">Salvar vistoria quinzenal</button>
 </form></section>
 <section id="historico" hidden><h1 id="history-title">Histórico de trocas</h1>
-<article><div class="grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label><label>Viatura<select id="history-vehicle"><option value="">Todas as viaturas</option></select></label><label>Operador<select id="history-operator"><option value="">Todos os operadores</option></select></label></div><div id="attendance-panel" hidden><h2>Acompanhamento do engenheiro</h2><div id="attendance-summary" aria-live="polite"></div></div></article>
+<article><div class="history-filter-grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label><label>Viatura<select id="history-vehicle"><option value="">Todas as viaturas</option></select></label><label>Operador<select id="history-operator"><option value="">Todos os operadores</option></select></label><label id="history-engineer-field" hidden>Engenheiro<select id="history-engineer"><option value="">Todos os engenheiros</option></select></label></div>
+<div class="actions history-filter-actions"><button type="button" id="clear-history-filters" hidden>Limpar filtros</button></div></article>
 <div class="actions" id="history-exports"><button type="button" id="prepare-report">Gerar relatório PDF</button><button type="button" id="export-excel">Baixar Excel</button></div>
 <div id="records"></div><div id="fortnight-records" hidden></div></section>
 <section id="ocorrencias" hidden><h1>Ocorrências no turno</h1>
@@ -262,7 +267,7 @@ function page(name) {
   if(sectionId==='historico') {
     switchHistory(name==='historico'?'daily':'fortnight');
     byId('history-title').textContent=historyKind==='daily'?'Histórico de trocas de turno':'Histórico quinzenal';
-    byId('attendance-panel').hidden=byId('fortnight-records').hidden=historyKind==='daily';
+    byId('fortnight-records').hidden=historyKind==='daily';
     byId('records').hidden=historyKind==='fortnight';
     byId('prepare-report').hidden=window.checklistCloud?.canReport===false;
     byId('export-excel').hidden=window.checklistCloud?.canExportExcel===false;
@@ -611,12 +616,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v22"></script>
-<script src="relatorios.js?v=v22"></script>
-<script src="xlsx.js?v=v22"></script>
-<script src="ocorrencias.js?v=v22"></script>
-<script src="cloud.js?v=v22"></script>
-<script src="instalar.js?v=v22"></script>
+<script src="quinzenal.js?v=v23"></script>
+<script src="relatorios.js?v=v23"></script>
+<script src="xlsx.js?v=v23"></script>
+<script src="ocorrencias.js?v=v23"></script>
+<script src="cloud.js?v=v23"></script>
+<script src="instalar.js?v=v23"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));

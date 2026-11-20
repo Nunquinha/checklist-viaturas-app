@@ -137,43 +137,32 @@ function duration(ms) {
 
 async function refreshFortnightHistory() {
   const version = ++historyRequest;
-  const summary = byId('attendance-summary');
   const list = byId('fortnight-records');
   try {
     const all = await inspections();
     if (version !== historyRequest || historyKind!=='fortnight') return;
     refreshHistoryOptions('fortnight',all);
     const records = all.filter(record=>historyIncludes(record,'fortnight')).reverse();
-    const totals = new Map();
-    let attended = 0;
-    for (const record of records) {
-      if (!record.attended) continue;
-      attended++;
-      const name = record.engineer.toLocaleLowerCase('pt-BR');
-      const total = totals.get(name) || {name:record.engineer, count:0};
-      total.count++;
-      totals.set(name,total);
-    }
-    const percent = count => (count/records.length).toLocaleString('pt-BR',{style:'percent',maximumFractionDigits:1});
-    summary.innerHTML = records.length
-      ? '<p><strong>'+attended+' de '+records.length+'</strong> com acompanhamento ('+percent(attended)+').</p>'+
-        [...totals.values()].map(total=>'<p>'+escape(total.name)+' · '+total.count+' de '+records.length+' ('+percent(total.count)+')</p>').join('')
-      : '<p>Nenhuma vistoria no período.</p>';
     const image = (url,label) => '<img class="record-image" loading="lazy" src="'+escape(url)+'" alt="'+escape(label)+'">';
-    list.innerHTML = records.map(record=>'<details><summary>'+escape(record.prefix)+' · '+time(record.at)+
+    const canReport = window.checklistCloud?.canReport!==false;
+    list.innerHTML = records.map((record,index)=>'<details><summary>'+escape(record.prefix)+' · '+time(record.at)+
+      ' · '+escape(record.attended?record.engineer:'Sem engenheiro')+
       '</summary><p>Operador: '+escape(record.operator)+'</p><p>Acompanhamento: '+
       (record.attended ? escape(record.engineer) : 'Sem engenheiro')+
       '</p><p>Tempo de conclusão: '+duration(record.durationMs)+'</p>'+
       (record.notes ? '<p>'+escape(record.notes)+'</p>' : '')+
+      (canReport?'<p><button type="button" data-fortnight-pdf="'+index+'">PDF desta vistoria</button></p>':'')+
       Object.entries(record.photos).map(([key,photos])=>'<p>'+photoLabels[key]+'</p>'+
         photos.map(url=>image(url,photoLabels[key])).join('')).join('')+
       Object.entries(record.signatures).map(([role,url])=>{
         const label = role==='engineer'?'Assinatura do engenheiro':'Assinatura do operador';
         return '<p>'+label+'</p>'+image(url,label);
       }).join('')+'</details>').join('') || '<article>Nenhuma vistoria registrada no período.</article>';
+    for(const button of list.querySelectorAll('[data-fortnight-pdf]')) {
+      button.onclick=()=>showIndividualFortnightReport(records[Number(button.dataset.fortnightPdf)],button);
+    }
   } catch {
     if (version !== historyRequest) return;
-    summary.textContent = '';
     list.textContent = 'O navegador não conseguiu abrir o histórico das vistorias.';
   }
 }
