@@ -17,6 +17,8 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+  if (['painel-tv/','painel-tv/index.html','tv.html','tv.js'].some(path=>
+    url.pathname===new URL(path,self.registration.scope).pathname)) return;
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (event.request.mode === 'navigate') {
     event.respondWith((async () => {
@@ -40,3 +42,4 @@ self.addEventListener('fetch', event => {
     return fetch(event.request);
   }));
 });
+

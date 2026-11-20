@@ -36,6 +36,9 @@ function startPanel() {
   const pageSize = 5;
   let sessionToken, accessScope, checkpoint, refreshing = false, syncedAt = null;
   let records = new Map(), pending = [], page = 0;
+  const requestForm = get('request-code'), verifyForm = get('verify-code');
+  const permitted = user => ['owner','manager','viewer'].includes(user?.role);
+  let email;
 
   function session() {
     try {
@@ -55,7 +58,7 @@ function startPanel() {
     return result.data;
   }
 
-  function hideData(message) {
+  function hideData(message, action) {
     records = new Map();
     pending = [];
     checkpoint = null;
@@ -66,6 +69,9 @@ function startPanel() {
     get('dashboard').hidden = true;
     get('gate-message').textContent = message;
     get('gate').hidden = false;
+    requestForm.hidden = action!=='login' || Boolean(email);
+    verifyForm.hidden = action!=='login' || !email;
+    get('retry').hidden = action!=='retry';
   }
 
   function age(timestamp) {
@@ -130,7 +136,7 @@ function startPanel() {
     const active = session();
     if (!active) {
       status('Painel com acesso restrito');
-      hideData('Entre no Checklist DER neste navegador com sua conta autorizada e volte a este link.');
+      hideData('Entre com seu e-mail autorizado para ver a situação da frota.','login');
       return;
     }
     refreshing = true;
@@ -141,9 +147,9 @@ function startPanel() {
         accessScope = null;
       }
       const user = await rpc(active.token,'me');
-      if (!['owner','manager','viewer'].includes(user.role)) {
+      if (!permitted(user)) {
         status('Painel com acesso restrito');
-        hideData('Este perfil não tem acesso ao painel de operação.');
+        hideData('Entre com uma conta autorizada a consultar o painel.','login');
         return;
       }
       const scope = JSON.stringify([user.role,user.prefix]);
@@ -175,18 +181,53 @@ function startPanel() {
       status('Atualizado às '+clock.format(syncedAt)+' · atualização automática a cada 60 s');
       render();
     } catch (error) {
-      if (/acesso|sessão|token/i.test(error.message)) {
+      if (/acesso|sessão|token|entre novamente/i.test(error.message)) {
         status('Sessão indisponível',true);
-        hideData('Entre novamente no Checklist DER e atualize o painel.');
+        hideData('Entre novamente para acessar o painel.','login');
       } else {
         status(syncedAt?'Sem atualização · últimos dados recebidos às '+clock.format(syncedAt):'Não foi possível consultar a base.',true);
-        if (!syncedAt) hideData('Confira a conexão e tente atualizar o painel.');
+        if (!syncedAt) hideData('Confira a conexão e tente atualizar o painel.','retry');
       }
     } finally {
       refreshing = false;
     }
   }
 
+  function submit(form, action) {
+    form.onsubmit = async event => {
+      event.preventDefault();
+      const button = form.querySelector('[type=submit]');
+      button.disabled = true;
+      try { await action(new FormData(form)); }
+      catch (error) { get('gate-message').textContent = error.message || 'Não foi possível entrar.'; }
+      finally { button.disabled = false; }
+    };
+  }
+  submit(requestForm,async data=>{
+    const address = data.get('email').trim().toLowerCase();
+    await rpc(null,'requestCode',{email:address});
+    email = address;
+    hideData('Se o endereço estiver autorizado, você receberá um código por e-mail.','login');
+    verifyForm.elements.code.focus();
+  });
+  submit(verifyForm,async data=>{
+    const access = await rpc(null,'verifyCode',{email,code:data.get('code')});
+    verifyForm.reset();
+    email = null;
+    if (!permitted(access.user)) {
+      hideData('Esta conta não tem acesso ao painel. Use um e-mail autorizado.','login');
+      return;
+    }
+    const {user,token,expires} = access;
+    localStorage.setItem(sessionKey,JSON.stringify({user,token,expires}));
+    await refresh();
+  });
+  get('change-email').onclick = () => {
+    email = null;
+    verifyForm.reset();
+    hideData('Informe o e-mail autorizado para o painel.','login');
+    requestForm.elements.email.focus();
+  };
   get('retry').onclick = refresh;
   get('previous').onclick = () => { page--; renderRows(); };
   get('next').onclick = () => { page++; renderRows(); };
