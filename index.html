@@ -16,6 +16,11 @@
 .report-record{margin:0 0 9px;padding:9px 12px;border:1px solid #dfe5df;overflow-wrap:anywhere}.report-record p{margin:4px 0;color:#26382e}
 .report-section-title{margin:24px 0 9px;font-size:1.1em}.report-footer{text-align:right;border-top:1px solid #dfe5df;margin-top:22px;padding-top:9px;font-size:.8em;color:#52655a}
 .history-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 14px}.history-filter-grid label{margin:0}.history-filter-actions{margin-top:12px}
+.account-strip{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 14px;padding:0 0 4px;border-bottom:1px solid var(--line)}
+.account-info{display:flex;align-items:baseline;flex-wrap:wrap;gap:1px 9px;min-width:0;overflow-wrap:anywhere;font-size:.84rem;line-height:1.3}
+.account-info p{margin:0}.account-actions{display:flex;align-items:center;flex:none;gap:1px}
+.account-actions button{min-height:44px;padding:6px 8px;border-color:transparent;background:transparent;font-size:.83rem}.account-actions button:hover{background:#e7ede7}.account-actions button:disabled{opacity:.55}
+@media(max-width:600px){.account-info{display:grid}.account-strip{margin-bottom:12px}}
 .report-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}.report-evidence figure{margin:0;padding:8px;border:1px solid #dfe5df;break-inside:avoid}.report-evidence img{display:block;max-width:100%;height:160px;width:100%;object-fit:contain}.report-evidence figcaption{font-size:.82em;font-weight:650;margin-top:4px}.report-evidence-signatures img{height:80px}.report-people{font-size:1em;margin:18px 0 7px;break-after:avoid}
 @media(max-width:600px){.history-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.history-filter-grid label:nth-child(n+3){grid-column:1/-1}}
 @media print{.report-evidence{display:block}.report-evidence figure{display:inline-block;vertical-align:top;width:48%;margin:0 1% 6px 0}.report-evidence img{height:58mm}.report-evidence-signatures img{height:28mm}}
@@ -67,7 +72,7 @@
 <form id="request-code"><label>E-mail da viatura ou da administração<input name="email" type="email" maxlength="254" required autocomplete="email"></label><button class="primary">Enviar código</button></form>
 <form id="verify-code" hidden><label>Código de 6 dígitos<input name="code" required minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"></label><button class="primary">Entrar</button><button type="button" id="change-email">Trocar e-mail</button></form>
 </article>
-<article id="cloud-account" hidden><div class="split"><div><strong id="cloud-identity"></strong><p id="cloud-status" role="status"></p></div><div class="actions"><button type="button" id="sync-cloud">Sincronizar</button><button type="button" id="cloud-logout">Sair</button></div></div></article>
+<div id="cloud-account" class="account-strip" hidden><div class="account-info"><strong id="cloud-identity"></strong><p id="cloud-status" role="status"></p></div><div class="account-actions"><button type="button" id="sync-cloud">Sincronizar</button><button type="button" id="cloud-logout">Sair</button></div></div>
 <p id="cloud-error" class="warning" role="alert" hidden></p>
 </div>
 <div id="notice" role="status"></div>
@@ -618,12 +623,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v25"></script>
-<script src="relatorios.js?v=v25"></script>
-<script src="xlsx.js?v=v25"></script>
-<script src="ocorrencias.js?v=v25"></script>
-<script src="cloud.js?v=v25"></script>
-<script src="instalar.js?v=v25"></script>
+<script src="quinzenal.js?v=v26"></script>
+<script src="relatorios.js?v=v26"></script>
+<script src="xlsx.js?v=v26"></script>
+<script src="ocorrencias.js?v=v26"></script>
+<script src="cloud.js?v=v26"></script>
+<script src="instalar.js?v=v26"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
