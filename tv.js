@@ -198,7 +198,7 @@ function mileagePdf(Pdf, {totals,skipped,label}, options) {
     font(9,true);
     doc.text('Viatura',19,88);
     doc.text('Total rodado',98,88,{align:'right'});
-    doc.text('Trechos calculados',147,88,{align:'right'});
+    doc.text('Intervalos entre trocas',147,88,{align:'right'});
     doc.text('Último trecho',191,88,{align:'right'});
   };
   const startPage = () => {
@@ -210,7 +210,7 @@ function mileagePdf(Pdf, {totals,skipped,label}, options) {
     font(8,false,'#52655a');
     doc.text('TOTAL RODADO PELA FROTA',19,71);
     font(10,true);
-    doc.text(totals.length+' viaturas · '+count+' trechos calculados',191,67,{align:'right'});
+    doc.text(totals.length+' viaturas · '+count+' intervalos entre trocas',191,67,{align:'right'});
     tableHeader();
   };
   let y = 97;
