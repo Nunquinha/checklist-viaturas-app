@@ -19,9 +19,9 @@
 .operator-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
 #checks{display:grid;gap:16px}#checks fieldset{margin:0;padding:12px 14px 14px;background:white}#checks legend{max-width:100%;padding:0 4px;overflow-wrap:anywhere}
 .daily-critical,.daily-expected{display:inline-block;border-radius:6px;padding:3px 7px;font-size:.78rem;line-height:1.3;white-space:nowrap}.daily-critical{margin-left:6px;background:#fff4d8;color:#704908;vertical-align:middle}.daily-expected{background:#eef2ed;color:#395343}
-#checks .choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}#checks .choices label{justify-content:flex-start;padding:8px 10px;min-height:48px}
+#checks .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#checks .choices label{justify-content:flex-start;padding:8px 10px;min-height:48px}
 .daily-quantity{margin:12px 0 0;gap:7px}.daily-quantity-label{display:flex;justify-content:space-between;align-items:baseline;gap:4px 8px;flex-wrap:wrap}.daily-quantity input{min-height:48px}.daily-note{margin:12px 0 0}
-@media(max-width:600px){#checks{margin-inline:-4px}#checks fieldset{padding-inline:12px}#checks .choices{grid-template-columns:repeat(2,minmax(0,1fr))}#checks .choices label:last-child{grid-column:1/-1}#checks .choices label{min-height:50px}}
+@media(max-width:600px){#checks{margin-inline:-4px}#checks fieldset{padding-inline:12px}#checks .choices label{min-height:50px}}
 .signature{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;align-content:start}.signature-name{overflow-wrap:anywhere;color:var(--muted);margin:0}.signature-preview{width:100%;height:64px;object-fit:contain;object-position:left}.signature .primary{margin:0}
 #signature-dialog{width:min(94vw,860px);height:min(90dvh,620px);max-width:none;max-height:none;margin:auto;padding:18px;background:#fff}
 #signature-dialog[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px}#signature-dialog h2{margin:0}#signature-dialog p{margin:4px 0 0}
@@ -416,7 +416,7 @@ function renderChecks() {
     state.vehicles.some(vehicle=>vehicle.active)?'Selecione a viatura acima para carregar os itens cadastrados para ela.':
       'Cadastre ou reative uma viatura no menu Viaturas para carregar os itens.';
   shown=prefix?state.items.filter(item=>item.active&&itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))):[];
-  byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?'<span class="daily-critical">Crítico</span>':'')+'</legend><div class="choices">'+['OK','Problema','Não se aplica'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+'</div><label class="daily-note" hidden>Descreva o problema<input name="note-'+item.id+'" maxlength="300"></label></fieldset>').join(''):'<p>'+escape(emptyMessage)+'</p>';
+  byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?' <span class="daily-critical">Crítico</span>':'')+'</legend><div class="choices">'+['OK','Problema'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+'</div><label class="daily-note" hidden>Descreva o problema<input name="note-'+item.id+'" maxlength="300"></label></fieldset>').join(''):'<p>'+escape(emptyMessage)+'</p>';
   prior.forEach(result=>{
     const control=fields['check-'+result.id];
     if(control){control.value=result.value;fields['note-'+result.id].value=result.note;}
@@ -456,8 +456,8 @@ function update() {
     const value=controls.find(control=>control.checked)?.value;
     const note=fields['note-'+item.id], found=fields['found-'+item.id];
     controls[0].required=true;
-    if(found){found.disabled=value==='Não se aplica';found.required=!found.disabled;}
-    const different=found&&!found.disabled&&found.value!==''&&found.valueAsNumber!==item.expected;
+    if(found)found.required=true;
+    const different=found&&found.value!==''&&found.valueAsNumber!==item.expected;
     note.parentElement.hidden=value!=='Problema'&&!different;
     note.required=value==='Problema'||Boolean(different);
     if(value)answered++;
@@ -569,7 +569,7 @@ handover.onsubmit=event=>{
   if(!shown.length)return alert('Cadastre pelo menos um item para esta viatura.');
   if(Object.values(pads).some(pad=>!pad.ink))return alert('Colete as assinaturas antes de salvar.');
   const results=shown.map(({photo,...item})=>{
-    const value=data['check-'+item.id], found=item.expected!=null&&value!=='Não se aplica'?Number(data['found-'+item.id]):null;
+    const value=data['check-'+item.id], found=item.expected!=null?Number(data['found-'+item.id]):null;
     const needsNote=value==='Problema'||(found!==null&&found!==item.expected);
     return {...item,value,found,note:needsNote?data['note-'+item.id].trim():''};
   });
@@ -613,12 +613,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v20"></script>
-<script src="relatorios.js?v=v20"></script>
-<script src="xlsx.js?v=v20"></script>
-<script src="ocorrencias.js?v=v20"></script>
-<script src="cloud.js?v=v20"></script>
-<script src="instalar.js?v=v20"></script>
+<script src="quinzenal.js?v=v21"></script>
+<script src="relatorios.js?v=v21"></script>
+<script src="xlsx.js?v=v21"></script>
+<script src="ocorrencias.js?v=v21"></script>
+<script src="cloud.js?v=v21"></script>
+<script src="instalar.js?v=v21"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
