@@ -22,7 +22,7 @@ function refreshIncidentChoices() {
   const prefix = incidentFields.vehicle.value;
   const eligible = operators().filter(operator=>prefix&&(incidentFields.coverage.checked||operator.vehicles.includes(prefix)));
   incidentFields.operator.innerHTML = option('','Selecione o operador')+
-    eligible.map(operator=>option(operator.name,operator.name+(operator.vehicles.includes(prefix)?'':' · Cobertura'))).join('');
+    eligible.map(operator=>option(operator.name,operator.name+(operator.vehicles.includes(prefix)?'':' · Substituto'))).join('');
   incidentFields.operator.value = eligible.some(operator=>operator.name===operatorName)?operatorName:'';
   incidentForm.hidden = window.checklistCloud?.canFileIncident===false;
 }

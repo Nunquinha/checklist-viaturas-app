@@ -3,7 +3,7 @@ const historyControls = {from:byId('history-from'),to:byId('history-to'),
 const historyFilters = {daily:{},fortnight:{}};
 const historyDay = new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'});
 const historyOrder = new Intl.Collator('pt-BR',{numeric:true});
-const recordedOperators = (record,kind) => kind==='daily'?[record.outgoing,record.incoming]:[record.operator];
+const recordedOperators = (record,kind) => kind==='daily'&&!isSoloChecklist(record)?[record.outgoing,record.incoming]:[record.operator];
 const noEngineer = 'Sem acompanhamento';
 const engineerKey = record => record.attended&&record.engineer?.trim()?record.engineer.trim().toLocaleLowerCase('pt-BR'):'';
 const engineerLabel = record => engineerKey(record)?record.engineer.trim():noEngineer;
@@ -132,10 +132,12 @@ function itemIssues(record) {
 
 function reportRecord(record,daily,grouped=false) {
   const date = time(daily?record.inspected||record.exchange:record.at);
-  const names = daily?[record.outgoing,record.incoming].filter(Boolean).join(' → '):record.operator;
+  const solo = daily&&isSoloChecklist(record);
+  const names = daily&&!solo?[record.outgoing,record.incoming].filter(Boolean).join(' → '):record.operator;
   const discrepancies = daily?itemIssues(record):'';
   const details = daily ? [
-    record.reason&&'Ausência: '+record.reason,
+    solo?'Checklist sozinho':null,
+    record.reason&&(solo?'Justificativa: ':'Ausência: ')+record.reason,
     record.lateReason&&'Atraso: '+record.lateReason,
     discrepancies&&'Não conformidades: '+discrepancies
   ] : [!grouped&&engineerLabel(record),record.notes];
@@ -199,11 +201,12 @@ byId('export-excel').onclick = async event => {
   try {
     const {daily,records,title} = await selectedReport();
     const headers = daily
-      ? ['Viatura','Troca','Conferência','Quem entregou','Quem recebeu','Duração (s)','Quilometragem','Combustível','Ausência','Atraso','Não conformidades']
+      ? ['Viatura','Troca','Conferência','Quem entregou','Quem recebeu','Operador (sozinho)','Duração (s)','Quilometragem','Combustível','Justificativa','Atraso','Não conformidades']
       : ['Viatura','Vistoria','Operador','Duração (s)','Acompanhamento','Engenheiro','Observações'];
     const seconds = record => Number.isFinite(record.durationMs)?Math.round(record.durationMs/1000):null;
     const rows = records.map(record=>daily ? [
-      record.prefix,time(record.exchange),record.inspected?time(record.inspected):'',record.outgoing,record.incoming,
+      record.prefix,time(record.exchange),record.inspected?time(record.inspected):'',isSoloChecklist(record)?'':record.outgoing,
+      record.incoming,isSoloChecklist(record)?record.operator:'',
       seconds(record),record.km===''||record.km==null?null:Number(record.km),record.fuel,
       record.reason,record.lateReason,itemIssues(record)
     ] : [record.prefix,time(record.at),record.operator,seconds(record),record.attended?'Sim':'Não',record.engineer,record.notes]);

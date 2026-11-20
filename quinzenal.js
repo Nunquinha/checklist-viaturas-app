@@ -70,7 +70,7 @@ function refreshFortnightChoices() {
     (fortnightFields.coverage.checked || operator.vehicles.includes(current)));
   fortnightFields.operator.innerHTML = option('','Selecione o operador') +
     eligible.map(operator => option(operator.name,operator.name +
-      (operator.vehicles.includes(current)?'':' · Cobertura'))).join('');
+      (operator.vehicles.includes(current)?'':' · Substituto'))).join('');
   fortnightFields.operator.value = eligible.some(operator=>operator.name===operatorName)?operatorName:'';
 }
 
