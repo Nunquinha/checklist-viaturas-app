@@ -322,8 +322,7 @@ function startPanel() {
     const month = new Intl.DateTimeFormat('sv-SE',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now).slice(0,7);
     const monthly = shiftMileage(records.values(),Date.parse(month+'-01T00:00:00-03:00'));
     const kilometers = totals => totals.reduce((sum,entry)=>sum+entry.total,0);
-    get('km-month').textContent = monthly.totals.length ? ' · '+number.format(kilometers(monthly.totals))+' km neste mês'
-      : ' · Sem trechos calculáveis neste mês';
+    get('km-month').textContent = monthly.totals.length ? number.format(kilometers(monthly.totals))+' km' : '—';
     const days = Number(period);
     const {totals,skipped} = period==='month'?monthly:shiftMileage(records.values(),days?now-days*86400000:0);
     const rows = document.createDocumentFragment();
@@ -577,6 +576,14 @@ function startPanel() {
   search.oninput = updateFilters;
   filter.onchange = updateFilters;
   get('km-period').onchange = renderMileage;
+  get('open-km-month').onclick = () => {
+    get('km-period').value = 'month';
+    renderMileage();
+    const mileage = get('mileage');
+    mileage.open = true;
+    mileage.scrollIntoView({block:'start'});
+    get('km-period').focus({preventScroll:true});
+  };
   get('material-search').oninput = renderMaterials;
   get('resolved-period').onchange = renderResolved;
   get('resolved-search').oninput = renderResolved;
