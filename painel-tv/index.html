@@ -17,6 +17,7 @@ header,.brand,.toolbar,.table-head,footer{display:flex;align-items:center;gap:14
 dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b5971;border-radius:14px;background:#10283c;color:var(--ink);padding:0}dialog::backdrop{background:#071221bb}dialog header{position:sticky;top:0;background:#10283c;padding:18px 22px;border-bottom:1px solid var(--line)}dialog h2,dialog h3{margin:0}dialog section{padding:18px 22px}dialog ul{padding:0;margin:12px 0 0;list-style:none}dialog li{padding:11px 0;border-top:1px solid var(--line)}dialog li strong{display:block}
 .mileage{margin-top:18px}.mileage summary{padding:16px 20px;cursor:pointer;font-weight:700}.mileage .filters p{padding:8px 0}.mileage td:nth-child(2){width:auto}dialog h3{margin-top:14px}
 .demo-notice{margin-top:12px;padding:12px 16px;border:1px solid #765d3c;border-radius:8px;background:#3c2e20;color:#ffd18b}.demo-notice a{display:inline-block;margin-left:8px}
+.sections{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.sections a{font-size:14px}.sections a:hover{background:#254a68}.material-vehicles{white-space:normal!important}.material-vehicles button{margin:0 6px 5px 0}.mileage .filters label{max-width:380px}.mileage .filters p{color:var(--muted)}#pending-section,#materials,#resolved,#mileage{scroll-margin-top:16px}
 @media(max-width:720px){.kpis{gap:6px}.kpi{padding:9px;font-size:12px}.intro{margin-top:22px}table{min-width:620px}}
 </style>
 </head>
@@ -35,12 +36,16 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <button id="retry" type="button" hidden>Atualizar painel</button>
   </section>
   <div id="dashboard" hidden>
+    <nav class="sections" id="sections" aria-label="Áreas do painel">
+      <a href="#pending-section">Pendências</a><a href="#materials">Reposição</a>
+      <a href="#resolved">Resoluções</a><a href="#mileage">Quilometragem</a>
+    </nav>
     <section class="kpis" aria-label="Indicadores da frota">
       <div class="kpi"><strong id="affected"></strong><span>Viaturas com pendências</span></div>
       <div class="kpi"><strong id="pending"></strong><span>Pendências em aberto</span></div>
       <div class="kpi"><strong id="critical"></strong><span>Pendências críticas</span></div>
     </section>
-    <section class="panel" aria-labelledby="pending-title">
+    <section id="pending-section" class="panel" aria-labelledby="pending-title">
       <div class="filters">
         <label>Buscar viatura ou item<input id="search" type="search" placeholder="Ex.: ITG-173 ou Cones"></label>
         <label>Pendências<select id="filter"><option value="all">Todas</option><option value="critical">Somente críticas</option><option value="repeated">Somente recorrentes</option><option value="shortage">Com falta de material</option></select></label>
@@ -55,7 +60,24 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       </div>
       <p class="empty" id="empty" hidden></p>
     </section>
-    <details class="panel mileage">
+    <details id="materials" class="panel mileage" open>
+      <summary>Reposição por material</summary>
+      <div class="filters">
+        <label>Buscar material ou viatura<input id="material-search" type="search" placeholder="Ex.: Cones"></label>
+        <p id="material-summary" role="status"></p>
+      </div>
+      <div class="table-scroll"><table id="material-table"><thead><tr><th scope="col">Material</th><th scope="col">Total a repor</th><th scope="col">Viaturas e quantidade a repor</th></tr></thead><tbody id="material-rows"></tbody></table></div>
+    </details>
+    <details id="resolved" class="panel mileage">
+      <summary>Pendências resolvidas</summary>
+      <div class="filters">
+        <label>Buscar item ou viatura<input id="resolved-search" type="search" placeholder="Ex.: Cones"></label>
+        <label>Período de resolução<select id="resolved-period"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="0">Todo o histórico</option></select></label>
+        <p id="resolved-summary" role="status"></p>
+      </div>
+      <div class="table-scroll"><table id="resolved-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Item</th><th scope="col">Conforme em</th><th scope="col">Tempo em aberto</th></tr></thead><tbody id="resolved-rows"></tbody></table></div>
+    </details>
+    <details id="mileage" class="panel mileage">
       <summary>Quilometragem por troca de turno</summary>
       <div class="filters">
         <label>Período<select id="km-period"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="0">Todo o histórico</option></select></label>
@@ -75,6 +97,6 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <section><p id="vehicle-summary"></p><h3>Itens conferidos</h3><ul id="vehicle-results"></ul></section>
   </dialog>
 </main>
-<script src="tv.js?v=4"></script>
+<script src="tv.js?v=5"></script>
 </body>
 </html>

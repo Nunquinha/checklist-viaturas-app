@@ -1,7 +1,8 @@
 'use strict';
 
-function openNonconformities(records) {
+function nonconformityHistory(records) {
   const open = new Map();
+  const resolved = [];
   for (const record of [...records].sort((a,b)=>a.at-b.at || a.id.localeCompare(b.id))) {
     const seen = new Set();
     for (const item of record.results) {
@@ -11,6 +12,8 @@ function openNonconformities(records) {
       if (seen.has(key)) continue;
       seen.add(key);
       if (item.value==='Conforme' || item.value==='OK') {
+        const prior = open.get(key);
+        if (prior) resolved.push({...prior,closed:record.at});
         open.delete(key);
       } else if (item.value==='Não Conforme' || item.value==='Problema') {
         const prior = open.get(key);
@@ -19,8 +22,31 @@ function openNonconformities(records) {
       }
     }
   }
-  return [...open.values()].sort((a,b)=>Number(Boolean(b.critical))-Number(Boolean(a.critical)) ||
-    a.first-b.first || a.prefix.localeCompare(b.prefix,'pt-BR'));
+  return {pending:[...open.values()].sort((a,b)=>Number(Boolean(b.critical))-Number(Boolean(a.critical)) ||
+    a.first-b.first || a.prefix.localeCompare(b.prefix,'pt-BR')),resolved:resolved.reverse()};
+}
+
+const openNonconformities = records => nonconformityHistory(records).pending;
+const normalize = value => String(value ?? '').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+const shortage = item => Number.isFinite(item.expected) && Number.isFinite(item.found) && item.found<item.expected
+  ? item.expected-item.found : 0;
+
+function materialsToReplace(pending) {
+  const materials = new Map();
+  for (const item of pending) {
+    const amount = shortage(item);
+    if (!amount) continue;
+    const key = item.id || normalize(item.title).trim();
+    const material = materials.get(key) || {title:item.title || 'Item sem nome',total:0,vehicles:[],at:0};
+    if (item.last>=material.at) {
+      material.title = item.title || material.title;
+      material.at = item.last;
+    }
+    material.total += amount;
+    material.vehicles.push({prefix:item.prefix,amount});
+    materials.set(key,material);
+  }
+  return [...materials.values()].sort((a,b)=>b.total-a.total || a.title.localeCompare(b.title,'pt-BR'));
 }
 
 function shiftMileage(records, since) {
@@ -60,11 +86,12 @@ function demonstrationRecords(now) {
     row('DEMO-101',48,8240,signal(false),cones(20)), row('DEMO-101',24,8290,signal(false),cones(20)),
     row('DEMO-101',4,8320,signal(false),cones(20)),
     row('DEMO-204',32,12040,cones(20),signal(true)), row('DEMO-204',2,12110,cones(17),signal(true)),
-    row('DEMO-308',31,6350,cones(19)), row('DEMO-308',6,6405,cones(20),flashlight)
+    row('DEMO-308',31,6350,cones(19)), row('DEMO-308',6,6405,cones(20),flashlight),
+    row('DEMO-407',21,9050,cones(20)), row('DEMO-407',1,9120,cones(18))
   ];
 }
 
-if (typeof module!=='undefined') module.exports = {openNonconformities,shiftMileage,demonstrationRecords};
+if (typeof module!=='undefined') module.exports = {openNonconformities,nonconformityHistory,materialsToReplace,shiftMileage,demonstrationRecords};
 if (typeof document!=='undefined') startPanel();
 
 function startPanel() {
@@ -78,13 +105,10 @@ function startPanel() {
   const number = new Intl.NumberFormat('pt-BR');
   const pageSize = 12;
   let sessionToken, accessScope, checkpoint, refreshing = false, syncedAt = null;
-  let records = new Map(), latest = new Map(), pending = [], page = 0;
+  let records = new Map(), latest = new Map(), pending = [], resolved = [], page = 0;
   const requestForm = get('request-code'), verifyForm = get('verify-code');
   const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
-  const normalize = value => String(value ?? '').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
-  const shortage = item => Number.isFinite(item.expected) && Number.isFinite(item.found) && item.found<item.expected
-    ? item.expected-item.found : 0;
   let email;
 
   function session() {
@@ -109,10 +133,13 @@ function startPanel() {
     records = new Map();
     latest = new Map();
     pending = [];
+    resolved = [];
     checkpoint = null;
     syncedAt = null;
     page = 0;
     get('rows').replaceChildren();
+    get('material-rows').replaceChildren();
+    get('resolved-rows').replaceChildren();
     get('vehicle-results').replaceChildren();
     get('vehicle-title').textContent = '';
     get('vehicle-summary').textContent = '';
@@ -127,13 +154,12 @@ function startPanel() {
     get('retry').hidden = action!=='retry';
   }
 
-  function age(timestamp) {
-    const minutes = Math.max(0,Math.floor((Date.now()-timestamp)/60000));
-    if (minutes<1) return 'Agora';
-    if (minutes<60) return 'Há '+minutes+' min';
+  function elapsed(ms) {
+    const minutes = Math.max(0,Math.floor(ms/60000));
+    if (minutes<60) return minutes+' min';
     const hours = Math.floor(minutes/60);
     const days = Math.floor(hours/24);
-    return days ? 'Há '+days+(days===1?' dia':' dias') : 'Há '+hours+' h';
+    return days ? days+(days===1?' dia':' dias') : hours+' h';
   }
 
   function addText(parent, tag, value, className) {
@@ -151,6 +177,56 @@ function startPanel() {
     button.setAttribute('aria-label','Abrir último checklist da viatura '+prefix);
     button.onclick = () => showVehicle(prefix);
     return button;
+  }
+
+  function renderMaterials() {
+    const query = normalize(get('material-search').value.trim());
+    const materials = materialsToReplace(pending).filter(item=>!query || normalize(item.title).includes(query) ||
+      item.vehicles.some(vehicle=>normalize(vehicle.prefix).includes(query)));
+    const rows = document.createDocumentFragment();
+    for (const material of materials) {
+      const row = rows.appendChild(document.createElement('tr'));
+      addText(row.insertCell(),'strong',material.title);
+      addText(row.insertCell(),'strong',number.format(material.total),'age');
+      const vehicles = row.insertCell();
+      vehicles.className = 'material-vehicles';
+      for (const {prefix,amount} of material.vehicles) {
+        const button = vehicleButton(prefix);
+        button.textContent = prefix+' · '+number.format(amount);
+        button.setAttribute('aria-label',prefix+', '+amount+' a repor. Abrir último checklist.');
+        vehicles.append(button);
+      }
+    }
+    get('material-rows').replaceChildren(rows);
+    get('material-table').hidden = !materials.length;
+    get('material-summary').textContent = materials.length
+      ? materials.length+(materials.length===1?' material com reposição pendente':' materiais com reposição pendente')
+      : 'Nenhum material a repor para essa busca.';
+  }
+
+  function renderResolved() {
+    const days = Number(get('resolved-period').value);
+    const cutoff = days ? Date.now()-days*86400000 : 0;
+    const query = normalize(get('resolved-search').value.trim());
+    const matches = resolved.filter(item=>item.closed>=cutoff && (!query ||
+      [item.prefix,item.title].some(value=>normalize(value).includes(query))));
+    const durations = matches.map(item=>item.closed-item.first).sort((a,b)=>a-b);
+    const middle = Math.floor(durations.length/2);
+    const median = durations.length%2 ? durations[middle] : (durations[middle-1]+durations[middle])/2;
+    const rows = document.createDocumentFragment();
+    for (const item of matches.slice(0,12)) {
+      const row = rows.appendChild(document.createElement('tr'));
+      row.insertCell().append(vehicleButton(item.prefix));
+      addText(row.insertCell(),'strong',item.title || 'Item sem nome');
+      addText(row.insertCell(),'time',date.format(item.closed));
+      addText(row.insertCell(),'span',elapsed(item.closed-item.first));
+    }
+    get('resolved-rows').replaceChildren(rows);
+    get('resolved-table').hidden = !matches.length;
+    get('resolved-summary').textContent = matches.length
+      ? matches.length+(matches.length===1?' resolvida':' resolvidas')+' · Tempo mediano: '+elapsed(median)+
+        (matches.length>12?' · 12 mais recentes abaixo':'')
+      : 'Nenhuma resolução para estes filtros.';
   }
 
   function renderMileage() {
@@ -195,7 +271,7 @@ function startPanel() {
       if (shortage(item)) addText(details,'span',shortage(item)+' a repor','line age');
       addText(details,'span',item.note || 'Registro sem justificativa','line');
       const first = row.insertCell();
-      addText(first,'span',age(item.first),'age');
+      addText(first,'span',Date.now()-item.first<60000?'Agora':'Há '+elapsed(Date.now()-item.first),'age');
       addText(first,'time',date.format(item.first),'line');
       const repetition = row.insertCell();
       if (item.count>1) {
@@ -248,6 +324,8 @@ function startPanel() {
     get('refresh-now').hidden = demo;
     if (!vehicleDialog.open) {
       renderRows();
+      renderMaterials();
+      renderResolved();
       renderMileage();
     }
   }
@@ -258,7 +336,7 @@ function startPanel() {
   }
 
   function loadRecords(nextRecords) {
-    pending = openNonconformities(nextRecords.values());
+    ({pending,resolved} = nonconformityHistory(nextRecords.values()));
     latest = new Map();
     for (const record of nextRecords.values()) {
       const prior = latest.get(record.prefix);
@@ -373,10 +451,20 @@ function startPanel() {
   search.oninput = updateFilters;
   filter.onchange = updateFilters;
   get('km-period').onchange = renderMileage;
+  get('material-search').oninput = renderMaterials;
+  get('resolved-period').onchange = renderResolved;
+  get('resolved-search').oninput = renderResolved;
+  get('sections').addEventListener('click',event=>{
+    const link = event.target.closest('a[href^="#"]');
+    const target = link && get(link.hash.slice(1));
+    if (target?.tagName==='DETAILS') target.open = true;
+  });
   get('clear-filters').onclick = () => { search.value = ''; filter.value = 'all'; updateFilters(); search.focus(); };
   vehicleDialog.addEventListener('close',()=>{
     if (!get('dashboard').hidden) {
       renderRows();
+      renderMaterials();
+      renderResolved();
       renderMileage();
     }
   });
