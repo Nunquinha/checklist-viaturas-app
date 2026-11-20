@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="checklist-endpoint" content="https://script.google.com/macros/s/AKfycbyZqFLXii8qI7q8tE1xBdm_AdPsVGboEwwFUxyZFiHYQZz5e4zOGKSEz1IoDH3FFrN_1A/exec">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checklist DER | Painel TV</title>
+<style>
+:root{color-scheme:dark;--ink:#eef6ff;--muted:#b3c6d7;--line:#29445a;--panel:#10283c;--blue:#85c9ff;--amber:#ffd18b;--red:#ffadb7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0,#193d59,transparent 60%),#091a29;color:var(--ink);font:16px/1.45 'Segoe UI',Arial,sans-serif}main{max-width:1920px;margin:auto;padding:clamp(16px,3vw,46px)}[hidden]{display:none!important}
+header,.brand,.toolbar,.table-head,footer{display:flex;align-items:center;gap:14px;flex-wrap:wrap}header,.table-head,footer{justify-content:space-between}.brand img{width:58px;height:58px;border-radius:11px;object-fit:contain;background:white}.brand strong{display:block;font-size:21px}small,.muted,footer{color:var(--muted)}a,button{color:var(--ink);background:#18364e;border:1px solid #3b5971;border-radius:8px;padding:9px 14px;font:inherit;text-decoration:none;cursor:pointer}button:disabled{opacity:.55;cursor:default}:focus-visible{outline:3px solid var(--blue);outline-offset:3px}.clock{font-size:24px;font-variant-numeric:tabular-nums}
+.intro{margin:34px 0 18px}h1{font-size:clamp(28px,3.3vw,52px);line-height:1.1;margin:0 0 9px;letter-spacing:-.03em}p{margin:0}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 18px}.kpi,.panel{background:linear-gradient(135deg,#152f46,var(--panel));border:1px solid var(--line);border-radius:14px}.kpi{padding:16px 20px;border-top:3px solid var(--blue)}.kpi:nth-child(2){border-top-color:var(--amber)}.kpi:nth-child(3){border-top-color:var(--red)}.kpi strong{display:block;font-size:clamp(26px,3vw,44px);line-height:1.12;margin-bottom:5px;font-variant-numeric:tabular-nums}.panel{overflow:hidden}.table-head,#gate{padding:16px 20px}.table-head h2{font-size:19px;margin:0}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:13px 16px;border-top:1px solid var(--line);vertical-align:top}th{font-size:13px;color:var(--muted);background:#0d2234}td:first-child,td:nth-child(n+3){white-space:nowrap}td:nth-child(2){width:53%;overflow-wrap:anywhere}.line{display:block;font-size:.88em;margin-top:3px;color:var(--muted)}.critical,.stale{color:var(--red)}.age{color:var(--amber);font-weight:700}.badge{display:inline-block;font-size:12px;font-weight:700;background:#502d3c;border-radius:5px;padding:2px 7px;margin-left:8px}.empty{padding:22px}footer{margin-top:16px;font-size:13px}#gate p{margin-bottom:16px}#sync-state{min-height:1.5em}#pager{font-variant-numeric:tabular-nums}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi{padding:12px}.clock{display:none}.intro{margin-top:22px}table{min-width:680px}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><img src="logo-der.jpg" alt="DER"><div><strong>Checklist DER</strong><small>Central de Operações · TV</small></div></div>
+    <div class="toolbar"><time class="clock" id="clock"></time><button id="fullscreen" type="button" hidden>Tela cheia</button></div>
+  </header>
+  <div class="intro"><h1>Não conformidades da frota</h1><p id="sync-state" class="muted" role="status">Verificando acesso…</p></div>
+  <section id="gate" class="panel" hidden><p id="gate-message"></p><a href="./">Abrir Checklist DER</a> <button id="retry" type="button">Atualizar painel</button></section>
+  <div id="dashboard" hidden>
+    <section class="kpis" aria-label="Indicadores da frota">
+      <div class="kpi"><strong id="affected"></strong><span>Viaturas afetadas</span></div>
+      <div class="kpi"><strong id="pending"></strong><span>Itens pendentes</span></div>
+      <div class="kpi"><strong id="critical"></strong><span>Itens críticos</span></div>
+      <div class="kpi"><strong id="repeated"></strong><span>Itens repetidos</span></div>
+    </section>
+    <section class="panel" aria-labelledby="pending-title">
+      <div class="table-head">
+        <h2 id="pending-title">Pendências por viatura</h2>
+        <div class="toolbar" id="pagination" hidden><button id="previous" type="button" aria-label="Página anterior">‹</button><span id="pager"></span><button id="next" type="button" aria-label="Próxima página">›</button></div>
+      </div>
+      <div class="table-scroll">
+        <table id="table"><thead><tr><th scope="col">Viatura</th><th scope="col">Item e última evidência</th><th scope="col">Em aberto desde</th><th scope="col">Último registro</th><th scope="col">Registros seguidos</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+      <p class="empty" id="empty" hidden></p>
+    </section>
+    <footer><span>Fonte: Checklist Diário · Horário de Brasília</span><span>Vinicius Vaz Vieira</span></footer>
+  </div>
+</main>
+<script src="tv.js?v=1"></script>
+</body>
+</html>
