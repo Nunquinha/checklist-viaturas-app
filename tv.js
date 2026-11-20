@@ -199,7 +199,7 @@ function mileagePdf(Pdf, {totals,skipped,label}, options) {
     doc.text('Viatura',19,88);
     doc.text('Total rodado',98,88,{align:'right'});
     doc.text('Intervalos entre trocas',147,88,{align:'right'});
-    doc.text('Último trecho',191,88,{align:'right'});
+    doc.text('Km desde a troca anterior',191,88,{align:'right'});
   };
   const startPage = () => {
     header();
