@@ -457,7 +457,10 @@ function startPanel() {
   get('sections').addEventListener('click',event=>{
     const link = event.target.closest('a[href^="#"]');
     const target = link && get(link.hash.slice(1));
+    if (!target) return;
+    event.preventDefault();
     if (target?.tagName==='DETAILS') target.open = true;
+    target.scrollIntoView({block:'start'});
   });
   get('clear-filters').onclick = () => { search.value = ''; filter.value = 'all'; updateFilters(); search.focus(); };
   vehicleDialog.addEventListener('close',()=>{
