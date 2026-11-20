@@ -72,6 +72,9 @@ incidentForm.onsubmit = async event => {
 async function refreshIncidentHistory() {
   const version = ++incidentHistoryRequest;
   const list = byId('incident-records');
+  const allowed=window.checklistCloud?.canReadHistory!==false;
+  byId('incident-history').hidden=!allowed;
+  if(!allowed){list.replaceChildren();return;}
   try {
     const records = (await incidents()).reverse();
     if (version!==incidentHistoryRequest) return;

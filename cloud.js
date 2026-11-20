@@ -53,10 +53,12 @@
   const write = next => localStorage.setItem('checklist-cloud-data-v1'+suffix(),JSON.stringify(next));
   const active = () => Boolean(session && session.expires>Date.now());
   const readingOnly = () => ['viewer','engineer'].includes(session?.user.role);
+  const isVehicleSession = () => session?.user.role==='vehicle';
   const catalogPages = ['viaturas','cadastros','operadores'];
   const canEditCatalog = () => Boolean(session?.user.admin || session?.user.role==='engineer');
   const canOpen = page => {
     if (!active()) return false;
+    if (isVehicleSession()) return ['troca','quinzenal','ocorrencias'].includes(page);
     if (page==='acessos') return Boolean(session.user.owner);
     if (readingOnly()) return ['historico','historico-quinzenal'].includes(page) ||
       (session.user.role==='engineer' && catalogPages.includes(page)) ||
@@ -82,8 +84,9 @@
 
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,
-    get canReport(){ return active() && session.user.role!=='engineer'; },
-    get canExportExcel(){ return active(); },
+    get canReport(){ return active() && !isVehicleSession() && session.user.role!=='engineer'; },
+    get canExportExcel(){ return active() && !isVehicleSession(); },
+    get canReadHistory(){ return active() && !isVehicleSession(); },
     get canDeleteCatalog(){ return active() && Boolean(session.user.owner); },
     get canFileIncident(){ return active() && !readingOnly(); },
     get vehicle(){ return active() ? session.user.prefix : null; },
@@ -193,6 +196,21 @@
         const {cloudSaved,...body} = record;
         await rpc('saveRecord',{kind:'incident',record:body});
         await incidents({...record,cloudSaved:true});
+      }
+
+      if (isVehicleSession()) {
+        const daily = state.records.filter(record=>!record.cloudSaved);
+        if (daily.length!==state.records.length || state.historyCheckpoint) {
+          const next = {...state,records:daily,historyCheckpoint:null};
+          write(next);
+          state = next;
+        }
+        await Promise.all([
+          removeEvidence('inspections',localFortnight.map(record=>record.id)),
+          removeEvidence('incidents',localIncident.map(record=>record.id))
+        ]);
+        updateStatus('Dados sincronizados');
+        return;
       }
 
       let cursor, head, reachedCheckpoint = false;

@@ -45,6 +45,17 @@ async function evidenceRecords(name,record) {
 }
 const inspections = record => evidenceRecords('inspections',record);
 
+async function removeEvidence(name,ids) {
+  if(!ids.length)return;
+  const db=await openInspectionStore();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(name,'readwrite'), store=transaction.objectStore(name);
+    for(const id of ids)store.delete(id);
+    transaction.oncomplete=resolve;
+    transaction.onabort=()=>reject(transaction.error);
+  });
+}
+
 function refreshFortnightChoices() {
   const prefix = fortnightFields.vehicle.value;
   const operatorName = fortnightFields.operator.value;
