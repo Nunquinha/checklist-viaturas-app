@@ -138,11 +138,19 @@ function duration(ms) {
 async function refreshFortnightHistory() {
   const version = ++historyRequest;
   const list = byId('fortnight-records');
+  const count = byId('fortnight-filter-count');
   try {
     const all = await inspections();
     if (version !== historyRequest || historyKind!=='fortnight') return;
     refreshHistoryOptions('fortnight',all);
     const records = all.filter(record=>historyIncludes(record,'fortnight')).reverse();
+    const selected = historyFilters.fortnight.engineer;
+    const name = selected && historyControls.engineer.selectedOptions[0]?.textContent;
+    const total = records.length;
+    const visits = total+(total===1?' vistoria':' vistorias');
+    count.textContent = selected && selected!=='!' && name
+      ? visits+(total===1?' acompanhada por ':' acompanhadas por ')+name
+      : visits+(selected==='!'?' sem acompanhamento':' nos filtros selecionados');
     const image = (url,label) => '<img class="record-image" loading="lazy" src="'+escape(url)+'" alt="'+escape(label)+'">';
     const canReport = window.checklistCloud?.canReport!==false;
     list.innerHTML = records.map((record,index)=>'<details><summary>'+escape(record.prefix)+' · '+time(record.at)+
@@ -163,6 +171,7 @@ async function refreshFortnightHistory() {
     }
   } catch {
     if (version !== historyRequest) return;
+    count.textContent = '';
     list.textContent = 'O navegador não conseguiu abrir o histórico das vistorias.';
   }
 }

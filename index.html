@@ -110,6 +110,7 @@
 <article><div class="history-filter-grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label><label>Viatura<select id="history-vehicle"><option value="">Todas as viaturas</option></select></label><label>Operador<select id="history-operator"><option value="">Todos os operadores</option></select></label><label id="history-engineer-field" hidden>Engenheiro<select id="history-engineer"><option value="">Todos os engenheiros</option></select></label></div>
 <div class="actions history-filter-actions"><button type="button" id="clear-history-filters" hidden>Limpar filtros</button></div></article>
 <div class="actions" id="history-exports"><button type="button" id="prepare-report">Gerar relatório PDF</button><button type="button" id="export-excel">Baixar Excel</button></div>
+<p id="fortnight-filter-count" class="muted" role="status" hidden></p>
 <div id="records"></div><div id="fortnight-records" hidden></div></section>
 <section id="ocorrencias" hidden><h1>Ocorrências no turno</h1>
 <form id="incident-form">
@@ -268,6 +269,7 @@ function page(name) {
     switchHistory(name==='historico'?'daily':'fortnight');
     byId('history-title').textContent=historyKind==='daily'?'Histórico de trocas de turno':'Histórico quinzenal';
     byId('fortnight-records').hidden=historyKind==='daily';
+    byId('fortnight-filter-count').hidden=historyKind==='daily';
     byId('records').hidden=historyKind==='fortnight';
     byId('prepare-report').hidden=window.checklistCloud?.canReport===false;
     byId('export-excel').hidden=window.checklistCloud?.canExportExcel===false;
@@ -616,12 +618,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v23"></script>
-<script src="relatorios.js?v=v23"></script>
-<script src="xlsx.js?v=v23"></script>
-<script src="ocorrencias.js?v=v23"></script>
-<script src="cloud.js?v=v23"></script>
-<script src="instalar.js?v=v23"></script>
+<script src="quinzenal.js?v=v24"></script>
+<script src="relatorios.js?v=v24"></script>
+<script src="xlsx.js?v=v24"></script>
+<script src="ocorrencias.js?v=v24"></script>
+<script src="cloud.js?v=v24"></script>
+<script src="instalar.js?v=v24"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
