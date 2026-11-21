@@ -47,11 +47,13 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <button type="button" role="tab" id="tab-materials" aria-controls="materials" aria-selected="false" tabindex="-1">Reposição</button>
       <button type="button" role="tab" id="tab-resolved" aria-controls="resolved" aria-selected="false" tabindex="-1">Resoluções</button>
       <button type="button" role="tab" id="tab-mileage" aria-controls="mileage" aria-selected="false" tabindex="-1">Quilometragem</button>
+      <button type="button" role="tab" id="tab-overview" aria-controls="overview" aria-selected="false" tabindex="-1">Visão por base</button>
     </div>
     <section id="pending-section" class="panel" role="tabpanel" aria-labelledby="tab-pending-section">
       <div class="filters">
         <label>Buscar viatura ou item<input id="search" type="search" placeholder="Ex.: ITG-173 ou Cones"></label>
         <label>Pendências<select id="filter"><option value="all">Todas</option><option value="critical">Somente críticas</option><option value="repeated">Somente recorrentes</option><option value="shortage">Com falta de material</option></select></label>
+        <label>Base<select id="pending-base"><option value="">Todas as bases</option></select></label>
         <button id="clear-filters" type="button">Limpar filtros</button>
       </div>
       <div class="table-head">
@@ -94,6 +96,13 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <div class="table-scroll"><table id="km-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Total rodado</th><th scope="col">Intervalos entre trocas</th><th scope="col">Km desde a troca anterior</th></tr></thead><tbody id="km-rows"></tbody></table></div>
       <p class="empty muted" id="km-note"></p>
     </section>
+    <section id="overview" class="panel mileage" role="tabpanel" aria-labelledby="tab-overview" hidden>
+      <div class="table-head"><h2>Pendências por base</h2></div>
+      <div class="table-scroll"><table><thead><tr><th scope="col">Base</th><th scope="col">Em aberto</th><th scope="col">Críticas</th><th scope="col">Crítica mais antiga</th></tr></thead><tbody id="base-rows"></tbody></table></div>
+      <div class="table-head"><h2>Evolução semanal</h2></div>
+      <div class="filters"><label>Base<select id="trend-base"><option value="">Todas as bases</option></select></label></div>
+      <div class="table-scroll"><table><thead><tr><th scope="col">Semana iniciada em</th><th scope="col">Novas pendências</th><th scope="col">Resolvidas</th><th scope="col">Saldo</th></tr></thead><tbody id="trend-rows"></tbody></table></div>
+    </section>
   </div>
   <footer>
     <div><span>Fonte: Checklist Diário · Horário de Brasília</span><p id="sync-state" role="status">Verificando acesso…</p></div>
@@ -106,6 +115,6 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
   </dialog>
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
-<script defer src="tv.js?v=13"></script>
+<script defer src="tv.js?v=14"></script>
 </body>
 </html>

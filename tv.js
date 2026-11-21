@@ -266,11 +266,14 @@ function startPanel() {
   const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
   const kmBase = get('km-base');
-  for (const [code,name] of bases) {
-    const option = document.createElement('option');
-    option.value = code;
-    option.textContent = name;
-    kmBase.append(option);
+  const pendingBase = get('pending-base'), trendBase = get('trend-base');
+  for (const select of [kmBase,pendingBase,trendBase]) {
+    for (const [code,name] of bases) {
+      const option = document.createElement('option');
+      option.value = code;
+      option.textContent = name;
+      select.append(option);
+    }
   }
   let email;
 
@@ -422,6 +425,7 @@ function startPanel() {
   function renderRows() {
     const query = normalize(search.value.trim());
     const visible = pending.filter(item=>{
+      if (pendingBase.value && firstPrefixDigit(item.prefix)!==pendingBase.value) return false;
       if (filter.value==='critical' && !item.critical) return false;
       if (filter.value==='repeated' && item.count<2) return false;
       if (filter.value==='shortage' && !shortage(item)) return false;
@@ -462,6 +466,52 @@ function startPanel() {
       : records.size ? 'Nenhuma não conformidade em aberto.' : 'Nenhum checklist diário disponível para este acesso.';
   }
 
+  function renderOverview() {
+    const baseRows = document.createDocumentFragment();
+    for (const [code,name] of bases) {
+      const open = pending.filter(item=>firstPrefixDigit(item.prefix)===code);
+      const critical = open.filter(item=>item.critical);
+      const row = baseRows.appendChild(document.createElement('tr'));
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'vehicle-link';
+      button.textContent = name;
+      button.onclick = () => {
+        pendingBase.value = code;
+        search.value = '';
+        filter.value = 'all';
+        updateFilters();
+        const tab = get('tab-pending-section');
+        activateTab(tab);
+        tab.focus();
+      };
+      row.insertCell().append(button);
+      addText(row.insertCell(),'strong',open.length);
+      addText(row.insertCell(),'strong',critical.length,critical.length?'critical':'');
+      addText(row.insertCell(),'span',critical.length?elapsed(Date.now()-critical[0].first):'—');
+    }
+    get('base-rows').replaceChildren(baseRows);
+    const week = 7*86400000, offset = 3*3600000;
+    const today = new Date(Date.now()-offset);
+    const monday = Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),today.getUTCDate()-(today.getUTCDay()+6)%7)+offset;
+    const calendar = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeZone:zone});
+    const rows = document.createDocumentFragment();
+    const inBase = item => !trendBase.value || firstPrefixDigit(item.prefix)===trendBase.value;
+    const opened = [...pending,...resolved].filter(inBase);
+    const closed = resolved.filter(inBase);
+    for (let index=0;index<4;index++) {
+      const from = monday-index*week, to = from+week;
+      const added = opened.filter(item=>item.first>=from && item.first<to).length;
+      const done = closed.filter(item=>item.closed>=from && item.closed<to).length;
+      const row = rows.appendChild(document.createElement('tr'));
+      addText(row.insertCell(),'span',calendar.format(from)+(index===0?' · Semana atual':''));
+      addText(row.insertCell(),'strong',added);
+      addText(row.insertCell(),'strong',done);
+      addText(row.insertCell(),'strong',(added>done?'+':'')+(added-done));
+    }
+    get('trend-rows').replaceChildren(rows);
+  }
+
   function showVehicle(prefix) {
     const record = latest.get(prefix);
     if (!record) return;
@@ -499,6 +549,7 @@ function startPanel() {
       renderMaterials();
       renderResolved();
       renderMileage();
+      renderOverview();
     }
   }
 
@@ -663,6 +714,8 @@ function startPanel() {
   const updateFilters = () => { page = 0; renderRows(); };
   search.oninput = updateFilters;
   filter.onchange = updateFilters;
+  pendingBase.onchange = updateFilters;
+  trendBase.onchange = renderOverview;
   get('km-period').onchange = renderMileage;
   kmBase.onchange = renderMileage;
   get('open-km-month').onclick = () => {
@@ -697,13 +750,14 @@ function startPanel() {
       target.focus();
     };
   }
-  get('clear-filters').onclick = () => { search.value = ''; filter.value = 'all'; updateFilters(); search.focus(); };
+  get('clear-filters').onclick = () => { search.value = ''; filter.value = 'all'; pendingBase.value = ''; updateFilters(); search.focus(); };
   vehicleDialog.addEventListener('close',()=>{
     if (!get('dashboard').hidden) {
       renderRows();
       renderMaterials();
       renderResolved();
       renderMileage();
+      renderOverview();
     }
   });
   if (demo) {
