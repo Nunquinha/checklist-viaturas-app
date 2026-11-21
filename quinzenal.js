@@ -237,7 +237,7 @@ async function refreshFortnightHistory() {
         record.tools.map(item=>'<li>'+escape(toolResultText(item))+(item.photo?'<br>'+image(item.photo,item.title):'')+'</li>').join('')+'</ul></div>':'')+
       (record.notes ? '<p>'+escape(record.notes)+'</p>' : '')+
       (canReport?'<p><button type="button" data-fortnight-pdf="'+index+'">PDF desta vistoria</button></p>':'')+
-      (canDelete && record.cloudSaved?'<p><button type="button" data-fortnight-delete="'+index+'">Excluir vistoria</button></p>':'')+
+      (canDelete && record.cloudSaved?'<p><button type="button" class="delete-button" data-fortnight-delete="'+index+'">Excluir vistoria</button></p>':'')+
       Object.entries(record.photos).map(([key,photos])=>'<p>'+photoLabels[key]+'</p>'+
         photos.map(url=>image(url,photoLabels[key])).join('')).join('')+
       Object.entries(record.signatures).map(([role,url])=>{
@@ -255,6 +255,7 @@ async function refreshFortnightHistory() {
         try {
           await window.checklistCloud.deleteFortnight(record);
           await refreshFortnightHistory();
+          byId('notice').textContent = 'Vistoria excluída do histórico e dos relatórios.';
         } catch (error) {
           alert(error.message || 'Não foi possível excluir a vistoria.');
         } finally {

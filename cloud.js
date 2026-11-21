@@ -82,12 +82,22 @@
     setTimeout(() => { scheduled = false; sync(); },250);
   }
 
+  const deletedFortnightIds = new Set();
+
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,
     get canReport(){ return active() && !isVehicleSession() && session.user.role!=='engineer'; },
     get canExportExcel(){ return active() && !isVehicleSession(); },
     get canReadHistory(){ return active() && !isVehicleSession(); },
     get canDeleteCatalog(){ return active() && Boolean(session.user.owner); },
+    get canDeleteFortnight(){ return active() && Boolean(session.user.owner); },
+    async deleteFortnight({id,prefix}) {
+      const currentSession = session;
+      await rpc('deleteFortnight',{id,prefix});
+      if (session!==currentSession) return;
+      deletedFortnightIds.add(id);
+      await removeEvidence('inspections',[id]);
+    },
     get canFileIncident(){ return active() && !readingOnly(); },
     get vehicle(){ return active() ? session.user.prefix : null; },
     get storageSuffix(){ return suffix(); }
@@ -97,6 +107,7 @@
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
+    deletedFortnightIds.clear();
     historyFilters.daily = {};
     historyFilters.fortnight = {};
     state = active() ? load('checklist-cloud-data-v1'+suffix(),blank()) : blank();
@@ -190,7 +201,7 @@
       for (const record of localFortnight.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
         await rpc('saveRecord',{kind:'fortnight',record:body});
-        await inspections({...record,cloudSaved:true});
+        if (!deletedFortnightIds.has(record.id)) await inspections({...record,cloudSaved:true});
       }
       for (const record of localIncident.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
@@ -220,12 +231,16 @@
       do {
         const dailyIds = new Set(state.records.map(record=>record.id));
         const batch = await rpc('listRecords',{cursor:cursor ?? null,checkpoint:checkpoint ?? null});
+        if (batch.deletedFortnightIds?.length) {
+          batch.deletedFortnightIds.forEach(id=>deletedFortnightIds.add(id));
+          await removeEvidence('inspections',batch.deletedFortnightIds);
+        }
         head ??= batch.records[0]?.record.id;
         const daily = [];
         for (const {kind,record} of batch.records) {
           if (record.id===checkpoint) { reachedCheckpoint = true; break; }
           if (kind==='daily' && !dailyIds.has(record.id)) daily.push({...record,cloudSaved:true});
-          if (kind==='fortnight' && !fortnightIds.has(record.id)) {
+          if (kind==='fortnight' && !fortnightIds.has(record.id) && !deletedFortnightIds.has(record.id)) {
             await inspections({...record,cloudSaved:true});
             fortnightIds.add(record.id);
           }
