@@ -1,4 +1,4 @@
-const cacheName = 'der-checklist-shell-v30';
+const cacheName = 'der-checklist-shell-v31';
 const version = cacheName.split('-').at(-1);
 const scripts = ['quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
 const appFiles = ['./index.html',...scripts.map(name=>'./'+name+'?v='+version),
@@ -17,9 +17,9 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (['painel-tv/','painel-tv/index.html','tv.html','tv.js'].some(path=>
     url.pathname===new URL(path,self.registration.scope).pathname)) return;
-  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
   if (event.request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
@@ -42,4 +42,3 @@ self.addEventListener('fetch', event => {
     return fetch(event.request);
   }));
 });
-

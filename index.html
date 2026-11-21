@@ -15,6 +15,7 @@
 .report-stat{border:1px solid #dfe5df;padding:10px 14px;flex:1 1 140px}.report-stat strong{display:block;font-size:1.15em}
 .report-record{margin:0 0 9px;padding:9px 12px;border:1px solid #dfe5df;overflow-wrap:anywhere}.report-record p{margin:4px 0;color:#26382e}
 .report-section-title{margin:24px 0 9px;font-size:1.1em}.report-footer{text-align:right;border-top:1px solid #dfe5df;margin-top:22px;padding-top:9px;font-size:.8em;color:#52655a}
+.report-visit-table{width:100%;border-collapse:collapse;font-size:.85em}.report-visit-table th,.report-visit-table td{border-bottom:1px solid #dfe5df;padding:8px;text-align:left}.report-visit-table thead{background:#e9eee9;display:table-header-group}.report-visit-table tr{break-inside:avoid}.report-visit-head{display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap}.report-visit-status{padding:4px 8px;background:#e9eee9;font-size:.8em;font-weight:700}.report-visit-issue{background:#fff1d2;color:#6b490f}.report-visit-data{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin:10px 0}.report-visit-data dt{font-size:.78em;font-weight:700;color:#52655a}.report-visit-data dd{margin:2px 0 0}.fortnight-report-record h4{margin:8px 0 4px}.fortnight-report-record ul{margin:4px 0 8px;padding-left:20px}.report-visit-notes{border-top:1px solid #dfe5df;padding-top:7px}
 .history-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 14px}.history-filter-grid label{margin:0}.history-filter-actions{margin-top:12px}
 .account-strip{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 14px;padding:0 0 4px;border-bottom:1px solid var(--line)}
 .account-info{display:flex;align-items:baseline;flex-wrap:wrap;gap:1px 9px;min-width:0;overflow-wrap:anywhere;font-size:.84rem;line-height:1.3}
@@ -635,12 +636,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v30"></script>
-<script src="relatorios.js?v=v30"></script>
-<script src="xlsx.js?v=v30"></script>
-<script src="ocorrencias.js?v=v30"></script>
-<script src="cloud.js?v=v30"></script>
-<script src="instalar.js?v=v30"></script>
+<script src="quinzenal.js?v=v31"></script>
+<script src="relatorios.js?v=v31"></script>
+<script src="xlsx.js?v=v31"></script>
+<script src="ocorrencias.js?v=v31"></script>
+<script src="cloud.js?v=v31"></script>
+<script src="instalar.js?v=v31"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));

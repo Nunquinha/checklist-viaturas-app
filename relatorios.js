@@ -134,22 +134,58 @@ function itemIssues(record) {
   }).join(', ');
 }
 
-function reportRecord(record,daily,grouped=false) {
-  const date = time(daily?record.inspected||record.exchange:record.at);
-  const solo = daily&&isSoloChecklist(record);
-  const names = daily&&!solo?[record.outgoing,record.incoming].filter(Boolean).join(' → '):record.operator;
-  const discrepancies = daily?itemIssues(record):'';
-  const details = daily ? [
+function reportRecord(record) {
+  const date = time(record.inspected||record.exchange);
+  const solo = isSoloChecklist(record);
+  const names = solo?record.operator:[record.outgoing,record.incoming].filter(Boolean).join(' → ');
+  const discrepancies = itemIssues(record);
+  const details = [
     solo?'Checklist sozinho':null,
     record.reason&&(solo?'Justificativa: ':'Ausência: ')+record.reason,
     record.lateReason&&'Atraso: '+record.lateReason,
     discrepancies&&'Não conformidades: '+discrepancies
-  ] : [fortnightPeriod(record.at),!grouped&&engineerLabel(record),record.notes,
-    record.tools?.length && 'Ferramental: '+record.tools.length+' conferidos · '+record.tools.filter(toolHasIssue).length+' com pendências',
-    ...(record.tools||[]).filter(toolHasIssue).map(toolResultText)];
+  ];
   return '<article class="report-record"><strong>'+escape(record.prefix)+' · '+date+'</strong>'+
     '<p>'+escape(names||'Operador não registrado')+' · '+duration(record.durationMs)+'</p>'+
     details.filter(Boolean).map(detail=>'<p>'+escape(detail)+'</p>').join('')+'</article>';
+}
+
+function fortnightReportDetails(record) {
+  const tools = record.tools||[];
+  const issues = tools.filter(toolHasIssue);
+  const photos = Object.entries(photoLabels).map(([key,label])=>label+' '+(record.photos?.[key]?.length??0));
+  const evidence = issues.filter(item=>item.photo).length;
+  const status = !tools.length?'Sem conferência por item':issues.length?'Pendências registradas':'Itens conferidos em ordem';
+  return '<article class="report-record fortnight-report-record"><div class="report-visit-head"><div><strong>'+
+    escape(record.prefix)+' · '+time(record.at)+'</strong><p>'+escape(fortnightPeriod(record.at))+'</p></div>'+
+    '<span class="report-visit-status'+(issues.length?' report-visit-issue':'')+'">'+status+'</span></div>'+
+    '<dl class="report-visit-data"><div><dt>Operador</dt><dd>'+escape(record.operator||'Não registrado')+'</dd></div>'+
+    '<div><dt>Duração</dt><dd>'+duration(record.durationMs)+'</dd></div>'+
+    '<div><dt>Ferramental</dt><dd>'+(tools.length?tools.length+' conferidos · '+(tools.length-issues.length)+' em ordem · '+issues.length+' pendentes':'Sem itens registrados')+'</dd></div>'+
+    '<div><dt>Fotos da vistoria</dt><dd>'+photos.join(' · ')+(evidence?' · '+evidence+' de pendências':'')+'</dd></div></dl>'+
+    (issues.length?'<h4>Pendências de ferramental</h4><ul>'+issues.map(item=>'<li>'+escape(toolResultText(item))+'</li>').join('')+'</ul>':'')+
+    (record.notes?'<p class="report-visit-notes"><strong>Observações</strong> '+escape(record.notes)+'</p>':'')+'</article>';
+}
+
+function fortnightVehicleSummary(records) {
+  const groups = new Map();
+  for (const record of records) {
+    const period = fortnightPeriod(record.at);
+    const key = JSON.stringify([record.prefix,period]);
+    const row = groups.get(key)||{prefix:record.prefix,period,visits:0,attended:0,checked:0,issues:0};
+    row.visits++;
+    if (record.attended) row.attended++;
+    if (record.tools?.length) {
+      row.checked++;
+      row.issues+=record.tools.filter(toolHasIssue).length;
+    }
+    groups.set(key,row);
+  }
+  return '<h2 class="report-section-title">Resumo por viatura e quinzena</h2><table class="report-visit-table">'+
+    '<thead><tr><th>Viatura</th><th>Quinzena</th><th>Vistorias</th><th>Com engenheiro</th><th>Com ferramental conferido</th><th>Pendências registradas</th></tr></thead><tbody>'+
+    [...groups.values()].sort((a,b)=>historyOrder.compare(a.prefix,b.prefix)).map(row=>
+      '<tr><th scope="row">'+escape(row.prefix)+'</th><td>'+escape(row.period)+'</td><td>'+row.visits+'</td><td>'+row.attended+
+      '</td><td>'+row.checked+' de '+row.visits+'</td><td>'+(row.checked?row.issues:'—')+'</td></tr>').join('')+'</tbody></table>';
 }
 
 function groupedFortnightRecords(records) {
@@ -162,7 +198,7 @@ function groupedFortnightRecords(records) {
   return [...groups.entries()].sort(([a,left],[b,right])=>!a?1:!b?-1:historyOrder.compare(left.label,right.label))
     .map(([,group])=>'<h3 class="report-people">'+escape(group.label)+' · '+group.records.length+
       (group.records.length===1?' vistoria':' vistorias')+'</h3>'+
-      group.records.map(record=>reportRecord(record,false,true)).join('')).join('');
+      group.records.map(fortnightReportDetails).join('')).join('');
 }
 
 byId('prepare-report').onclick = async event => {
@@ -173,19 +209,25 @@ byId('prepare-report').onclick = async event => {
     const report = await selectedReport();
     const {daily,records,period,vehicle,operator,engineer,title} = report;
     const fields = [['Período',period],['Viatura',vehicle],['Operador',operator]];
-    const stats = [['Registros',records.length],['Tempo médio',reportDuration(records)]];
+    const stats = [[daily?'Registros':'Vistorias',records.length],['Tempo médio',reportDuration(records)]];
     if(!daily) {
       fields.push(['Engenheiro',engineer]);
       const attended = records.filter(record=>record.attended).length;
       const rate = records.length?(attended/records.length).toLocaleString('pt-BR',{style:'percent',maximumFractionDigits:1}):'—';
       stats.push(['Com engenheiro',attended+' de '+records.length+(records.length?' · '+rate:'')]);
+      const checked = records.filter(record=>record.tools?.length);
+      const tools = checked.flatMap(record=>record.tools);
+      stats.push(['Viaturas vistoriadas',new Set(records.map(record=>record.prefix)).size],
+        ['Com ferramental conferido',checked.length+' de '+records.length],
+        ['Pendências de ferramental',tools.length?tools.filter(toolHasIssue).length:'—']);
     }
     const summary = '<div class="report-stats">'+stats.map(([label,value])=>'<div class="report-stat"><span>'+label+
       '</span><strong>'+escape(value)+'</strong></div>').join('')+'</div>';
     const details=!records.length?'<p>Nenhum registro nos filtros selecionados.</p>':daily?
-      records.map(record=>reportRecord(record,true)).join(''):groupedFortnightRecords(records);
+      records.map(reportRecord).join(''):groupedFortnightRecords(records);
+    const coverage = !daily&&records.length ? fortnightVehicleSummary(records) : '';
     openReport('Relatório de '+title.toLocaleLowerCase('pt-BR'),fields,
-      summary+'<h2 class="report-section-title">'+(daily?'Registros do período':'Vistorias por engenheiro')+'</h2>'+details,button);
+      summary+coverage+'<h2 class="report-section-title">'+(daily?'Registros do período':'Detalhamento por engenheiro')+'</h2>'+details,button);
   } catch {
     byId('notice').textContent = 'Não foi possível preparar o relatório. Tente novamente.';
   } finally { button.disabled = false; }
