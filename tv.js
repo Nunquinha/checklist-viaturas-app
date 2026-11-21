@@ -246,8 +246,54 @@ function elapsedTime(ms) {
   return days ? days+(days===1?' dia':' dias') : hours+' h';
 }
 
+function panelTablePdf(Pdf, report, options) {
+  const {doc,font,header,finish} = derPdf(Pdf,options,report.title,report.summary);
+  header();
+  let y = 60;
+  for (const {title,columns,widths,rows} of report.tables) {
+    const printHead = () => {
+      font(11,true);
+      doc.text(title,15,y);
+      y += 4;
+      doc.setFillColor('#e9eee9');
+      doc.rect(15,y,180,8,'F');
+      font(8,true);
+      let x = 17;
+      columns.forEach((label,i)=>{ doc.text(label,x,y+5); x += widths[i]; });
+      y += 13;
+    };
+    if (y>241) { doc.addPage(); header(); y = 60; }
+    printHead();
+    for (const [index,row] of rows.entries()) {
+      font(9);
+      const cells = row.map((value,i)=>doc.splitTextToSize(String(value),widths[i]-4));
+      let lines = Math.max(...cells.map(cell=>cell.length));
+      let start = 0;
+      while (start<lines) {
+        if (y+Math.min(lines-start,3)*4+3>276) { doc.addPage(); header(); y = 60; printHead(); }
+        const take = Math.min(lines-start,Math.floor((273-y)/4)+1);
+        if (index%2) {
+          doc.setFillColor('#f7f9f7');
+          doc.rect(15,y-3.5,180,take*4+4,'F');
+        }
+        font(9);
+        let x = 17;
+        cells.forEach((cell,i)=>{
+          const part = cell.slice(start,start+take);
+          if (part.length) doc.text(part,x,y,{lineHeightFactor:1.26});
+          x += widths[i];
+        });
+        y += take*4+4;
+        start += take;
+      }
+    }
+    y += 7;
+  }
+  return finish();
+}
+
 if (typeof module!=='undefined') module.exports = {openNonconformities,nonconformityHistory,materialsToReplace,
-  shiftMileage,demonstrationRecords,nonconformityPdf,mileagePdf};
+  shiftMileage,demonstrationRecords,nonconformityPdf,mileagePdf,panelTablePdf};
 if (typeof document!=='undefined') startPanel();
 
 function startPanel() {
@@ -262,6 +308,7 @@ function startPanel() {
   const pageSize = 12;
   let sessionToken, accessScope, checkpoint, refreshing = false, syncedAt = null;
   let records = new Map(), latest = new Map(), pending = [], resolved = [], page = 0;
+  const reports = {};
   const requestForm = get('request-code'), verifyForm = get('verify-code');
   const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
@@ -300,6 +347,7 @@ function startPanel() {
     latest = new Map();
     pending = [];
     resolved = [];
+    for (const key of ['materials','resolved','overview']) delete reports[key];
     checkpoint = null;
     syncedAt = null;
     page = 0;
@@ -340,7 +388,8 @@ function startPanel() {
   }
 
   function renderMaterials() {
-    const query = normalize(get('material-search').value.trim());
+    const searchText = get('material-search').value.trim();
+    const query = normalize(searchText);
     const materials = materialsToReplace(pending).filter(item=>!query || normalize(item.title).includes(query) ||
       item.vehicles.some(vehicle=>normalize(vehicle.prefix).includes(query)));
     const rows = document.createDocumentFragment();
@@ -362,6 +411,12 @@ function startPanel() {
     get('material-summary').textContent = materials.length
       ? materials.length+(materials.length===1?' material com reposição pendente':' materiais com reposição pendente')
       : 'Nenhum material a repor para essa busca.';
+    reports.materials = materials.length ? {title:'Relatório de reposição',
+      summary:'Materiais: '+materials.length+(searchText?' · Busca: '+searchText.slice(0,80):''),
+      tables:[{title:'Materiais a repor',columns:['Material','Total a repor','Viaturas e quantidade'],widths:[53,27,100],
+        rows:materials.map(item=>[item.title,number.format(item.total),
+          item.vehicles.map(vehicle=>vehicle.prefix+' ('+number.format(vehicle.amount)+')').join(' · ')])}]} : null;
+    get('download-materials-pdf').disabled = !reports.materials;
   }
 
   function renderResolved() {
@@ -387,6 +442,12 @@ function startPanel() {
       ? matches.length+(matches.length===1?' resolvida':' resolvidas')+' · Tempo mediano: '+elapsed(median)+
         (matches.length>12?' · 12 mais recentes abaixo':'')
       : 'Nenhuma resolução para estes filtros.';
+    const label = days?'Últimos '+days+' dias':'Todo o histórico';
+    reports.resolved = matches.length ? {title:'Relatório de pendências resolvidas',
+      summary:label+' · Resolvidas: '+matches.length+' · Tempo mediano: '+elapsed(median),
+      tables:[{title:'Pendências resolvidas',columns:['Viatura','Item','Conforme em','Tempo em aberto'],widths:[24,68,48,40],
+        rows:matches.map(item=>[item.prefix,item.title || 'Item sem nome',date.format(item.closed),elapsed(item.closed-item.first)])}]} : null;
+    get('download-resolved-pdf').disabled = !reports.resolved;
   }
 
   function mileagePeriod(period, now, base = kmBase.value) {
@@ -468,6 +529,7 @@ function startPanel() {
 
   function renderOverview() {
     const baseRows = document.createDocumentFragment();
+    const baseData = [], trendData = [];
     for (const [code,name] of bases) {
       const open = pending.filter(item=>firstPrefixDigit(item.prefix)===code);
       const critical = open.filter(item=>item.critical);
@@ -488,7 +550,9 @@ function startPanel() {
       row.insertCell().append(button);
       addText(row.insertCell(),'strong',open.length);
       addText(row.insertCell(),'strong',critical.length,critical.length?'critical':'');
-      addText(row.insertCell(),'span',critical.length?elapsed(Date.now()-critical[0].first):'—');
+      const oldest = critical.length?elapsed(Date.now()-critical[0].first):'—';
+      addText(row.insertCell(),'span',oldest);
+      baseData.push([name,open.length,critical.length,oldest]);
     }
     get('base-rows').replaceChildren(baseRows);
     const week = 7*86400000, offset = 3*3600000;
@@ -507,9 +571,18 @@ function startPanel() {
       addText(row.insertCell(),'span',calendar.format(from)+(index===0?' · Semana atual':''));
       addText(row.insertCell(),'strong',added);
       addText(row.insertCell(),'strong',done);
-      addText(row.insertCell(),'strong',(added>done?'+':'')+(added-done));
+      const balance = (added>done?'+':'')+(added-done);
+      addText(row.insertCell(),'strong',balance);
+      trendData.push([calendar.format(from),added,done,balance]);
     }
     get('trend-rows').replaceChildren(rows);
+    const base = bases.find(([code])=>code===trendBase.value)?.[1] || 'Todas as bases';
+    reports.overview = records.size ? {title:'Relatório de pendências por base',summary:'Comparativo da frota e evolução das últimas quatro semanas',
+      tables:[
+        {title:'Pendências em aberto por base',columns:['Base','Em aberto','Críticas','Crítica mais antiga'],widths:[60,35,30,55],rows:baseData},
+        {title:'Evolução semanal · '+base,columns:['Semana iniciada em','Novas pendências','Resolvidas','Saldo'],widths:[60,50,40,30],rows:trendData}
+      ]} : null;
+    get('download-overview-pdf').disabled = !reports.overview;
   }
 
   function showVehicle(prefix) {
@@ -708,6 +781,13 @@ function startPanel() {
     return downloadReport(get('download-km-pdf'),get('km-pdf-error'),'quilometragem-da-frota',
       (Pdf,options)=>mileagePdf(Pdf,data,{...options,base}),()=>mileagePeriod(get('km-period').value,Date.now()).totals.length);
   };
+  for (const [key,filename] of [['materials','reposicao'],['resolved','resolucoes'],['overview','visao-por-base']]) {
+    const button = get('download-'+key+'-pdf'), error = get(key+'-pdf-error');
+    button.onclick = () => {
+      const report = reports[key];
+      if (report) return downloadReport(button,error,filename,(Pdf,options)=>panelTablePdf(Pdf,report,options),()=>reports[key]);
+    };
+  }
   get('refresh-now').onclick = refresh;
   get('previous').onclick = () => { page--; renderRows(); };
   get('next').onclick = () => { page++; renderRows(); };

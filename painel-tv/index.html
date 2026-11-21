@@ -68,7 +68,8 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <p class="empty" id="empty" hidden></p>
     </section>
     <section id="materials" class="panel mileage" role="tabpanel" aria-labelledby="tab-materials" hidden>
-      <div class="table-head"><h2>Reposição por material</h2></div>
+      <div class="table-head"><h2>Reposição por material</h2><button id="download-materials-pdf" type="button" disabled>Baixar PDF de reposição</button></div>
+      <p class="empty stale" id="materials-pdf-error" role="alert" hidden></p>
       <div class="filters">
         <label>Buscar material ou viatura<input id="material-search" type="search" placeholder="Ex.: Cones"></label>
         <p id="material-summary" role="status"></p>
@@ -76,7 +77,8 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <div class="table-scroll"><table id="material-table"><thead><tr><th scope="col">Material</th><th scope="col">Total a repor</th><th scope="col">Viaturas e quantidade a repor</th></tr></thead><tbody id="material-rows"></tbody></table></div>
     </section>
     <section id="resolved" class="panel mileage" role="tabpanel" aria-labelledby="tab-resolved" hidden>
-      <div class="table-head"><h2>Pendências resolvidas</h2></div>
+      <div class="table-head"><h2>Pendências resolvidas</h2><button id="download-resolved-pdf" type="button" disabled>Baixar PDF de resoluções</button></div>
+      <p class="empty stale" id="resolved-pdf-error" role="alert" hidden></p>
       <div class="filters">
         <label>Buscar item ou viatura<input id="resolved-search" type="search" placeholder="Ex.: Cones"></label>
         <label>Período de resolução<select id="resolved-period"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="0">Todo o histórico</option></select></label>
@@ -97,7 +99,8 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <p class="empty muted" id="km-note"></p>
     </section>
     <section id="overview" class="panel mileage" role="tabpanel" aria-labelledby="tab-overview" hidden>
-      <div class="table-head"><h2>Pendências por base</h2></div>
+      <div class="table-head"><h2>Pendências por base</h2><button id="download-overview-pdf" type="button" disabled>Baixar PDF da visão por base</button></div>
+      <p class="empty stale" id="overview-pdf-error" role="alert" hidden></p>
       <div class="table-scroll"><table><thead><tr><th scope="col">Base</th><th scope="col">Em aberto</th><th scope="col">Críticas</th><th scope="col">Crítica mais antiga</th></tr></thead><tbody id="base-rows"></tbody></table></div>
       <div class="table-head"><h2>Evolução semanal</h2></div>
       <div class="filters"><label>Base<select id="trend-base"><option value="">Todas as bases</option></select></label></div>
@@ -115,6 +118,6 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
   </dialog>
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
-<script defer src="tv.js?v=14"></script>
+<script defer src="tv.js?v=15"></script>
 </body>
 </html>
