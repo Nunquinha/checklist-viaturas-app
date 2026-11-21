@@ -107,7 +107,7 @@ function openReport(title,fields,sections,trigger) {
 
 function showIndividualFortnightReport(record,trigger) {
   if(!record||window.checklistCloud?.canReport===false)return;
-  const fields=[['Viatura',record.prefix],['Data da vistoria',time(record.at)],
+  const fields=[['Viatura',record.prefix],['Data da vistoria',time(record.at)],['Quinzena',fortnightPeriod(record.at)],
     ['Operador',record.operator],['Engenheiro',engineerLabel(record)],['Duração',duration(record.durationMs)]];
   const figure = (source,label) => '<figure><img src="'+escape(source)+'" alt="'+escape(label)+'"><figcaption>'+
     escape(label)+'</figcaption></figure>';
@@ -118,8 +118,12 @@ function showIndividualFortnightReport(record,trigger) {
   const evidence = (title,items,classes='') => '<h2 class="report-section-title">'+title+'</h2>'+
     (items.length?'<div class="report-evidence '+classes+'">'+items.join('')+'</div>':'<p>Sem registros.</p>');
   const notes=record.notes?'<h2 class="report-section-title">Observações</h2><p>'+escape(record.notes)+'</p>':'';
+  const tools=record.tools?.length?'<h2 class="report-section-title">Conferência de ferramental</h2><ul>'+
+    record.tools.map(item=>'<li>'+escape(toolResultText(item))+'</li>').join('')+'</ul>'+
+    (record.tools.some(item=>item.photo)?evidence('Fotos das pendências de ferramental',
+      record.tools.filter(item=>item.photo).map(item=>figure(item.photo,item.title))):''):'';
   openReport('Checklist quinzenal · Vistoria individual',fields,
-    notes+evidence('Registro fotográfico',photos)+evidence('Assinaturas',signatures,'report-evidence-signatures'),trigger);
+    notes+tools+evidence('Registro fotográfico',photos)+evidence('Assinaturas',signatures,'report-evidence-signatures'),trigger);
 }
 
 function itemIssues(record) {
@@ -140,7 +144,9 @@ function reportRecord(record,daily,grouped=false) {
     record.reason&&(solo?'Justificativa: ':'Ausência: ')+record.reason,
     record.lateReason&&'Atraso: '+record.lateReason,
     discrepancies&&'Não conformidades: '+discrepancies
-  ] : [!grouped&&engineerLabel(record),record.notes];
+  ] : [fortnightPeriod(record.at),!grouped&&engineerLabel(record),record.notes,
+    record.tools?.length && 'Ferramental: '+record.tools.length+' conferidos · '+record.tools.filter(toolHasIssue).length+' com pendências',
+    ...(record.tools||[]).filter(toolHasIssue).map(toolResultText)];
   return '<article class="report-record"><strong>'+escape(record.prefix)+' · '+date+'</strong>'+
     '<p>'+escape(names||'Operador não registrado')+' · '+duration(record.durationMs)+'</p>'+
     details.filter(Boolean).map(detail=>'<p>'+escape(detail)+'</p>').join('')+'</article>';
@@ -202,14 +208,15 @@ byId('export-excel').onclick = async event => {
     const {daily,records,title} = await selectedReport();
     const headers = daily
       ? ['Viatura','Troca','Conferência','Quem entregou','Quem recebeu','Operador (sozinho)','Duração (s)','Quilometragem','Combustível','Justificativa','Atraso','Não conformidades']
-      : ['Viatura','Vistoria','Operador','Duração (s)','Acompanhamento','Engenheiro','Observações'];
+      : ['Viatura','Vistoria','Operador','Duração (s)','Acompanhamento','Engenheiro','Observações','Quinzena','Ferramental conferido','Pendências de ferramental'];
     const seconds = record => Number.isFinite(record.durationMs)?Math.round(record.durationMs/1000):null;
     const rows = records.map(record=>daily ? [
       record.prefix,time(record.exchange),record.inspected?time(record.inspected):'',isSoloChecklist(record)?'':record.outgoing,
       record.incoming,isSoloChecklist(record)?record.operator:'',
       seconds(record),record.km===''||record.km==null?null:Number(record.km),record.fuel,
       record.reason,record.lateReason,itemIssues(record)
-    ] : [record.prefix,time(record.at),record.operator,seconds(record),record.attended?'Sim':'Não',record.engineer,record.notes]);
+    ] : [record.prefix,time(record.at),record.operator,seconds(record),record.attended?'Sim':'Não',record.engineer,record.notes,
+      fortnightPeriod(record.at),record.tools?.length??null,(record.tools||[]).filter(toolHasIssue).map(toolResultText).join('\n')]);
     const bytes = createWorkbook(title,headers,rows);
     const url = URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
     const link = document.createElement('a');

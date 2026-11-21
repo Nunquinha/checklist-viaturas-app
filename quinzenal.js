@@ -5,6 +5,54 @@ let fortnightStarted = null;
 let fortnightPads = {};
 let historyRequest = 0;
 let database;
+let toolKey;
+let fortnightTools = [];
+const toolStatuses = ['Em ordem','Com problema','Faltando'];
+const toolHasIssue = item => item.status!=='Em ordem';
+
+function fortnightPeriod(at) {
+  const parts = new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',year:'numeric',timeZone:'America/Sao_Paulo'})
+    .formatToParts(new Date(at));
+  const part = type => parts.find(item=>item.type===type)?.value;
+  return (Number(part('day'))<=15?'1ª':'2ª')+' quinzena de '+part('month')+' de '+part('year');
+}
+
+function refreshFortnightTools(prefix) {
+  const tools = prefix ? state.items.filter(item=>item.active && item.fortnightTool &&
+    itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))) : [];
+  byId('fortnight-period').textContent = fortnightPeriod(Date.now());
+  const key = JSON.stringify([window.checklistCloud?.storageSuffix,prefix,tools.map(({id,title,expected})=>[id,title,expected])]);
+  if (key===toolKey) return;
+  toolKey = key;
+  fortnightTools = tools;
+  const area = byId('fortnight-tools');
+  area.innerHTML = tools.length ? tools.map((item,index)=>
+    '<fieldset class="fortnight-tool"><legend>'+escape(item.title)+'</legend>'+
+    (item.expected==null?'':'<p class="muted">Quantidade esperada: '+escape(item.expected)+'</p>')+
+    '<div class="choices">'+toolStatuses.map(status=>'<label><input type="radio" name="tool-status-'+index+
+      '" value="'+status+'" required>'+status+'</label>').join('')+'</div>'+
+    '<div class="fortnight-exception" hidden>'+
+    (item.expected==null?'':'<label>Quantidade encontrada<input type="number" name="tool-count-'+index+'" min="0" max="9999" step="1" inputmode="numeric" disabled></label>')+
+    '<label>Justificativa breve<input name="tool-note-'+index+'" maxlength="300" disabled></label>'+
+    '<label>Foto da pendência<input type="file" name="tool-photo-'+index+'" accept="image/jpeg,image/png,image/webp" disabled></label></div></fieldset>'
+  ).join('') : '<p class="muted">'+(prefix?'Nenhum item de ferramental configurado para esta viatura.':'Selecione uma viatura para ver o ferramental.')+'</p>';
+  byId('fortnight-progress').textContent = tools.length?'0 de '+tools.length+' conferidos':'';
+  area.querySelectorAll('fieldset').forEach((field,index)=>{
+    const exception = field.querySelector('.fortnight-exception');
+    for (const input of field.querySelectorAll('[type="radio"]')) input.onchange = () => {
+      const issue = fortnightFields['tool-status-'+index].value!=='Em ordem';
+      exception.hidden = !issue;
+      for (const control of exception.querySelectorAll('input')) { control.disabled = !issue; control.required = issue; }
+      const checked = area.querySelectorAll('[type="radio"]:checked').length;
+      byId('fortnight-progress').textContent = checked+' de '+tools.length+' conferidos';
+    };
+  });
+}
+
+function toolResultText(item) {
+  return item.title+' · '+item.status+(item.expected==null?'':' · '+item.found+' de '+item.expected)+
+    (item.note?' · '+item.note:'');
+}
 
 function openInspectionStore() {
   if (!database) {
@@ -66,6 +114,7 @@ function refreshFortnightChoices() {
   if(window.checklistCloud?.vehicle)fortnightFields.vehicle.value=window.checklistCloud.vehicle;
 
   const current = fortnightFields.vehicle.value;
+  refreshFortnightTools(current);
   const eligible = operators().filter(operator => current &&
     (fortnightFields.coverage.checked || operator.vehicles.includes(current)));
   fortnightFields.operator.innerHTML = option('','Selecione o operador') +
@@ -111,6 +160,16 @@ fortnight.onsubmit = async event => {
   const completedAt = Date.now();
   const storageSuffix = window.checklistCloud?.storageSuffix;
   const signatures = padImages(fortnightPads);
+  const toolChecks = fortnightTools.map((item,index)=>{
+    const status = values.get('tool-status-'+index);
+    const expected = item.expected??null;
+    const issue = status!=='Em ordem';
+    return {id:item.id,title:item.title,status,expected,found:expected===null?null:issue?Number(values.get('tool-count-'+index)):expected,
+      note:issue?(values.get('tool-note-'+index)||'').trim():'',file:issue?values.get('tool-photo-'+index):null};
+  });
+  if (toolChecks.some(item=>!toolStatuses.includes(item.status) || (toolHasIssue(item) && (!item.note || !item.file?.size)))) {
+    return alert('Confira todos os itens e inclua justificativa e foto para cada pendência.');
+  }
   button.disabled = true;
   try {
     const photos = {};
@@ -118,20 +177,23 @@ fortnight.onsubmit = async event => {
       photos[key] = [];
       for (const file of files) photos[key].push(await preparePhoto(file));
     }
+    const tools = [];
+    for (const {file,...item} of toolChecks) tools.push({...item,photo:file?await preparePhoto(file):null});
     const at = new Date(completedAt).toISOString();
-    if (JSON.stringify(photos).length>7000000) throw new Error('Vistoria muito grande. Reduza a quantidade de fotos.');
+    if (JSON.stringify({photos,tools}).length>7000000) throw new Error('Vistoria muito grande. Reduza a quantidade de fotos.');
     if (storageSuffix!==window.checklistCloud?.storageSuffix) throw Error('A sessão mudou. Reabra o formulário.');
     await inspections({
       id: at+'-'+(globalThis.crypto?.randomUUID?.()||Math.random().toString(36).slice(2)), at, prefix: values.get('vehicle')||window.checklistCloud?.vehicle, operator: values.get('operator'),
-      attended, engineer, notes: values.get('notes').trim(), signatures, photos,
+      attended, engineer, notes: values.get('notes').trim(), signatures, photos, tools,
       durationMs: Math.max(0,completedAt-(fortnightStarted??completedAt))
     });
     window.checklistCloud?.schedule();
     fortnight.reset();
+    toolKey = undefined;
     fortnightStarted = null;
     refreshFortnightChoices();
     refreshFortnightPads();
-    page('historico-quinzenal');
+    if(window.checklistCloud?.canReadHistory!==false)page('historico-quinzenal');
     byId('notice').textContent = 'Vistoria quinzenal salva neste navegador.';
   } catch (error) {
     alert(error.message || 'Não foi possível salvar a vistoria. Tente novamente.');
@@ -164,13 +226,18 @@ async function refreshFortnightHistory() {
       : visits+(selected==='!'?' sem acompanhamento':' nos filtros selecionados');
     const image = (url,label) => '<img class="record-image" loading="lazy" src="'+escape(url)+'" alt="'+escape(label)+'">';
     const canReport = window.checklistCloud?.canReport!==false;
+    const canDelete = window.checklistCloud?.canDeleteFortnight;
     list.innerHTML = records.map((record,index)=>'<details><summary>'+escape(record.prefix)+' · '+time(record.at)+
       ' · '+escape(record.attended?record.engineer:'Sem engenheiro')+
       '</summary><p>Operador: '+escape(record.operator)+'</p><p>Acompanhamento: '+
       (record.attended ? escape(record.engineer) : 'Sem engenheiro')+
       '</p><p>Tempo de conclusão: '+duration(record.durationMs)+'</p>'+
+      '<p>'+escape(fortnightPeriod(record.at))+'</p>'+
+      (record.tools?.length?'<div class="fortnight-results"><h3>Ferramental conferido</h3><ul>'+
+        record.tools.map(item=>'<li>'+escape(toolResultText(item))+(item.photo?'<br>'+image(item.photo,item.title):'')+'</li>').join('')+'</ul></div>':'')+
       (record.notes ? '<p>'+escape(record.notes)+'</p>' : '')+
       (canReport?'<p><button type="button" data-fortnight-pdf="'+index+'">PDF desta vistoria</button></p>':'')+
+      (canDelete && record.cloudSaved?'<p><button type="button" data-fortnight-delete="'+index+'">Excluir vistoria</button></p>':'')+
       Object.entries(record.photos).map(([key,photos])=>'<p>'+photoLabels[key]+'</p>'+
         photos.map(url=>image(url,photoLabels[key])).join('')).join('')+
       Object.entries(record.signatures).map(([role,url])=>{
@@ -179,6 +246,21 @@ async function refreshFortnightHistory() {
       }).join('')+'</details>').join('') || '<article>Nenhuma vistoria registrada no período.</article>';
     for(const button of list.querySelectorAll('[data-fortnight-pdf]')) {
       button.onclick=()=>showIndividualFortnightReport(records[Number(button.dataset.fortnightPdf)],button);
+    }
+    for (const button of list.querySelectorAll('[data-fortnight-delete]')) {
+      button.onclick = async () => {
+        const record = records[Number(button.dataset.fortnightDelete)];
+        if (!confirm('Excluir a vistoria de '+record.prefix+' de '+time(record.at)+' do histórico e dos relatórios?')) return;
+        button.disabled = true;
+        try {
+          await window.checklistCloud.deleteFortnight(record);
+          await refreshFortnightHistory();
+        } catch (error) {
+          alert(error.message || 'Não foi possível excluir a vistoria.');
+        } finally {
+          button.disabled = false;
+        }
+      };
     }
   } catch {
     if (version !== historyRequest) return;

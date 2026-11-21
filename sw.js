@@ -1,4 +1,4 @@
-const cacheName = 'der-checklist-shell-v28';
+const cacheName = 'der-checklist-shell-v30';
 const version = cacheName.split('-').at(-1);
 const scripts = ['quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
 const appFiles = ['./index.html',...scripts.map(name=>'./'+name+'?v='+version),
