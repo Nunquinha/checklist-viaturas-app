@@ -15,6 +15,7 @@
   const accessForm = byId('access-form');
   const accessList = byId('access-list');
   let session, email, syncing = false, scheduled = false, syncRequested = false;
+  let retryTimer, retryDelay = 5000;
 
   function rpc(action,body = {},token = session?.token) {
     const request = {action,body,token:token || null};
@@ -82,10 +83,19 @@
     setTimeout(() => { scheduled = false; sync(); },250);
   }
 
+  function recordSaved(label) {
+    const message = byId('notice');
+    message.textContent = label+' no aparelho. '+(navigator.onLine
+      ? 'O app vai sincronizar automaticamente.'
+      : 'Sem conexão. Será enviado quando o app estiver aberto e a internet voltar.');
+    message.scrollIntoView({block:'nearest'});
+    schedule();
+  }
+
   const deletedFortnightIds = new Set();
 
   window.checklistCloud = {
-    enabled:true,canOpen,persist,schedule,showAccess,
+    enabled:true,canOpen,persist,schedule,showAccess,recordSaved,
     get canReport(){ return active() && !isVehicleSession() && session.user.role!=='engineer'; },
     get canExportExcel(){ return active() && !isVehicleSession(); },
     get canReadHistory(){ return active() && !isVehicleSession(); },
@@ -107,6 +117,9 @@
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
+    clearTimeout(retryTimer);
+    retryTimer = undefined;
+    retryDelay = 5000;
     deletedFortnightIds.clear();
     historyFilters.daily = {};
     historyFilters.fortnight = {};
@@ -142,12 +155,21 @@
     }
   }
 
-  function updateStatus(text) { byId('cloud-status').textContent = text; }
+  function updateStatus(text,connection='online') {
+    byId('cloud-status').textContent = text;
+    account.dataset.connection = connection;
+  }
+
+  function showOfflineStatus() {
+    updateStatus('Sem conexão · lançamentos ficam salvos no aparelho','offline');
+  }
 
   async function sync() {
     if (syncing || !active()) return;
+    clearTimeout(retryTimer);
+    retryTimer = undefined;
     if (!navigator.onLine) {
-      updateStatus('Sem sinal · registros salvos neste aparelho');
+      showOfflineStatus();
       return;
     }
     syncing = true;
@@ -221,6 +243,7 @@
           removeEvidence('incidents',localIncident.map(record=>record.id))
         ]);
         updateStatus('Dados sincronizados');
+        retryDelay = 5000;
         return;
       }
 
@@ -262,11 +285,20 @@
         state = next;
       }
       updateStatus('Dados sincronizados');
+      retryDelay = 5000;
       if (!byId('historico').hidden) { historyView(); refreshFortnightHistory(); }
       if (!byId('historico-ocorrencias').hidden) refreshIncidentHistory();
       again ||= state.dirty || state.records.some(record=>!record.cloudSaved);
     } catch (failure) {
-      updateStatus('Sincronização pendente');
+      if (!navigator.onLine) {
+        showOfflineStatus();
+      } else {
+        updateStatus('Sincronização pendente','offline');
+        if (failure.message.startsWith('Conexão indisponível')) {
+          retryTimer = setTimeout(schedule,retryDelay);
+          retryDelay = Math.min(retryDelay*2,60000);
+        }
+      }
       if (failure.message==='Acesso expirado ou removido.') {
         localStorage.removeItem(SESSION_KEY);
         verifyForm.hidden = true;
@@ -371,7 +403,10 @@
   syncButton.onclick = sync;
   window.addEventListener('online',schedule);
   window.addEventListener('offline',()=>{
-    if (active()) updateStatus('Sem sinal · registros salvos neste aparelho');
+    if (active()) showOfflineStatus();
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if (document.visibilityState==='visible' && navigator.onLine) schedule();
   });
   byId('cloud-panel').hidden = false;
   byId('local-mode').hidden = true;

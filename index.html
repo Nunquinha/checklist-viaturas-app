@@ -75,6 +75,7 @@
   .workspace button:disabled{cursor:default;opacity:.62}
   .account-strip{background:#f3f7f3;border:1px solid #d5e1d8;border-radius:11px;padding:2px 8px 2px 12px;margin-bottom:18px}
   .account-info strong{color:#254837}.account-actions button{color:#294f3e}
+  .account-strip[data-connection=offline] #cloud-status{color:#79500c;font-weight:650}
   #notice:not(:empty){padding:10px 13px;margin-bottom:12px;background:#f5faf6;border:1px solid #bcd2c4;border-radius:9px;color:#234936}
   #checks fieldset,.workspace .fortnight-tool{background:#f7faf8;border-color:#d4e1d8;border-radius:11px}
   .workspace .choices label{background:#fff}.workspace .choices label:has(:checked){background:#e0efe5;border-color:#467b60}
@@ -645,7 +646,9 @@ handover.onsubmit=event=>{
   });
   if(!save({...state,records:[record,...state.records]}))return;
   handover.reset();handoverStarted=null;resumed=null;fields.vehicle.disabled=Boolean(window.checklistCloud?.vehicle);byId('resuming').hidden=true;
-  shown=[];buildPads([]);refresh();renderChecks();page('historico');byId('notice').textContent='Passagem salva neste navegador.';
+  shown=[];buildPads([]);refresh();renderChecks();page('historico');
+  if(window.checklistCloud) window.checklistCloud.recordSaved('Checklist diário salvo');
+  else byId('notice').textContent='Passagem salva neste navegador.';
 };
 function historyView() {
   refreshHistoryOptions('daily',state.records);
@@ -678,12 +681,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v35"></script>
-<script src="relatorios.js?v=v35"></script>
-<script src="xlsx.js?v=v35"></script>
-<script src="ocorrencias.js?v=v35"></script>
-<script src="cloud.js?v=v35"></script>
-<script src="instalar.js?v=v35"></script>
+<script src="quinzenal.js?v=v36"></script>
+<script src="relatorios.js?v=v36"></script>
+<script src="xlsx.js?v=v36"></script>
+<script src="ocorrencias.js?v=v36"></script>
+<script src="cloud.js?v=v36"></script>
+<script src="instalar.js?v=v36"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));

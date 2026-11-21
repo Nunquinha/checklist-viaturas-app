@@ -187,14 +187,14 @@ fortnight.onsubmit = async event => {
       attended, engineer, notes: values.get('notes').trim(), signatures, photos, tools,
       durationMs: Math.max(0,completedAt-(fortnightStarted??completedAt))
     });
-    window.checklistCloud?.schedule();
     fortnight.reset();
     toolKey = undefined;
     fortnightStarted = null;
     refreshFortnightChoices();
     refreshFortnightPads();
     if(window.checklistCloud?.canReadHistory!==false)page('historico-quinzenal');
-    byId('notice').textContent = 'Vistoria quinzenal salva neste navegador.';
+    if(window.checklistCloud) window.checklistCloud.recordSaved('Vistoria quinzenal salva');
+    else byId('notice').textContent = 'Vistoria quinzenal salva neste navegador.';
   } catch (error) {
     alert(error.message || 'Não foi possível salvar a vistoria. Tente novamente.');
   } finally {

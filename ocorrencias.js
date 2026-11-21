@@ -62,8 +62,8 @@ incidentForm.onsubmit = async event => {
     await incidents({id,at,prefix,operator:values.get('operator'),impact:values.get('impact'),
       description,photos,signatures});
     resetIncident();
-    window.checklistCloud?.schedule();
-    byId('notice').textContent = 'Ocorrência salva neste aparelho.';
+    if(window.checklistCloud) window.checklistCloud.recordSaved('Ocorrência salva');
+    else byId('notice').textContent = 'Ocorrência salva neste aparelho.';
   } catch (failure) { alert(failure.message || 'Não foi possível salvar a ocorrência.'); }
   finally { button.disabled = false; }
 };
