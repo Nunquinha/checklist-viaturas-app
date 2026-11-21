@@ -52,6 +52,41 @@
  :root{--navy:#26382e;--blue:#243d32;--line:#dfe5df;--muted:#52655a}body{background:#dfe6e1;font-family:Arial,Helvetica,sans-serif}.shell{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}.sidebar{position:sticky;top:0;height:100dvh;background:#202e25;color:#f8faf7;padding:24px 18px;display:flex;flex-direction:column}.brand{padding:0;margin:0 0 32px}.brand img{width:54px;height:54px;object-fit:contain;border-radius:8px;background:white}.brand small{color:#bdcbbb;margin-top:3px}.sidebar nav{display:grid;gap:6px}.sidebar nav button{display:flex;align-items:center;gap:11px;text-align:left;background:transparent;border:1px solid transparent;color:#edf2eb;padding-inline:12px}.sidebar nav button[aria-current=true]{background:#35483b;border-left:3px solid #ffe500}.sidebar nav button:hover{background:#35483b}.sidebar svg{width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.nav-label{letter-spacing:.12em;font-size:.76rem;color:#bdcbbb;margin:0 12px 8px}.sidebar-foot{margin-top:auto;color:#bdcbbb;font-size:.85rem}.workspace{min-width:0}.topbar{min-height:65px;background:white;border:0;border-bottom:1px solid var(--line);color:var(--navy);display:flex;align-items:center;gap:12px;padding:12px clamp(16px,4vw,42px)}.topbar span{margin-left:auto}.menu-toggle{display:none}.workspace main{max-width:1040px;padding:22px clamp(14px,4vw,42px) 44px}.workspace section>h1{margin-top:0}.workspace article{padding:clamp(14px,3vw,24px);box-shadow:0 2px 8px #202e2508}.workspace fieldset{background:#fafbf9}.choices label:has(:checked){background:#e3eee5;border-color:var(--blue)}.choices label:has([value="Não Conforme"]:checked){background:#fff1d2;border-color:#95670a}.prototype-note{margin:0 0 16px}.sidebar[hidden]{display:none}
 @media(max-width:760px){.shell{display:block}.menu-toggle{display:block}.topbar{position:sticky;top:0;z-index:2}.topbar span{display:none}.sidebar{display:none;position:fixed;z-index:4;inset:0 auto 0 0;width:min(82vw,285px);box-shadow:0 0 0 100vmax #18251c88}.shell.menu-open .sidebar{display:flex}.sidebar .menu-toggle{margin-bottom:16px;background:#35483b;color:white;border-color:#6b8172}}
 .scope-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:6px;margin:6px 0 14px}.scope-choice{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--line);border-radius:8px;background:white;margin:0;min-height:44px}.scope-choice:has(:checked){background:#e3eee5;border-color:#567161}#catalog-status:empty{display:none}.delete-button{color:#9e2222;border-color:#d8a9a9}
+@media screen{
+  body{font-family:"Segoe UI",system-ui,sans-serif;background:#e6ece8}
+  .shell{--line:#d8e2db;--navy:#21382e;--blue:#23533e;--muted:#4f6559}
+  .sidebar{background:linear-gradient(165deg,#203b30,#142820 68%);padding:22px 16px}
+  .sidebar .brand{margin:0 0 19px;padding:0 3px 18px;border-bottom:1px solid #537061;gap:10px}
+  .sidebar .brand strong{font-size:.98rem;letter-spacing:-.01em}
+  .sidebar nav{gap:4px}.sidebar nav button{font-size:.91rem;line-height:1.25;min-height:44px}
+  .sidebar nav button[aria-current=true]{background:#315545;color:white}.sidebar svg{color:#b7d6c5}
+  .sidebar nav button[aria-current=true] svg{color:#f5dc39}
+  .sidebar-foot{font-size:.76rem}
+  .topbar{background:#f8fbf9;border-bottom:1px solid #cfdcd3;box-shadow:0 2px 9px #1632250d}
+  .topbar strong{font-size:1rem;letter-spacing:-.015em}.topbar>span{color:#4f6559;font-size:.83rem}
+  .workspace main{max-width:1100px;padding-top:22px}
+  .workspace section>h1{font-size:clamp(1.85rem,3.3vw,2.65rem);letter-spacing:-.035em;line-height:1.12;margin-bottom:12px}
+  .workspace article{border-radius:15px;box-shadow:0 2px 4px #19372a08,0 10px 22px #19372a06}
+  .workspace article h2{font-size:1.17rem;letter-spacing:-.015em}
+  .workspace label{font-size:.94rem;gap:6px}
+  .workspace input:not([type=radio]):not([type=checkbox]),.workspace select,.workspace textarea{background:#fbfdfb;border-color:#c8d8cf}
+  .workspace button.primary{background:#22523d;border-color:#22523d;border-radius:10px;box-shadow:0 2px 4px #102f2422;min-height:48px}
+  .workspace button.primary:hover{background:#183f2f}
+  .workspace button:disabled{cursor:default;opacity:.62}
+  .account-strip{background:#f3f7f3;border:1px solid #d5e1d8;border-radius:11px;padding:2px 8px 2px 12px;margin-bottom:18px}
+  .account-info strong{color:#254837}.account-actions button{color:#294f3e}
+  #notice:not(:empty){padding:10px 13px;margin-bottom:12px;background:#f5faf6;border:1px solid #bcd2c4;border-radius:9px;color:#234936}
+  #checks fieldset,.workspace .fortnight-tool{background:#f7faf8;border-color:#d4e1d8;border-radius:11px}
+  .workspace .choices label{background:#fff}.workspace .choices label:has(:checked){background:#e0efe5;border-color:#467b60}
+  .workspace .choices label:has([value="Não Conforme"]:checked),.workspace .choices label:has([value="Faltando"]:checked),.workspace .choices label:has([value="Com problema"]:checked){background:#fff1d2;border-color:#95670a}
+}
+@media screen and (max-width:760px){
+  .topbar{min-height:58px;padding:8px 12px;gap:9px}.topbar .menu-toggle{min-height:44px;padding:7px 10px}
+  .topbar strong{line-height:1.18}.topbar #install-app{padding-inline:8px;font-size:.83rem;white-space:normal}
+  .workspace main{padding-top:14px}.workspace article{margin-block:12px}
+  .workspace .account-info{min-width:0}.workspace .account-actions button{padding-inline:5px}
+  .workspace .grid:has(> .signature){display:grid;grid-template-columns:minmax(0,1fr)}
+}
 </style>
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
@@ -640,12 +675,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v32"></script>
-<script src="relatorios.js?v=v32"></script>
-<script src="xlsx.js?v=v32"></script>
-<script src="ocorrencias.js?v=v32"></script>
-<script src="cloud.js?v=v32"></script>
-<script src="instalar.js?v=v32"></script>
+<script src="quinzenal.js?v=v33"></script>
+<script src="relatorios.js?v=v33"></script>
+<script src="xlsx.js?v=v33"></script>
+<script src="ocorrencias.js?v=v33"></script>
+<script src="cloud.js?v=v33"></script>
+<script src="instalar.js?v=v33"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
