@@ -670,21 +670,33 @@ function startPanel() {
     kmBase.value = '';
     renderMileage();
     const mileage = get('mileage');
-    mileage.open = true;
+    activateTab(get('tab-mileage'));
     mileage.scrollIntoView({block:'start'});
     get('km-period').focus({preventScroll:true});
   };
   get('material-search').oninput = renderMaterials;
   get('resolved-period').onchange = renderResolved;
   get('resolved-search').oninput = renderResolved;
-  get('sections').addEventListener('click',event=>{
-    const link = event.target.closest('a[href^="#"]');
-    const target = link && get(link.hash.slice(1));
-    if (!target) return;
-    event.preventDefault();
-    if (target?.tagName==='DETAILS') target.open = true;
-    target.scrollIntoView({block:'start'});
-  });
+  const tabs = [...get('sections').querySelectorAll('[role="tab"]')];
+  function activateTab(selected) {
+    for (const tab of tabs) {
+      const active = tab===selected;
+      tab.setAttribute('aria-selected',String(active));
+      tab.tabIndex = active?0:-1;
+      get(tab.getAttribute('aria-controls')).hidden = !active;
+    }
+  }
+  for (const [index,tab] of tabs.entries()) {
+    tab.onclick = () => activateTab(tab);
+    tab.onkeydown = event => {
+      const positions = {ArrowLeft:(index+tabs.length-1)%tabs.length,ArrowRight:(index+1)%tabs.length,Home:0,End:tabs.length-1};
+      if (!Object.hasOwn(positions,event.key)) return;
+      event.preventDefault();
+      const target = tabs[positions[event.key]];
+      activateTab(target);
+      target.focus();
+    };
+  }
   get('clear-filters').onclick = () => { search.value = ''; filter.value = 'all'; updateFilters(); search.focus(); };
   vehicleDialog.addEventListener('close',()=>{
     if (!get('dashboard').hidden) {
