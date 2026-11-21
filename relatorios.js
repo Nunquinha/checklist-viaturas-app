@@ -82,15 +82,16 @@ async function selectedReport() {
     title:daily?'Trocas de turno':'Vistorias quinzenais'};
 }
 
-function openReport(title,fields,sections,trigger) {
+function openReport(title,fields,sections,trigger,metadataTitle='Dados da vistoria') {
   if(window.checklistCloud?.canReport===false)return;
   const logo=document.querySelector('.brand img').src;
   reportTrigger=trigger;
   byId('report-content').innerHTML =
     '<header class="report-heading"><img src="'+escape(logo)+'" alt="Logo do DER"><div>'+
     '<div class="report-eyebrow">DER · CGR.02 | Checklist de Viaturas</div><h1>'+escape(title)+'</h1></div></header>'+
+    '<section class="report-scope"><h2>'+metadataTitle+'</h2>'+
     '<dl class="report-metadata">'+[...fields,['Emitido em',time(Date.now())]].map(([label,value])=>
-      '<div><dt>'+label+'</dt><dd>'+escape(value)+'</dd></div>').join('')+'</dl>'+sections+
+      '<div><dt>'+label+'</dt><dd>'+escape(value)+'</dd></div>').join('')+'</dl></section>'+sections+
     '<footer class="report-footer">DER · CGR.02 · Checklist de Viaturas</footer>';
   byId('shell').hidden=true;
   byId('report-print').hidden=false;
@@ -221,13 +222,15 @@ byId('prepare-report').onclick = async event => {
         ['Com ferramental conferido',checked.length+' de '+records.length],
         ['Pendências de ferramental',tools.length?tools.filter(toolHasIssue).length:'—']);
     }
-    const summary = '<div class="report-stats">'+stats.map(([label,value])=>'<div class="report-stat"><span>'+label+
-      '</span><strong>'+escape(value)+'</strong></div>').join('')+'</div>';
+    const summary = '<section class="report-overview"><h2 class="report-section-title">Resumo dos registros selecionados</h2>'+
+      '<div class="report-stats">'+stats.map(([label,value])=>'<div class="report-stat"><span>'+label+
+      '</span><strong>'+escape(value)+'</strong></div>').join('')+'</div></section>';
     const details=!records.length?'<p>Nenhum registro nos filtros selecionados.</p>':daily?
       records.map(reportRecord).join(''):groupedFortnightRecords(records);
     const coverage = !daily&&records.length ? fortnightVehicleSummary(records) : '';
     openReport('Relatório de '+title.toLocaleLowerCase('pt-BR'),fields,
-      summary+coverage+'<h2 class="report-section-title">'+(daily?'Registros do período':'Detalhamento por engenheiro')+'</h2>'+details,button);
+      summary+coverage+'<h2 class="report-section-title">'+(daily?'Registros do período':'Detalhamento por engenheiro')+'</h2>'+details,
+      button,'Filtros aplicados');
   } catch {
     byId('notice').textContent = 'Não foi possível preparar o relatório. Tente novamente.';
   } finally { button.disabled = false; }
