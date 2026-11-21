@@ -62,7 +62,7 @@
     if (page==='acessos') return Boolean(session.user.owner);
     if (readingOnly()) return ['historico','historico-quinzenal'].includes(page) ||
       (session.user.role==='engineer' && catalogPages.includes(page)) ||
-      (page==='ocorrencias' && session.user.role==='viewer');
+      (page==='historico-ocorrencias' && session.user.role==='viewer');
     return canEditCatalog() || !catalogPages.includes(page);
   };
   function persist(previous,next) {
@@ -263,7 +263,7 @@
       }
       updateStatus('Dados sincronizados');
       if (!byId('historico').hidden) { historyView(); refreshFortnightHistory(); }
-      if (!byId('ocorrencias').hidden) refreshIncidentHistory();
+      if (!byId('historico-ocorrencias').hidden) refreshIncidentHistory();
       again ||= state.dirty || state.records.some(record=>!record.cloudSaved);
     } catch (failure) {
       updateStatus('Sincronização pendente');

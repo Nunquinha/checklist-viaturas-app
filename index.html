@@ -98,6 +98,7 @@
 <button type="button" data-page="historico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico de trocas</button>
 <button type="button" data-page="historico-quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico quinzenal</button>
 <button type="button" data-page="ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3zm0 6v5m0 3v.1"/></svg>Ocorrências no turno</button>
+<button type="button" data-page="historico-ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5zM8 9h8M8 12h8M8 15h5"/></svg>Histórico de ocorrências</button>
 <button type="button" data-page="viaturas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v-5l2-5h12l2 5v5M4 13h16M6 17v2m12-2v2M7 15h1m8 0h1"/></svg>Viaturas</button>
 <button type="button" data-page="cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>Cadastro do Checklist</button>
 <button type="button" data-page="operadores"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>Cadastro de Operador</button>
@@ -167,7 +168,8 @@
 <label>Fotos (opcionais)<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label></article>
 <article><h2>Assinatura</h2><div class="grid" id="incident-pads"></div></article>
 <button class="primary" id="save-incident">Salvar ocorrência</button></form>
-<div id="incident-history"><h2>Ocorrências registradas</h2><div id="incident-records" aria-live="polite"></div></div></section>
+</section>
+<section id="historico-ocorrencias" hidden><h1>Histórico de ocorrências</h1><div id="incident-records" aria-live="polite"></div></section>
 <section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
 <article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
 <section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
@@ -323,7 +325,8 @@ function page(name) {
   }
   if(name==='quinzenal') refreshFortnightChoices();
   if(name==='troca') renderChecks();
-  if(name==='ocorrencias') { refreshIncidentChoices(); refreshIncidentHistory(); }
+  if(name==='ocorrencias') refreshIncidentChoices();
+  if(name==='historico-ocorrencias') refreshIncidentHistory();
   if(name==='acessos') window.checklistCloud?.showAccess();
   window.scrollTo(0,0);
 }
@@ -675,12 +678,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v34"></script>
-<script src="relatorios.js?v=v34"></script>
-<script src="xlsx.js?v=v34"></script>
-<script src="ocorrencias.js?v=v34"></script>
-<script src="cloud.js?v=v34"></script>
-<script src="instalar.js?v=v34"></script>
+<script src="quinzenal.js?v=v35"></script>
+<script src="relatorios.js?v=v35"></script>
+<script src="xlsx.js?v=v35"></script>
+<script src="ocorrencias.js?v=v35"></script>
+<script src="cloud.js?v=v35"></script>
+<script src="instalar.js?v=v35"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));

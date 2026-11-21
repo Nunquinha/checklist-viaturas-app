@@ -63,7 +63,6 @@ incidentForm.onsubmit = async event => {
       description,photos,signatures});
     resetIncident();
     window.checklistCloud?.schedule();
-    refreshIncidentHistory();
     byId('notice').textContent = 'Ocorrência salva neste aparelho.';
   } catch (failure) { alert(failure.message || 'Não foi possível salvar a ocorrência.'); }
   finally { button.disabled = false; }
@@ -72,12 +71,11 @@ incidentForm.onsubmit = async event => {
 async function refreshIncidentHistory() {
   const version = ++incidentHistoryRequest;
   const list = byId('incident-records');
-  const allowed=window.checklistCloud?.canReadHistory!==false;
-  byId('incident-history').hidden=!allowed;
+  const allowed=window.checklistCloud?.canOpen('historico-ocorrencias')!==false;
   if(!allowed){list.replaceChildren();return;}
   try {
     const records = (await incidents()).reverse();
-    if (version!==incidentHistoryRequest) return;
+    if (version!==incidentHistoryRequest || window.checklistCloud?.canOpen('historico-ocorrencias')===false) return;
     const image = (src,alt) => '<img class="record-image" loading="lazy" src="'+escape(src)+'" alt="'+escape(alt)+'">';
     list.innerHTML = records.map(record=>'<details><summary>'+escape(record.prefix)+' · '+escape(record.impact)+'<br>'+
       '<span class="muted">'+time(record.at)+'</span></summary><p>Operador: '+escape(record.operator)+'</p>'+
