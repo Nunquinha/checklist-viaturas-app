@@ -93,6 +93,7 @@
   }
 
   const deletedFortnightIds = new Set();
+  const deletedIncidentIds = new Set();
 
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,recordSaved,
@@ -101,6 +102,14 @@
     get canReadHistory(){ return active() && !isVehicleSession(); },
     get canDeleteCatalog(){ return active() && Boolean(session.user.owner); },
     get canDeleteFortnight(){ return active() && Boolean(session.user.owner); },
+    get canDeleteIncident(){ return active() && Boolean(session.user.owner); },
+    async deleteIncident({id,prefix}) {
+      const currentSession = session;
+      await rpc('deleteIncident',{id,prefix});
+      if (session!==currentSession) return;
+      deletedIncidentIds.add(id);
+      await removeEvidence('incidents',[id]);
+    },
     async deleteFortnight({id,prefix}) {
       const currentSession = session;
       await rpc('deleteFortnight',{id,prefix});
@@ -121,6 +130,8 @@
     retryTimer = undefined;
     retryDelay = 5000;
     deletedFortnightIds.clear();
+    deletedIncidentIds.clear();
+    resetIncidentHistoryFilters();
     historyFilters.daily = {};
     historyFilters.fortnight = {};
     state = active() ? load('checklist-cloud-data-v1'+suffix(),blank()) : blank();
@@ -228,7 +239,7 @@
       for (const record of localIncident.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
         await rpc('saveRecord',{kind:'incident',record:body});
-        await incidents({...record,cloudSaved:true});
+        if (!deletedIncidentIds.has(record.id)) await incidents({...record,cloudSaved:true});
       }
 
       if (isVehicleSession()) {
@@ -258,6 +269,10 @@
           batch.deletedFortnightIds.forEach(id=>deletedFortnightIds.add(id));
           await removeEvidence('inspections',batch.deletedFortnightIds);
         }
+        if (batch.deletedIncidentIds?.length) {
+          batch.deletedIncidentIds.forEach(id=>deletedIncidentIds.add(id));
+          await removeEvidence('incidents',batch.deletedIncidentIds);
+        }
         head ??= batch.records[0]?.record.id;
         const daily = [];
         for (const {kind,record} of batch.records) {
@@ -267,7 +282,7 @@
             await inspections({...record,cloudSaved:true});
             fortnightIds.add(record.id);
           }
-          if (kind==='incident' && !incidentIds.has(record.id)) {
+          if (kind==='incident' && !incidentIds.has(record.id) && !deletedIncidentIds.has(record.id)) {
             await incidents({...record,cloudSaved:true});
             incidentIds.add(record.id);
           }

@@ -170,7 +170,15 @@
 <article><h2>Assinatura</h2><div class="grid" id="incident-pads"></div></article>
 <button class="primary" id="save-incident">Salvar ocorrência</button></form>
 </section>
-<section id="historico-ocorrencias" hidden><h1>Histórico de ocorrências</h1><div id="incident-records" aria-live="polite"></div></section>
+<section id="historico-ocorrencias" hidden><h1>Histórico de ocorrências</h1>
+<article><div class="history-filter-grid">
+<label>De<input type="date" id="incident-from"></label><label>Até<input type="date" id="incident-to"></label>
+<label>Viatura<select id="incident-vehicle"><option value="">Todas as viaturas</option></select></label>
+<label>Operador<select id="incident-operator"><option value="">Todos os operadores</option></select></label>
+<label>Situação<select id="incident-impact"><option value="">Todas as situações</option><option>Viatura pode operar</option><option>Operação com restrição</option><option>Viatura parada</option></select></label>
+</div><div class="actions history-filter-actions"><button type="button" id="clear-incident-filters" hidden>Limpar filtros</button></div></article>
+<div class="actions"><button type="button" id="incident-report">PDF consolidado</button></div>
+<p id="incident-count" class="muted" role="status"></p><div id="incident-records" aria-live="polite"></div></section>
 <section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
 <article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
 <section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
@@ -681,12 +689,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v36"></script>
-<script src="relatorios.js?v=v36"></script>
-<script src="xlsx.js?v=v36"></script>
-<script src="ocorrencias.js?v=v36"></script>
-<script src="cloud.js?v=v36"></script>
-<script src="instalar.js?v=v36"></script>
+<script src="quinzenal.js?v=v37"></script>
+<script src="relatorios.js?v=v37"></script>
+<script src="xlsx.js?v=v37"></script>
+<script src="ocorrencias.js?v=v37"></script>
+<script src="cloud.js?v=v37"></script>
+<script src="instalar.js?v=v37"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));
