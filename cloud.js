@@ -16,6 +16,7 @@
   const accessList = byId('access-list');
   let session, email, syncing = false, scheduled = false, syncRequested = false;
   let retryTimer, retryDelay = 5000;
+  let queueRequest = 0;
 
   function rpc(action,body = {},token = session?.token) {
     const request = {action,body,token:token || null};
@@ -89,7 +90,23 @@
       ? 'O app vai sincronizar automaticamente.'
       : 'Sem conexão. Será enviado quando o app estiver aberto e a internet voltar.');
     message.scrollIntoView({block:'nearest'});
+    refreshPendingQueue();
     schedule();
+  }
+
+  async function refreshPendingQueue() {
+    const request = ++queueRequest, queue = byId('cloud-queue');
+    if (!active()) { queue.hidden = true; return; }
+    try {
+      const [fortnight,incident] = await Promise.all([inspections(),incidents()]);
+      if (request!==queueRequest) return;
+      const count = [state.records,fortnight,incident].reduce((sum,records)=>
+        sum+records.filter(record=>!record.cloudSaved).length,0);
+      queue.hidden = count===0;
+      queue.textContent = count===1?'1 lançamento aguardando envio':count+' lançamentos aguardando envio';
+    } catch {
+      if (request===queueRequest) queue.hidden = true;
+    }
   }
 
   const deletedFortnightIds = new Set();
@@ -135,6 +152,8 @@
     historyFilters.daily = {};
     historyFilters.fortnight = {};
     state = active() ? load('checklist-cloud-data-v1'+suffix(),blank()) : blank();
+    byId('cloud-queue').hidden = true;
+    refreshPendingQueue();
     if(initialCatalog&&!state.dirty) {
       state = {...state,...initialCatalog,catalogLoaded:true};
       try { write(state); } catch { /* The active session can still use this catalog in memory. */ }
@@ -324,6 +343,7 @@
     } finally {
       syncing = false;
       syncButton.disabled = logoutButton.disabled = false;
+      refreshPendingQueue();
       if (again || syncRequested) schedule();
     }
   }

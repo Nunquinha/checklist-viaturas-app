@@ -102,6 +102,14 @@
     .workspace select:not([multiple])::picker-icon{color:#3e6652}
   }
 }
+
+.pending-queue{color:#79500c;font-weight:700}
+.launch-review{padding:10px 13px;border:1px solid #d5e2d9;border-radius:10px;background:#f7faf8;color:#486054;font-size:.88rem;margin-top:12px}
+.launch-review[data-ready=true]{background:#eaf5ec;color:#215438}
+.launch-review[data-ready=false]{background:#fff8e8;border-color:#e7d4aa;color:#624708}
+#coverage-vehicles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px}
+#coverage-vehicles>div{padding:8px 10px;border:1px solid var(--line);border-radius:8px;display:grid}
+#coverage-vehicles span{font-size:.86rem;color:var(--muted)}
 </style>
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
@@ -130,7 +138,7 @@
 <form id="request-code"><label>E-mail da viatura ou da administração<input name="email" type="email" maxlength="254" required autocomplete="email"></label><button class="primary">Enviar código</button></form>
 <form id="verify-code" hidden><label>Código de 6 dígitos<input name="code" required minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"></label><button class="primary">Entrar</button><button type="button" id="change-email">Trocar e-mail</button></form>
 </article>
-<div id="cloud-account" class="account-strip" hidden><div class="account-info"><strong id="cloud-identity"></strong><p id="cloud-status" role="status"></p></div><div class="account-actions"><button type="button" id="sync-cloud">Sincronizar</button><button type="button" id="cloud-logout">Sair</button></div></div>
+<div id="cloud-account" class="account-strip" hidden><div class="account-info"><strong id="cloud-identity"></strong><p id="cloud-status" role="status"></p><p id="cloud-queue" class="pending-queue" role="status" hidden></p></div><div class="account-actions"><button type="button" id="sync-cloud">Sincronizar</button><button type="button" id="cloud-logout">Sair</button></div></div>
 <p id="cloud-error" class="warning" role="alert" hidden></p>
 </div>
 <div id="notice" role="status"></div>
@@ -150,7 +158,7 @@
 <div class="grid"><label>Quilometragem<input name="km" type="number" min="0" step="1" inputmode="numeric"></label><label>Combustível<select name="fuel"><option value="">Selecione</option><option>Cheio</option><option>¾</option><option>½</option><option>¼</option><option>Reserva</option></select></label></div>
 <h3 id="daily-items-title">Itens da viatura</h3><div id="checks" role="group" aria-labelledby="daily-items-title"></div><p id="critical" class="warning" hidden>Atenção: problema registrado em item crítico.</p></article>
 <article id="signatures"><h2 id="handover-signatures-title">3. Assinaturas</h2><p>Toque em Assinar para abrir a tela de assinatura.</p><div class="grid" id="pads"></div></article>
-<button class="primary" id="submit">Salvar passagem</button>
+<div class="launch-review" id="review-daily" role="status"></div><button class="primary" id="submit">Salvar passagem</button>
 </form></section>
 <section id="quinzenal" hidden>
 <h1>Checklist Quinzenal</h1>
@@ -166,12 +174,15 @@
 <label>Ferramental<input type="file" name="tools" accept="image/jpeg,image/png,image/webp" multiple required></label>
 <label>Observações<textarea name="notes" maxlength="1000"></textarea></label></article>
 <article><h2>Assinaturas</h2><div class="grid" id="fortnight-pads"></div></article>
-<button class="primary" id="save-fortnight">Salvar vistoria quinzenal</button>
+<div class="launch-review" id="review-fortnight" role="status"></div><button class="primary" id="save-fortnight">Salvar vistoria quinzenal</button>
 </form></section>
 <section id="historico" hidden><h1 id="history-title">Histórico de trocas</h1>
 <article><div class="history-filter-grid"><label>De<input type="date" id="history-from"></label><label>Até<input type="date" id="history-to"></label><label>Viatura<select id="history-vehicle"><option value="">Todas as viaturas</option></select></label><label>Operador<select id="history-operator"><option value="">Todos os operadores</option></select></label><label id="history-engineer-field" hidden>Engenheiro<select id="history-engineer"><option value="">Todos os engenheiros</option></select></label></div>
 <div class="actions history-filter-actions"><button type="button" id="clear-history-filters" hidden>Limpar filtros</button></div></article>
 <div class="actions" id="history-exports"><button type="button" id="prepare-report">Gerar relatório PDF</button><button type="button" id="export-excel">Baixar Excel</button></div>
+<details id="fortnight-coverage" hidden><summary>Acompanhamento da quinzena por base</summary>
+<p class="muted" id="coverage-period"></p><label>Base<select id="fortnight-base"><option value="">Todas as bases</option><option value="1">Itapetininga</option><option value="2">Capão Bonito</option><option value="4">Itapeva</option><option value="5">Sorocaba</option><option value="8">Tatuí</option></select></label>
+<p id="coverage-summary" role="status"></p><div id="coverage-vehicles"></div></details>
 <p id="fortnight-filter-count" class="muted" role="status" hidden></p>
 <div id="records"></div><div id="fortnight-records" hidden></div></section>
 <section id="ocorrencias" hidden><h1>Ocorrências no turno</h1>
@@ -182,7 +193,7 @@
 <label>O que aconteceu?<textarea name="description" maxlength="1500" required></textarea></label>
 <label>Fotos (opcionais)<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label></article>
 <article><h2>Assinatura</h2><div class="grid" id="incident-pads"></div></article>
-<button class="primary" id="save-incident">Salvar ocorrência</button></form>
+<div class="launch-review" id="review-incident" role="status"></div><button class="primary" id="save-incident">Salvar ocorrência</button></form>
 </section>
 <section id="historico-ocorrencias" hidden><h1>Histórico de ocorrências</h1>
 <article><div class="history-filter-grid">
@@ -350,6 +361,8 @@ function page(name) {
   }
   if(name==='quinzenal') refreshFortnightChoices();
   if(name==='troca') renderChecks();
+  byId('fortnight-coverage').hidden = true;
+  refreshLaunchReviews();
   if(name==='ocorrencias') refreshIncidentChoices();
   if(name==='historico-ocorrencias') refreshIncidentHistory();
   if(name==='acessos') window.checklistCloud?.showAccess();
@@ -627,11 +640,48 @@ function openSignature(pad,caption,name,onConfirm) {
     if(!ink)return;
     pad.canvas=document.createElement('canvas');pad.canvas.width=canvas.width;pad.canvas.height=canvas.height;
     pad.canvas.getContext('2d').drawImage(canvas,0,0);
-    pad.ink=true;onConfirm();dialog.close();
+    pad.ink=true;onConfirm();dialog.close();refreshLaunchReviews();
   };
   dialog.onclose=()=>watcher.disconnect();
 }
 function buildPads(roles) { pads=signaturePads(byId('pads'),roles); }
+function updateLaunchReview(form,key,signatures,itemCount) {
+  const groups = new Set(), missing = {fields:0,items:0,photos:0,signatures:0};
+  for (const control of form.elements) {
+    if (!control.willValidate || control.closest('[hidden]')) continue;
+    if (control.validity.valid && !(control.required && ['text','textarea'].includes(control.type) && !control.value.trim())) continue;
+    const name = control.name;
+    if (groups.has(name)) continue;
+    groups.add(name);
+    if (control.type==='file') missing.photos++;
+    else if (/^(check-|note-|found-|tool-status-|tool-count-|tool-note-)/.test(name)) missing.items++;
+    else missing.fields++;
+  }
+  missing.signatures = Object.values(signatures).filter(pad=>!pad.ink).length;
+  const parts = [[missing.fields,'campo','campos'],[missing.items,'resposta de item','respostas de itens'],
+    [missing.photos,'foto','fotos'],[missing.signatures,'assinatura','assinaturas']]
+    .filter(([count])=>count).map(([count,one,many])=>count+' '+(count===1?one:many));
+  const note = byId('review-'+key);
+  const noItems = key==='daily' && itemCount===0 && Boolean(fields.vehicle.value);
+  note.dataset.ready = String(!parts.length&&!noItems);
+  note.textContent = parts.length ? 'Antes de salvar: '+parts.join(' · ')+'.'
+    : noItems ? 'Cadastre os itens da viatura antes de salvar.' : 'Tudo pronto para salvar.';
+}
+function refreshLaunchReviews() {
+  for (const [id,key,signatures,items] of [
+    ['troca','daily',()=>pads,()=>shown.length],
+    ['quinzenal','fortnight',()=>fortnightPads],
+    ['ocorrencias','incident',()=>incidentPads]
+  ]) {
+    const section = byId(id);
+    if (!section.hidden) updateLaunchReview(section.querySelector('form'),key,signatures(),items?.());
+  }
+}
+for (const event of ['input','change','reset']) {
+  document.addEventListener(event,({target})=>{
+    if(target.closest?.('#handover,#fortnight-form,#incident-form')) queueMicrotask(refreshLaunchReviews);
+  });
+}
 const padImages = signatures => Object.fromEntries(Object.entries(signatures).map(([role,pad])=>[role,pad.canvas.toDataURL()]));
 const isSoloChecklist = record => record.solo===true;
 let handoverStarted=null;
@@ -705,12 +755,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v38"></script>
-<script src="relatorios.js?v=v38"></script>
-<script src="xlsx.js?v=v38"></script>
-<script src="ocorrencias.js?v=v38"></script>
-<script src="cloud.js?v=v38"></script>
-<script src="instalar.js?v=v38"></script>
+<script src="quinzenal.js?v=v39"></script>
+<script src="relatorios.js?v=v39"></script>
+<script src="xlsx.js?v=v39"></script>
+<script src="ocorrencias.js?v=v39"></script>
+<script src="cloud.js?v=v39"></script>
+<script src="instalar.js?v=v39"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));

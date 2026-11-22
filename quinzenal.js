@@ -53,6 +53,43 @@ function toolResultText(item) {
     (item.note?' · '+item.note:'');
 }
 
+let coverageRecords = [];
+function renderFortnightCoverage() {
+  const box = byId('fortnight-coverage');
+  const scope = window.checklistCloud?.vehicle;
+  const catalog = state.vehicles.filter(vehicle=>vehicle.active && (!scope || scope===vehicle.prefix));
+  box.hidden = !catalog.length || historyKind!=='fortnight' || window.checklistCloud?.canReadHistory===false;
+  if (box.hidden) return;
+  const base = byId('fortnight-base').value;
+  const period = fortnightPeriod(Date.now());
+  const latest = new Map();
+  for (const record of coverageRecords) {
+    if (fortnightPeriod(record.at)!==period) continue;
+    const previous = latest.get(record.prefix);
+    if (!previous || record.at>previous.at) latest.set(record.prefix,record);
+  }
+  const vehicles = catalog.filter(vehicle=>!base || vehicle.prefix.split('-')[1]?.[0]===base)
+    .sort((a,b)=>historyOrder.compare(a.prefix,b.prefix));
+  let completed = 0, issues = 0;
+  byId('coverage-vehicles').innerHTML = vehicles.map(({prefix})=>{
+    const record = latest.get(prefix);
+    let label = 'Sem vistoria registrada na quinzena';
+    if (record) {
+      completed++;
+      const pending = record.tools?.filter(toolHasIssue).length??0;
+      if (pending) issues++;
+      label = pending ? 'Vistoria com '+pending+(pending===1?' pendência':' pendências')
+        : record.tools?.length?'Vistoria sem pendências nos itens conferidos':'Vistoria feita · sem conferência por item';
+    }
+    return '<div><strong>'+escape(prefix)+'</strong><span>'+label+'</span></div>';
+  }).join('');
+  byId('coverage-period').textContent = period+' · Última vistoria de cada viatura ativa';
+  byId('coverage-summary').textContent = vehicles.length
+    ? completed+' de '+vehicles.length+' vistoriadas · '+issues+' com pendências registradas · '+(vehicles.length-completed)+' sem vistoria'
+    : 'Nenhuma viatura ativa nesta base.';
+}
+byId('fortnight-base').onchange = renderFortnightCoverage;
+
 function openInspectionStore() {
   if (!database) {
     database = new Promise((resolve,reject) => {
@@ -215,6 +252,8 @@ async function refreshFortnightHistory() {
   try {
     const all = await inspections();
     if (version !== historyRequest || historyKind!=='fortnight') return;
+    coverageRecords = all;
+    if (!byId('historico').hidden) renderFortnightCoverage();
     refreshHistoryOptions('fortnight',all);
     const records = all.filter(record=>historyIncludes(record,'fortnight')).reverse();
     const selected = historyFilters.fortnight.engineer;
