@@ -53,7 +53,8 @@
 
   const suffix = () => session ? ':'+session.user.email+':'+(session.user.prefix || '')+':'+session.user.role : '';
   const write = next => localStorage.setItem('checklist-cloud-data-v1'+suffix(),JSON.stringify(next));
-  const active = () => Boolean(session && session.expires>Date.now());
+  const active = () => Boolean(session?.token && (session.expires>Date.now() ||
+    (session.user.role==='vehicle' && session.expires===null)));
   const readingOnly = () => ['viewer','engineer'].includes(session?.user.role);
   const isVehicleSession = () => session?.user.role==='vehicle';
   const catalogPages = ['viaturas','cadastros','operadores'];
@@ -210,13 +211,18 @@
     let again = false;
     try {
       const version = state.catalogLoaded?state.version:null;
-      const {user,catalog:central} = await rpc('bootstrap',{version});
+      const {user,catalog:central,renewedSession} = await rpc('bootstrap',{version,rememberVehicle:true});
       if (session.user.role!==user.role || session.user.prefix!==user.prefix) {
-        const updated = {...session,user};
+        const updated = {...session,user,...renewedSession};
         localStorage.setItem(SESSION_KEY,JSON.stringify(updated));
         changeSession(updated);
         again = true;
         return;
+      }
+      if (renewedSession) {
+        const updated = {...session,...renewedSession};
+        localStorage.setItem(SESSION_KEY,JSON.stringify(updated));
+        session = updated;
       }
       const local = state;
       if (local.dirty) {
@@ -418,7 +424,7 @@
     const button = verifyForm.querySelector('button');
     button.disabled = true;
     try {
-      const {catalog,...next} = await rpc('verifyCode',{email,code:verifyForm.elements.code.value});
+      const {catalog,...next} = await rpc('verifyCode',{email,code:verifyForm.elements.code.value,rememberVehicle:true});
       localStorage.setItem(SESSION_KEY,JSON.stringify(next));
       verifyForm.reset();
       changeSession(next,catalog);
