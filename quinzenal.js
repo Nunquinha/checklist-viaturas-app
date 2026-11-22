@@ -7,8 +7,8 @@ let historyRequest = 0;
 let database;
 let toolKey;
 let fortnightTools = [];
-const toolStatuses = ['Em ordem','Com problema','Faltando'];
-const toolHasIssue = item => item.status!=='Em ordem';
+const toolStatuses = ['Conforme','Não Conforme'];
+const toolHasIssue = item => !['Conforme','Em ordem'].includes(item.status);
 
 function fortnightPeriod(at) {
   const parts = new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',year:'numeric',timeZone:'America/Sao_Paulo'})
@@ -18,8 +18,7 @@ function fortnightPeriod(at) {
 }
 
 function refreshFortnightTools(prefix) {
-  const tools = prefix ? state.items.filter(item=>item.active && item.fortnightTool &&
-    itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))) : [];
+  const tools = itemsForVehicle(prefix);
   byId('fortnight-period').textContent = fortnightPeriod(Date.now());
   const key = JSON.stringify([window.checklistCloud?.storageSuffix,prefix,tools.map(({id,title,expected})=>[id,title,expected])]);
   if (key===toolKey) return;
@@ -27,7 +26,7 @@ function refreshFortnightTools(prefix) {
   fortnightTools = tools;
   const area = byId('fortnight-tools');
   area.innerHTML = tools.length ? tools.map((item,index)=>
-    '<fieldset class="fortnight-tool"><legend>'+escape(item.title)+'</legend>'+
+    '<fieldset class="fortnight-tool"><legend>'+escape(item.title)+(item.critical?' <span class="daily-critical">Crítico</span>':'')+'</legend>'+
     (item.expected==null?'':'<p class="muted">Quantidade esperada: '+escape(item.expected)+'</p>')+
     '<div class="choices">'+toolStatuses.map(status=>'<label><input type="radio" name="tool-status-'+index+
       '" value="'+status+'" required>'+status+'</label>').join('')+'</div>'+
@@ -35,12 +34,12 @@ function refreshFortnightTools(prefix) {
     (item.expected==null?'':'<label>Quantidade encontrada<input type="number" name="tool-count-'+index+'" min="0" max="9999" step="1" inputmode="numeric" disabled></label>')+
     '<label>Justificativa breve<input name="tool-note-'+index+'" maxlength="300" disabled></label>'+
     '<label>Foto da pendência<input type="file" name="tool-photo-'+index+'" accept="image/jpeg,image/png,image/webp" disabled></label></div></fieldset>'
-  ).join('') : '<p class="muted">'+(prefix?'Nenhum item de ferramental configurado para esta viatura.':'Selecione uma viatura para ver o ferramental.')+'</p>';
+  ).join('') : '<p class="muted">'+(prefix?'Nenhum item ativo para esta viatura.':'Selecione uma viatura para ver os itens.')+'</p>';
   byId('fortnight-progress').textContent = tools.length?'0 de '+tools.length+' conferidos':'';
   area.querySelectorAll('fieldset').forEach((field,index)=>{
     const exception = field.querySelector('.fortnight-exception');
     for (const input of field.querySelectorAll('[type="radio"]')) input.onchange = () => {
-      const issue = fortnightFields['tool-status-'+index].value!=='Em ordem';
+      const issue = toolHasIssue({status:fortnightFields['tool-status-'+index].value});
       exception.hidden = !issue;
       for (const control of exception.querySelectorAll('input')) { control.disabled = !issue; control.required = issue; }
       const checked = area.querySelectorAll('[type="radio"]:checked').length;
@@ -141,7 +140,8 @@ fortnightFields.coverage.onchange = () => {
   refreshFortnightChoices();
   refreshFortnightPads();
 };
-for (const field of ['operator','attendance','engineer']) {
+for (const control of fortnight.querySelectorAll('[name="attendance"]')) control.onchange = refreshFortnightPads;
+for (const field of ['operator','engineer']) {
   fortnightFields[field].onchange = refreshFortnightPads;
 }
 
@@ -163,7 +163,7 @@ fortnight.onsubmit = async event => {
   const toolChecks = fortnightTools.map((item,index)=>{
     const status = values.get('tool-status-'+index);
     const expected = item.expected??null;
-    const issue = status!=='Em ordem';
+    const issue = toolHasIssue({status});
     return {id:item.id,title:item.title,status,expected,found:expected===null?null:issue?Number(values.get('tool-count-'+index)):expected,
       note:issue?(values.get('tool-note-'+index)||'').trim():'',file:issue?values.get('tool-photo-'+index):null};
   });
@@ -233,7 +233,7 @@ async function refreshFortnightHistory() {
       (record.attended ? escape(record.engineer) : 'Sem engenheiro')+
       '</p><p>Tempo de conclusão: '+duration(record.durationMs)+'</p>'+
       '<p>'+escape(fortnightPeriod(record.at))+'</p>'+
-      (record.tools?.length?'<div class="fortnight-results"><h3>Ferramental conferido</h3><ul>'+
+      (record.tools?.length?'<div class="fortnight-results"><h3>Itens conferidos</h3><ul>'+
         record.tools.map(item=>'<li>'+escape(toolResultText(item))+(item.photo?'<br>'+image(item.photo,item.title):'')+'</li>').join('')+'</ul></div>':'')+
       (record.notes ? '<p>'+escape(record.notes)+'</p>' : '')+
       (canReport?'<p><button type="button" data-fortnight-pdf="'+index+'">PDF desta vistoria</button></p>':'')+

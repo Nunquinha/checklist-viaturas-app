@@ -88,6 +88,20 @@
   .workspace .account-info{min-width:0}.workspace .account-actions button{padding-inline:5px}
   .workspace .grid:has(> .signature){display:grid;grid-template-columns:minmax(0,1fr)}
 }
+
+.attendance-field{padding:9px 12px 12px}.attendance-field legend{padding-inline:4px;font-size:.94rem}
+.attendance-field .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.attendance-field .choices label{margin:0;font-weight:650}
+@supports (appearance:base-select) and selector(::picker(select)){
+  @media screen{
+    .workspace select:not([multiple]),.workspace select:not([multiple])::picker(select){appearance:base-select}
+    .workspace select:not([multiple])::picker(select){margin-block:4px;padding:5px;border:1px solid #b6cbbf;border-radius:10px;background:#fff;color:#21382e;box-shadow:0 12px 30px #183a2c24}
+    .workspace select:not([multiple]) option{min-height:42px;padding:8px 10px;border-radius:6px;font-weight:500;white-space:normal}
+    .workspace select:not([multiple]) option:checked{background:#e2efe6;color:#1c4b35;font-weight:650}
+    .workspace select:not([multiple]) option:hover,.workspace select:not([multiple]) option:focus-visible{background:#edf4ef;color:#183f2f}
+    .workspace select:not([multiple])::picker-icon{color:#3e6652}
+  }
+}
 </style>
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
@@ -143,9 +157,9 @@
 <form id="fortnight-form">
 <article><h2>Identificação</h2><div class="grid"><label>Viatura<select name="vehicle" required></select></label><label>Operador<select name="operator" required></select></label></div>
 <label class="handover-option"><input type="checkbox" name="coverage"><span>Operador substituto<small>Marque se alguém de outra viatura estiver cobrindo o turno.</small></span></label>
-<label>Acompanhamento do engenheiro<select name="attendance" required><option value="">Selecione</option><option value="yes">Sim</option><option value="no">Não</option></select></label>
+<fieldset class="attendance-field"><legend>Houve acompanhamento do engenheiro?</legend><div class="choices"><label><input type="radio" name="attendance" value="yes" required>Sim</label><label><input type="radio" name="attendance" value="no" required>Não</label></div></fieldset>
 <label id="engineer-name" hidden>Nome do engenheiro<input name="engineer" maxlength="100"></label></article>
-<article><div class="fortnight-heading"><div><h2>Conferência de ferramental</h2><p class="muted" id="fortnight-period"></p></div><p id="fortnight-progress" class="muted" role="status"></p></div><div id="fortnight-tools"></div></article>
+<article><div class="fortnight-heading"><div><h2>Itens da viatura</h2><p class="muted" id="fortnight-period"></p></div><p id="fortnight-progress" class="muted" role="status"></p></div><div id="fortnight-tools"></div></article>
 <article><h2>Fotos da vistoria</h2><p>Fotografe os pneus, os cones e o ferramental da viatura.</p>
 <label>Pneus<input type="file" name="tires" accept="image/jpeg,image/png,image/webp" multiple required></label>
 <label>Cones<input type="file" name="cones" accept="image/jpeg,image/png,image/webp" multiple required></label>
@@ -182,7 +196,7 @@
 <section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
 <article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
 <section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
-<article><h2>Itens do checklist</h2><form id="catalog"><label>Nome do item<input name="title" maxlength="100" required></label><label>Quantidade esperada (opcional)<input name="expected" type="number" min="1" max="9999" step="1" inputmode="numeric"></label><fieldset><legend>Em quais viaturas este item aparece?</legend><label class="scope-choice"><input type="checkbox" name="all" checked> Toda a frota</label><div id="scope-options" hidden><p>Marque um ou mais serviços, prefixos ou uma combinação dos dois.</p><strong>Tipos de serviço</strong><div class="scope-grid" id="service-scopes"></div><strong>Viaturas específicas</strong><div class="scope-grid" id="vehicle-scopes"></div></div></fieldset><label>Foto de referência (opcional)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label><p class="muted">Use uma foto do equipamento ou do local onde ele fica. JPG, PNG ou WebP.</p><label style="display:block"><input type="checkbox" name="critical"> Marcar como item crítico</label><label style="display:block"><input type="checkbox" name="fortnightTool"> Incluir no ferramental do Checklist Quinzenal</label><div class="actions"><button id="save-item">Adicionar item</button><button type="button" id="cancel-item" hidden>Cancelar edição</button></div><p id="catalog-status" role="status"></p></form><div id="items"></div></article></section>
+<article><h2>Itens do checklist</h2><form id="catalog"><label>Nome do item<input name="title" maxlength="100" required></label><label>Quantidade esperada (opcional)<input name="expected" type="number" min="1" max="9999" step="1" inputmode="numeric"></label><fieldset><legend>Em quais viaturas este item aparece?</legend><label class="scope-choice"><input type="checkbox" name="all" checked> Toda a frota</label><div id="scope-options" hidden><p>Marque um ou mais serviços, prefixos ou uma combinação dos dois.</p><strong>Tipos de serviço</strong><div class="scope-grid" id="service-scopes"></div><strong>Viaturas específicas</strong><div class="scope-grid" id="vehicle-scopes"></div></div></fieldset><label>Foto de referência (opcional)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label><p class="muted">Use uma foto do equipamento ou do local onde ele fica. JPG, PNG ou WebP.</p><label style="display:block"><input type="checkbox" name="critical"> Marcar como item crítico</label><div class="actions"><button id="save-item">Adicionar item</button><button type="button" id="cancel-item" hidden>Cancelar edição</button></div><p id="catalog-status" role="status"></p></form><div id="items"></div></article></section>
 <section id="operadores" hidden><h1>Cadastro de Operador</h1><p>Vincule cada operador às viaturas que ele costuma assumir. Na troca, a cobertura não muda esse vínculo.</p>
 <article><form id="operator-form"><label>Nome do operador<input name="operatorName" required maxlength="80"></label><fieldset><legend>Viaturas habituais</legend><div id="operator-vehicles" class="scope-grid"></div></fieldset><div class="actions"><button id="operator-save">Adicionar operador</button><button type="button" id="operator-cancel" hidden>Cancelar edição</button></div></form></article>
 <div id="operator-list"></div></section>
@@ -243,6 +257,8 @@ const decode = prefix => /^ITG-[0-9][012467][0-9]$/.test(prefix) ? 'Base '+prefi
 const time = date => new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}).format(new Date(date));
 const option = (value,label) => '<option value="'+escape(value)+'">'+escape(label)+'</option>';
 const itemScopes = item => item.scopes || [item.scope];
+const itemsForVehicle = prefix => prefix ? state.items.filter(item=>item.active &&
+  itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))) : [];
 const scopeLabel = scope => scope==='all'?'Toda a frota':scope.startsWith('s:')?services[scope.slice(2)]:scope.slice(2);
 const selectedScopes = () => [...catalog.querySelectorAll('[name="target"]:checked')].map(input=>input.value);
 let editingItem=null, editingVehicle=null;
@@ -388,7 +404,7 @@ function refresh() {
       const item=list[index], label=document.createElement('label'), input=document.createElement('input'), edit=document.createElement('button');
       edit.type='button';edit.textContent='Editar item';
       edit.onclick=()=>{
-        editingItem=item.id;catalog.elements.title.value=item.title;catalog.elements.critical.checked=item.critical;catalog.elements.fortnightTool.checked=Boolean(item.fortnightTool);
+        editingItem=item.id;catalog.elements.title.value=item.title;catalog.elements.critical.checked=item.critical;
         catalog.elements.expected.value=item.expected??'';
         catalog.elements.all.checked=itemScopes(item).includes('all');catalog.elements.photo.value='';renderScopes(itemScopes(item));
         byId('save-item').textContent='Salvar alterações';byId('cancel-item').hidden=false;
@@ -465,12 +481,12 @@ catalog.onsubmit=async event=>{
   const original=state.items.find(entry=>entry.id===editingItem);
   const expected = catalog.elements.expected.value==='' ? null : catalog.elements.expected.valueAsNumber;
   if(expected!==null&&(!Number.isInteger(expected)||expected<1||expected>9999))return alert('Informe uma quantidade esperada entre 1 e 9999.');
-  const item={...original,id:original?.id||String(Date.now()),title,scopes,expected,critical:catalog.elements.critical.checked,fortnightTool:catalog.elements.fortnightTool.checked,active:original?.active??true};
+  const item={...original,id:original?.id||String(Date.now()),title,scopes,expected,critical:catalog.elements.critical.checked,active:original?.active??true};
   const button=byId('save-item'), file=catalog.elements.photo.files[0];
   byId('cancel-item').disabled=true;
   button.disabled=true;
   try{if(file)item.photo=await preparePhoto(file);}catch(error){alert(error.message);return;}finally{button.disabled=false;byId('cancel-item').disabled=false;}
-  const items=original?state.items.map(entry=>entry.id===item.id?{...entry,title:item.title,scopes:item.scopes,expected:item.expected,critical:item.critical,fortnightTool:item.fortnightTool,...(file?{photo:item.photo}:{})}:entry):[...state.items,item];
+  const items=original?state.items.map(entry=>entry.id===item.id?{...entry,title:item.title,scopes:item.scopes,expected:item.expected,critical:item.critical,...(file?{photo:item.photo}:{})}:entry):[...state.items,item];
   if(save({...state,items})){resetCatalog();refresh();renderChecks();byId('catalog-status').textContent=original?'Alterações salvas.':'Item adicionado.';}
 };
 function renderChecks() {
@@ -480,7 +496,7 @@ function renderChecks() {
   const emptyMessage=prefix?'Nenhum item ativo para '+prefix+'. Verifique a abrangência no Cadastro do Checklist.':
     state.vehicles.some(vehicle=>vehicle.active)?'Selecione a viatura acima para carregar os itens cadastrados para ela.':
       'Cadastre ou reative uma viatura no menu Viaturas para carregar os itens.';
-  shown=prefix?state.items.filter(item=>item.active&&itemScopes(item).some(scope=>['all','s:'+prefix[5],'v:'+prefix].includes(scope))):[];
+  shown=itemsForVehicle(prefix);
   byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?' <span class="daily-critical">Crítico</span>':'')+'</legend>'+
     (item.expected==null?'':'<p class="daily-requirement"><span class="daily-expected">Quantidade exigida: '+escape(item.expected)+'</span></p>')+
     '<div class="choices">'+['Conforme','Não Conforme'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+
@@ -689,12 +705,12 @@ function historyView() {
 }
 refresh();renderChecks();
 </script>
-<script src="quinzenal.js?v=v37"></script>
-<script src="relatorios.js?v=v37"></script>
-<script src="xlsx.js?v=v37"></script>
-<script src="ocorrencias.js?v=v37"></script>
-<script src="cloud.js?v=v37"></script>
-<script src="instalar.js?v=v37"></script>
+<script src="quinzenal.js?v=v38"></script>
+<script src="relatorios.js?v=v38"></script>
+<script src="xlsx.js?v=v38"></script>
+<script src="ocorrencias.js?v=v38"></script>
+<script src="cloud.js?v=v38"></script>
+<script src="instalar.js?v=v38"></script>
 <script>
 if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(error => console.warn('Cache offline indisponível',error));

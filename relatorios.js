@@ -119,9 +119,9 @@ function showIndividualFortnightReport(record,trigger) {
   const evidence = (title,items,classes='') => '<h2 class="report-section-title">'+title+'</h2>'+
     (items.length?'<div class="report-evidence '+classes+'">'+items.join('')+'</div>':'<p>Sem registros.</p>');
   const notes=record.notes?'<h2 class="report-section-title">Observações</h2><p>'+escape(record.notes)+'</p>':'';
-  const tools=record.tools?.length?'<h2 class="report-section-title">Conferência de ferramental</h2><ul>'+
+  const tools=record.tools?.length?'<h2 class="report-section-title">Itens da viatura</h2><ul>'+
     record.tools.map(item=>'<li>'+escape(toolResultText(item))+'</li>').join('')+'</ul>'+
-    (record.tools.some(item=>item.photo)?evidence('Fotos das pendências de ferramental',
+    (record.tools.some(item=>item.photo)?evidence('Fotos das não conformidades',
       record.tools.filter(item=>item.photo).map(item=>figure(item.photo,item.title))):''):'';
   openReport('Checklist quinzenal · Vistoria individual',fields,
     notes+tools+evidence('Registro fotográfico',photos)+evidence('Assinaturas',signatures,'report-evidence-signatures'),trigger);
@@ -162,9 +162,9 @@ function fortnightReportDetails(record) {
     '<span class="report-visit-status'+(issues.length?' report-visit-issue':'')+'">'+status+'</span></div>'+
     '<dl class="report-visit-data"><div><dt>Operador</dt><dd>'+escape(record.operator||'Não registrado')+'</dd></div>'+
     '<div><dt>Duração</dt><dd>'+duration(record.durationMs)+'</dd></div>'+
-    '<div><dt>Ferramental</dt><dd>'+(tools.length?tools.length+' conferidos · '+(tools.length-issues.length)+' em ordem · '+issues.length+' pendentes':'Sem itens registrados')+'</dd></div>'+
+    '<div><dt>Itens da viatura</dt><dd>'+(tools.length?tools.length+' conferidos · '+(tools.length-issues.length)+' em ordem · '+issues.length+' pendentes':'Sem itens registrados')+'</dd></div>'+
     '<div><dt>Fotos da vistoria</dt><dd>'+photos.join(' · ')+(evidence?' · '+evidence+' de pendências':'')+'</dd></div></dl>'+
-    (issues.length?'<h4>Pendências de ferramental</h4><ul>'+issues.map(item=>'<li>'+escape(toolResultText(item))+'</li>').join('')+'</ul>':'')+
+    (issues.length?'<h4>Pendências dos itens</h4><ul>'+issues.map(item=>'<li>'+escape(toolResultText(item))+'</li>').join('')+'</ul>':'')+
     (record.notes?'<p class="report-visit-notes"><strong>Observações</strong> '+escape(record.notes)+'</p>':'')+'</article>';
 }
 
@@ -183,7 +183,7 @@ function fortnightVehicleSummary(records) {
     groups.set(key,row);
   }
   return '<h2 class="report-section-title">Resumo por viatura e quinzena</h2><table class="report-visit-table">'+
-    '<thead><tr><th>Viatura</th><th>Quinzena</th><th>Vistorias</th><th>Com engenheiro</th><th>Com ferramental conferido</th><th>Pendências registradas</th></tr></thead><tbody>'+
+    '<thead><tr><th>Viatura</th><th>Quinzena</th><th>Vistorias</th><th>Com engenheiro</th><th>Com itens conferidos</th><th>Pendências registradas</th></tr></thead><tbody>'+
     [...groups.values()].sort((a,b)=>historyOrder.compare(a.prefix,b.prefix)).map(row=>
       '<tr><th scope="row">'+escape(row.prefix)+'</th><td>'+escape(row.period)+'</td><td>'+row.visits+'</td><td>'+row.attended+
       '</td><td>'+row.checked+' de '+row.visits+'</td><td>'+(row.checked?row.issues:'—')+'</td></tr>').join('')+'</tbody></table>';
@@ -219,8 +219,8 @@ byId('prepare-report').onclick = async event => {
       const checked = records.filter(record=>record.tools?.length);
       const tools = checked.flatMap(record=>record.tools);
       stats.push(['Viaturas vistoriadas',new Set(records.map(record=>record.prefix)).size],
-        ['Com ferramental conferido',checked.length+' de '+records.length],
-        ['Pendências de ferramental',tools.length?tools.filter(toolHasIssue).length:'—']);
+        ['Com itens conferidos',checked.length+' de '+records.length],
+        ['Pendências dos itens',tools.length?tools.filter(toolHasIssue).length:'—']);
     }
     const summary = '<section class="report-overview"><h2 class="report-section-title">Resumo dos registros selecionados</h2>'+
       '<div class="report-stats">'+stats.map(([label,value])=>'<div class="report-stat"><span>'+label+
@@ -253,7 +253,7 @@ byId('export-excel').onclick = async event => {
     const {daily,records,title} = await selectedReport();
     const headers = daily
       ? ['Viatura','Troca','Conferência','Quem entregou','Quem recebeu','Operador (sozinho)','Duração (s)','Quilometragem','Combustível','Justificativa','Atraso','Não conformidades']
-      : ['Viatura','Vistoria','Operador','Duração (s)','Acompanhamento','Engenheiro','Observações','Quinzena','Ferramental conferido','Pendências de ferramental'];
+      : ['Viatura','Vistoria','Operador','Duração (s)','Acompanhamento','Engenheiro','Observações','Quinzena','Itens conferidos','Pendências dos itens'];
     const seconds = record => Number.isFinite(record.durationMs)?Math.round(record.durationMs/1000):null;
     const rows = records.map(record=>daily ? [
       record.prefix,time(record.exchange),record.inspected?time(record.inspected):'',isSoloChecklist(record)?'':record.outgoing,
