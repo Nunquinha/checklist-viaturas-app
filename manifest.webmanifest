@@ -1,14 +1,23 @@
 {
-  "id": "./",
+  "id": "/checklist-viaturas-app/",
   "name": "Checklist DER",
   "short_name": "Checklist DER",
   "lang": "pt-BR",
-  "start_url": "./index.html",
+  "start_url": "/checklist-viaturas-app/index.html",
   "display": "standalone",
   "background_color": "#dfe6e1",
   "theme_color": "#202e25",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"}
-  ]
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "scope": "/checklist-viaturas-app/"
 }
