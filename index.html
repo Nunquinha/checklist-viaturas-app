@@ -831,28 +831,16 @@ if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
 
       claimed.add(related.id);
       const previousScopes = scopeOf(related);
-      const otherScopes = previousScopes.filter(scope => !scopes.includes(scope));
       const updatedQuantity = expected ?? related.expected ?? null;
-      if (otherScopes.length && related.expected != null && updatedQuantity !== related.expected && !exact) {
-        const index = result.indexOf(related);
-        result[index] = {...related,scopes:otherScopes};
-        if (result.some(item => item.id === id)) throw Error('Conflito de quantidade no item '+title+'.');
-        result.push({id,title,scopes,expected,active:related.active,critical:related.critical,...(photo ? {photo} : {})});
-        claimed.add(id);
-        changed++;
-        created++;
-        if (photo) photos++;
-        continue;
-      }
-
-      const addedScopes = scopes.filter(scope => !previousScopes.includes(scope));
+      const scopesChanged = previousScopes.length !== scopes.length ||
+        scopes.some(scope => !previousScopes.includes(scope));
       const newPhoto = !related.photo && photo;
-      if (!addedScopes.length && updatedQuantity === (related.expected ?? null) && !newPhoto) {
+      if (!scopesChanged && updatedQuantity === (related.expected ?? null) && !newPhoto) {
         unchanged++;
         continue;
       }
       const item = {...related, expected:updatedQuantity};
-      if (addedScopes.length) item.scopes = [...previousScopes,...addedScopes];
+      if (scopesChanged) item.scopes = scopes;
       if (newPhoto) { item.photo = photo; photos++; }
       result[result.indexOf(related)] = item;
       changed++;
