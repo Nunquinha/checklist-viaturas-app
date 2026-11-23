@@ -801,12 +801,12 @@ if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
     let created = 0, changed = 0, unchanged = 0, photos = 0;
 
     for (const incoming of payload.items) {
-      const {id,title,scopes,expected,aliases,photo} = incoming;
+      const {id,title,scopes,expected,aliases,photo,rename} = incoming;
       if (typeof id !== 'string' || !/^der-mapa-[a-f0-9]{18}$/.test(id) || seen.has(id) ||
           typeof title !== 'string' || !title.trim() || title.length > 100 ||
           !Array.isArray(scopes) || !scopes.length || new Set(scopes).size !== scopes.length ||
           scopes.some(scope => !allScopes.includes(scope)) ||
-          !Array.isArray(aliases) || aliases.some(value => typeof value !== 'string' || value.length > 100) ||
+          (rename !== undefined && typeof rename !== 'boolean') || !Array.isArray(aliases) || aliases.some(value => typeof value !== 'string' || value.length > 100) ||
           (expected !== null && (!Number.isInteger(expected) || expected < 1 || expected > 9999)) ||
           (photo !== undefined && (typeof photo !== 'string' || photo.length > 100000 || !validImage.test(photo)))) {
         throw Error('O arquivo contém um item inválido.');
@@ -835,12 +835,14 @@ if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
       const scopesChanged = previousScopes.length !== scopes.length ||
         scopes.some(scope => !previousScopes.includes(scope));
       const newPhoto = !related.photo && photo;
-      if (!scopesChanged && updatedQuantity === (related.expected ?? null) && !newPhoto) {
+      const titleChanged = rename && related.title !== title;
+      if (!scopesChanged && updatedQuantity === (related.expected ?? null) && !newPhoto && !titleChanged) {
         unchanged++;
         continue;
       }
       const item = {...related, expected:updatedQuantity};
       if (scopesChanged) item.scopes = scopes;
+      if (titleChanged) item.title = title;
       if (newPhoto) { item.photo = photo; photos++; }
       result[result.indexOf(related)] = item;
       changed++;
