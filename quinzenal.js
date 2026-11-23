@@ -21,7 +21,7 @@ function refreshFortnightTools(prefix) {
   const tools = itemsForVehicle(prefix);
   byId('fortnight-period').textContent = fortnightPeriod(Date.now());
   const key = JSON.stringify([window.checklistCloud?.storageSuffix,prefix,tools.map(({id,title,expected})=>[id,title,expected])]);
-  if (key===toolKey) return;
+  if (key===toolKey && tools.every((item,index)=>item.photo===fortnightTools[index]?.photo)) return;
   toolKey = key;
   fortnightTools = tools;
   const area = byId('fortnight-tools');
@@ -37,6 +37,8 @@ function refreshFortnightTools(prefix) {
   ).join('') : '<p class="muted">'+(prefix?'Nenhum item ativo para esta viatura.':'Selecione uma viatura para ver os itens.')+'</p>';
   byId('fortnight-progress').textContent = tools.length?'0 de '+tools.length+' conferidos':'';
   area.querySelectorAll('fieldset').forEach((field,index)=>{
+    const photo = referencePhoto(tools[index]);
+    if (photo) field.querySelector('legend').after(photo);
     const exception = field.querySelector('.fortnight-exception');
     for (const input of field.querySelectorAll('[type="radio"]')) input.onchange = () => {
       const issue = toolHasIssue({status:fortnightFields['tool-status-'+index].value});
