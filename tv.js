@@ -307,14 +307,15 @@ function startPanel() {
   const number = new Intl.NumberFormat('pt-BR');
   const pageSize = 12;
   let sessionToken, accessScope, checkpoint, refreshing = false, syncedAt = null;
+  let budgetVehicles=[],budgetVersion=null,budgetAllowed=false;
   let records = new Map(), latest = new Map(), pending = [], resolved = [], page = 0;
   const reports = {};
   const requestForm = get('request-code'), verifyForm = get('verify-code');
   const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
-  const kmBase = get('km-base');
+  const kmBase = get('km-base'), budgetBase=get('budget-base');
   const pendingBase = get('pending-base'), trendBase = get('trend-base');
-  for (const select of [kmBase,pendingBase,trendBase]) {
+  for (const select of [kmBase,pendingBase,trendBase,budgetBase]) {
     for (const [code,name] of bases) {
       const option = document.createElement('option');
       option.value = code;
@@ -344,6 +345,7 @@ function startPanel() {
 
   function hideData(message, action) {
     records = new Map();
+    budgetVehicles=[];budgetVersion=null;budgetAllowed=false;
     latest = new Map();
     pending = [];
     resolved = [];
@@ -481,6 +483,32 @@ function startPanel() {
       : 'Sem trechos calculáveis no período';
     get('km-note').textContent = 'Diferença entre odômetros consecutivos da mesma viatura, atribuída à data da última leitura.'+
       (skipped?' '+skipped+' '+(skipped===1?'trecho sem leituras válidas':'trechos sem leituras válidas')+'.':'');
+  }
+
+  function renderBudget() {
+    const target=get('budget-rows');target.replaceChildren();
+    if(!budgetAllowed){
+      const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=6;
+      cell.textContent='As metas de KM não estão disponíveis neste perfil. Consulte com Administração, Gestão ou Engenheiro.';row.append(cell);target.append(row);
+      get('budget-summary').textContent='Acesso conforme o perfil da conta.';return;
+    }
+    const all=window.ChecklistMileage.fleet(budgetVehicles,[...records.values()]);
+    const query=normalize(get('budget-search').value.trim()),base=budgetBase.value;
+    const selected=all.filter(row=>(!base||row.prefix[4]===base)&&normalize(row.prefix+' '+row.plate).includes(query));
+    const km=value=>value===null?'—':number.format(value)+' km';
+    const day=value=>value?value.split('-').reverse().join('/'):'Sem data final';
+    for(const item of selected){
+      const row=document.createElement('tr');
+      for(const value of [item.prefix,item.budget?day(item.budget.start)+' a '+day(item.budget.end):'—',
+        km(item.budget?.limit??null),km(item.used),km(item.remaining)])addText(row,'td',value);
+      const statusCell=document.createElement('td');addText(statusCell,'span',item.label,'km-budget-status km-budget-'+item.status);
+      if(item.closed)addText(statusCell,'small','Período encerrado');
+      if(item.issues.length)addText(statusCell,'small',item.issues[0]);
+      if(item.lastKm!==null)addText(statusCell,'small','Última leitura: '+number.format(item.lastKm)+' km');
+      row.append(statusCell);target.append(row);
+    }
+    if(!selected.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=6;cell.textContent='Nenhuma viatura disponível para os filtros selecionados.';row.append(cell);target.append(row)}
+    get('budget-summary').textContent=all.filter(row=>row.budget).length+' metas configuradas · '+all.filter(row=>row.remaining!==null&&row.remaining<=0).length+' limites atingidos ou excedidos.';
   }
 
   function renderRows() {
@@ -622,6 +650,7 @@ function startPanel() {
       renderMaterials();
       renderResolved();
       renderMileage();
+      renderBudget();
       renderOverview();
     }
   }
@@ -657,7 +686,9 @@ function startPanel() {
         sessionToken = active.token;
         accessScope = null;
       }
-      const user = await rpc(active.token,'me');
+      const bootstrap=await rpc(active.token,'bootstrap',{version:budgetVersion});
+      if(session()?.token!==active.token)return;
+      const user=bootstrap.user;
       if (!permitted(user)) {
         status('Painel com acesso restrito');
         hideData('Entre com uma conta autorizada a consultar o painel.','login');
@@ -668,6 +699,8 @@ function startPanel() {
         hideData('Carregando os registros disponíveis para este acesso.');
         accessScope = scope;
       }
+      budgetAllowed=user.admin===true || user.role==='engineer';
+      if(bootstrap.catalog){budgetVehicles=(bootstrap.catalog.vehicles||[]).filter(vehicle=>!user.prefix||vehicle.prefix===user.prefix).map(({prefix,plate,active,kmBudget})=>({prefix,plate,active,kmBudget}));budgetVersion=bootstrap.catalog.version}
       if (!syncedAt) status('Lendo o histórico do Checklist Diário…');
       let cursor = null, head;
       const nextRecords = new Map(records);
@@ -798,6 +831,7 @@ function startPanel() {
   trendBase.onchange = renderOverview;
   get('km-period').onchange = renderMileage;
   kmBase.onchange = renderMileage;
+  get('budget-search').oninput=renderBudget;budgetBase.onchange=renderBudget;
   get('open-km-month').onclick = () => {
     get('km-period').value = 'month';
     kmBase.value = '';
@@ -837,12 +871,15 @@ function startPanel() {
       renderMaterials();
       renderResolved();
       renderMileage();
+      renderBudget();
       renderOverview();
     }
   });
   if (demo) {
     get('demo-notice').hidden = false;
-    loadRecords(new Map(demonstrationRecords(Date.now()).map(record=>[record.id,record])));
+    const demoRecords=demonstrationRecords(Date.now());
+    loadRecords(new Map(demoRecords.map(record=>[record.id,record])));
+    budgetAllowed=true;budgetVehicles=[...new Set(demoRecords.map(row=>row.prefix))].map(prefix=>({prefix,active:true}));
     status('Fonte da demonstração: registros fictícios.');
     render();
     return;

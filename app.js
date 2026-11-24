@@ -45,7 +45,7 @@ const scopeLabel = scope => scope==='all'?'Toda a frota':scope.startsWith('s:')?
 const selectedScopes = () => [...catalog.querySelectorAll('[name="target"]:checked')].map(input=>input.value);
 let editingItem=null, editingVehicle=null;
 function resetFleet() {
-  editingVehicle=null;fleet.reset();fleet.elements.prefix.readOnly=false;
+  editingVehicle=null;fleet.reset();window.ChecklistMileageUI?.reset();fleet.elements.prefix.readOnly=false;
   byId('decoded').textContent='';byId('fleet-save').textContent='Adicionar viatura';byId('fleet-cancel').hidden=true;
 }
 byId('fleet-cancel').onclick=resetFleet;
@@ -135,6 +135,7 @@ function page(name) {
   if(name==='troca') renderChecks();
   byId('fortnight-coverage').hidden = true;
   refreshLaunchReviews();
+  if(name==='km-saldo')window.ChecklistMileageUI?.render();
   if(name==='ocorrencias') refreshIncidentChoices();
   if(name==='historico-ocorrencias') refreshIncidentHistory();
   if(name==='acessos') window.checklistCloud?.showAccess();
@@ -158,6 +159,7 @@ function refresh() {
   const selected=available.find(vehicle=>vehicle.prefix===prior)?.prefix;
   fields.vehicle.value=window.checklistCloud?.vehicle||selected||'';
   renderScopes();
+  window.ChecklistMileageUI?.render();
   renderOperatorAdmin();
   refreshOperatorChoices();
   for(const [area,list] of [['vehicles',state.vehicles],['items',state.items]]) {
@@ -175,10 +177,10 @@ function refresh() {
         const edit=document.createElement('button'), email=document.createElement('p');
         email.textContent=target.email?'E-mail da VTR: '+target.email:'E-mail da VTR ainda não vinculado';
         entry.querySelector('p').after(email);
-        edit.type='button';edit.textContent='Editar vínculo';
+        edit.type='button';edit.textContent='Editar viatura';
         edit.onclick=()=>{
           editingVehicle=target.prefix;fleet.elements.prefix.value=target.prefix;fleet.elements.prefix.readOnly=true;
-          fleet.elements.plate.value=target.plate||'';fleet.elements.vehicleEmail.value=target.email||'';
+          fleet.elements.plate.value=target.plate||'';fleet.elements.vehicleEmail.value=target.email||'';window.ChecklistMileageUI?.fill(target);
           byId('decoded').textContent=decode(target.prefix);byId('fleet-save').textContent='Salvar alterações';byId('fleet-cancel').hidden=false;
           fleet.elements.vehicleEmail.focus();
         };
@@ -241,8 +243,10 @@ fleet.onsubmit=event=>{
   const email=fleet.elements.vehicleEmail.value.trim().toLowerCase(), plate=fleet.elements.plate.value.trim().toUpperCase();
   if(state.vehicles.some(vehicle=>vehicle.prefix===prefix&&vehicle.prefix!==editingVehicle))return alert('Este prefixo já está cadastrado.');
   if(email&&state.vehicles.some(vehicle=>vehicle.prefix!==editingVehicle&&vehicle.email?.toLowerCase()===email))return alert('Este e-mail já está vinculado a outra viatura.');
-  const vehicles=editingVehicle?state.vehicles.map(vehicle=>vehicle.prefix===editingVehicle?{...vehicle,email,plate}:vehicle):[...state.vehicles,{prefix,email,plate,active:true}];
-  if(save({...state,vehicles})){resetFleet();refresh();byId('notice').textContent='Cadastro da viatura salvo neste navegador.';}
+  if(!window.ChecklistMileageUI)return alert('Aguarde o controle de KM carregar e tente novamente.');
+  let kmBudget;try{kmBudget=window.ChecklistMileageUI.read()}catch(error){return alert(error.message)}
+  const vehicles=editingVehicle?state.vehicles.map(vehicle=>vehicle.prefix===editingVehicle?{...vehicle,email,plate,kmBudget}:vehicle):[...state.vehicles,{prefix,email,plate,kmBudget,active:true}];
+  if(save({...state,vehicles})){resetFleet();refresh();byId('notice').textContent='Cadastro da viatura salvo no aparelho. Aguarde a confirmação de sincronização.';}
 };
 async function preparePhoto(file) {
   if(!file)return '';

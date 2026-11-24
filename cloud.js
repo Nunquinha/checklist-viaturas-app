@@ -57,7 +57,7 @@
     (session.user.role==='vehicle' && session.expires===null)));
   const readingOnly = () => ['viewer','engineer'].includes(session?.user.role);
   const isVehicleSession = () => session?.user.role==='vehicle';
-  const catalogPages = ['viaturas','cadastros','operadores'];
+  const catalogPages = ['viaturas','cadastros','operadores','km-saldo'];
   const canEditCatalog = () => Boolean(session?.user.admin || session?.user.role==='engineer');
   const canOpen = page => {
     if (!active()) return false;
@@ -366,6 +366,7 @@
         pendingFortnight.some(record=>!record.cloudSaved) || pendingIncident.some(record=>!record.cloudSaved);
       updateStatus(again?'Enviando alterações pendentes…':'Dados sincronizados',again?'offline':'online');
       retryDelay = 5000;
+      window.ChecklistMileageUI?.render();
       if (!byId('historico').hidden) { historyView(); refreshFortnightHistory(); }
       if (!byId('historico-ocorrencias').hidden) refreshIncidentHistory();
       again ||= state.dirty || state.records.some(record=>!record.cloudSaved);

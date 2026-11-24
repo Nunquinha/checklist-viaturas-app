@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#202e25">
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
-<link rel="stylesheet" href="app.css?v=v44">
+<link rel="stylesheet" href="app.css?v=v45">
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
 <button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
@@ -18,6 +18,7 @@
 <button type="button" data-page="historico-quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico quinzenal</button>
 <button type="button" data-page="ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3zm0 6v5m0 3v.1"/></svg>Ocorrências no turno</button>
 <button type="button" data-page="historico-ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5zM8 9h8M8 12h8M8 15h5"/></svg>Histórico de ocorrências</button>
+<button type="button" data-page="km-saldo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a9 9 0 1 1 16 0M12 12l5-5"/></svg>Saldo de KM</button>
 <button type="button" data-page="viaturas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v-5l2-5h12l2 5v5M4 13h16M6 17v2m12-2v2M7 15h1m8 0h1"/></svg>Viaturas</button>
 <button type="button" data-page="cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>Cadastro do Checklist</button>
 <button type="button" data-page="operadores"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>Cadastro de Operador</button>
@@ -100,8 +101,10 @@
 </div><div class="actions history-filter-actions"><button type="button" id="clear-incident-filters" hidden>Limpar filtros</button></div></article>
 <div class="actions"><button type="button" id="incident-report">PDF consolidado</button></div>
 <p id="incident-count" class="muted" role="status"></p><div id="incident-records" aria-live="polite"></div></section>
+<section id="km-saldo" hidden><h1>KM disponível por viatura</h1><p>Limite do período menos os quilômetros registrados no Checklist Diário. Reenvios do mesmo registro não descontam novamente.</p>
+<article><label>Buscar viatura<input id="km-balance-search" type="search" placeholder="Prefixo ou placa"></label><p id="km-balance-summary" role="status"></p><p><a href="./painel-tv/" target="_blank" rel="noopener">Abrir painel da frota</a></p><div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período configurado</th><th>Limite</th><th>Rodados</th><th>KM disponíveis</th><th>Situação</th></tr></thead><tbody id="km-balance-rows"></tbody></table></div><p class="muted">Configure o limite e o odômetro inicial em Viaturas → Editar viatura. Leituras inconsistentes ficam para revisão e não geram um saldo definitivo. O painel usa o histórico recebido pela conta e inclui somente os registros já enviados à base central.</p></article></section>
 <section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
-<article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
+<article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><fieldset class="km-budget"><legend>Controle de KM do contrato</legend><label class="scope-choice"><input type="checkbox" id="km-budget-enabled"> Configurar limite de KM desta viatura</label><div id="km-budget-fields" hidden><div class="grid"><label>Limite de KM no período<input name="kmLimit" type="number" min="1" step="1" inputmode="numeric"></label><label>Odômetro no início do período<input name="kmInitial" type="number" min="0" step="1" inputmode="numeric"></label><label>Data inicial<input name="kmStart" type="date"></label><label>Data final (opcional)<input name="kmEnd" type="date"></label></div><p class="muted">Informe o limite previsto e o odômetro correspondente à data inicial. Pode usar o mês, o contrato inteiro ou um período específico. Sem data final, o controle continua até você alterar a configuração.</p></div></fieldset><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form><div id="vehicles"></div></article></section>
 <section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
 <article><h2>Itens do checklist</h2><form id="catalog"><label>Nome do item<input name="title" maxlength="100" required></label><label>Quantidade esperada (opcional)<input name="expected" type="number" min="1" max="9999" step="1" inputmode="numeric"></label><fieldset><legend>Em quais viaturas este item aparece?</legend><label class="scope-choice"><input type="checkbox" name="all" checked> Toda a frota</label><div id="scope-options" hidden><p>Marque um ou mais serviços, prefixos ou uma combinação dos dois.</p><strong>Tipos de serviço</strong><div class="scope-grid" id="service-scopes"></div><strong>Viaturas específicas</strong><div class="scope-grid" id="vehicle-scopes"></div></div></fieldset><label>Foto de referência (opcional)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label><p class="muted">Use uma foto do equipamento ou do local onde ele fica. JPG, PNG ou WebP.</p><label style="display:block"><input type="checkbox" name="critical"> Marcar como item crítico</label><div class="actions"><button id="save-item">Adicionar item</button><button type="button" id="cancel-item" hidden>Cancelar edição</button></div><p id="catalog-status" role="status"></p></form><div id="items"></div></article></section>
 <section id="operadores" hidden><h1>Cadastro de Operador</h1><p>Vincule cada operador às viaturas que ele costuma assumir. Na troca, a cobertura não muda esse vínculo.</p>
@@ -124,19 +127,22 @@
 <div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
 </dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
-<script src="app.js?v=v44"></script>
-<script src="quinzenal.js?v=v44"></script>
-<script src="relatorios.js?v=v44"></script>
-<script src="xlsx.js?v=v44"></script>
-<script src="ocorrencias.js?v=v44"></script>
-<script src="catalog-sync.js?v=v44"></script>
-<script src="cloud.js?v=v44"></script>
-<script src="instalar.js?v=v44"></script>
-<script src="register-sw.js?v=v44"></script>
-<script src="catalog-import.js?v=v44"></script>
+<script src="mileage-budget.js?v=v45"></script>
+<script src="app.js?v=v45"></script>
+<script src="quinzenal.js?v=v45"></script>
+<script src="relatorios.js?v=v45"></script>
+<script src="xlsx.js?v=v45"></script>
+<script src="ocorrencias.js?v=v45"></script>
+<script src="catalog-sync.js?v=v45"></script>
+<script src="cloud.js?v=v45"></script>
+<script src="instalar.js?v=v45"></script>
+<script src="register-sw.js?v=v45"></script>
+<script src="catalog-import.js?v=v45"></script>
 </html>
 
-<script src="operators-import.js?v=v44"></script>
+<script src="operators-import.js?v=v45"></script>
 
 <script src="vendor/jspdf-4.2.1.umd.min.js"></script>
-<script src="operators-export.js?v=v44"></script>
+<script src="operators-export.js?v=v45"></script>
+
+<script src="mileage-ui.js?v=v45"></script>

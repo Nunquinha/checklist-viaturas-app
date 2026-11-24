@@ -19,6 +19,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 .demo-notice{margin-top:12px;padding:12px 16px;border:1px solid #765d3c;border-radius:8px;background:#3c2e20;color:#ffd18b}.demo-notice a{display:inline-block;margin-left:8px}
 .sections{display:flex;gap:6px;margin:0 0 12px;border-bottom:1px solid var(--line);overflow-x:auto;padding:4px}.sections button{border:0;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font-size:15px;white-space:nowrap;font-weight:650}.sections button:hover{background:#18364e;color:var(--ink)}.sections button[aria-selected=true]{color:var(--ink);background:#15334a;border-bottom-color:var(--blue)}.material-vehicles{white-space:normal!important}.material-vehicles button{margin:0 6px 5px 0}.mileage .filters label{max-width:380px}.mileage .filters p{color:var(--muted)}#pending-section,#materials,#resolved,#mileage{scroll-margin-top:16px}
 @media(max-width:720px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.kpi{padding:9px;font-size:12px}.intro{margin-top:22px}table{min-width:620px}}
+.km-budget-status{font-weight:700}.km-budget-review,.km-budget-invalid,.km-budget-low{color:var(--amber)}.km-budget-exceeded,.km-budget-exhausted{color:var(--red)}#budget-rows small{display:block;color:var(--muted);font-size:12px;margin-top:4px}#budget-rows td:first-child{width:120px}#budget-rows td:nth-child(2){white-space:normal;min-width:160px}
 </style>
 </head>
 <body>
@@ -47,6 +48,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <button type="button" role="tab" id="tab-materials" aria-controls="materials" aria-selected="false" tabindex="-1">Reposição</button>
       <button type="button" role="tab" id="tab-resolved" aria-controls="resolved" aria-selected="false" tabindex="-1">Resoluções</button>
       <button type="button" role="tab" id="tab-mileage" aria-controls="mileage" aria-selected="false" tabindex="-1">Quilometragem</button>
+      <button type="button" role="tab" id="tab-km-balance" aria-controls="km-balance" aria-selected="false" tabindex="-1">KM disponível</button>
       <button type="button" role="tab" id="tab-overview" aria-controls="overview" aria-selected="false" tabindex="-1">Visão por base</button>
     </div>
     <section id="pending-section" class="panel" role="tabpanel" aria-labelledby="tab-pending-section">
@@ -98,6 +100,12 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <div class="table-scroll"><table id="km-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Total rodado</th><th scope="col">Intervalos entre trocas</th><th scope="col">Km desde a troca anterior</th></tr></thead><tbody id="km-rows"></tbody></table></div>
       <p class="empty muted" id="km-note"></p>
     </section>
+    <section id="km-balance" class="panel mileage" role="tabpanel" aria-labelledby="tab-km-balance" hidden>
+      <div class="table-head"><h2>KM disponível por viatura</h2></div>
+      <div class="filters"><label>Buscar viatura<input id="budget-search" type="search" placeholder="Prefixo ou placa"></label><label>Base<select id="budget-base"><option value="">Todas as bases</option></select></label><p id="budget-summary" role="status"></p></div>
+      <div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período do limite</th><th>Limite</th><th>Rodados</th><th>KM disponíveis</th><th>Situação</th></tr></thead><tbody id="budget-rows"></tbody></table></div>
+      <p class="empty muted">Configure o limite, o período e o odômetro inicial no app, em Viaturas → Editar viatura. O saldo usa apenas os checklists recebidos pela base central. Leituras inconsistentes precisam de revisão.</p>
+    </section>
     <section id="overview" class="panel mileage" role="tabpanel" aria-labelledby="tab-overview" hidden>
       <div class="table-head"><h2>Pendências por base</h2><button id="download-overview-pdf" type="button" disabled>Baixar PDF da visão por base</button></div>
       <p class="empty stale" id="overview-pdf-error" role="alert" hidden></p>
@@ -118,6 +126,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
   </dialog>
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
-<script defer src="tv.js?v=15"></script>
+<script defer src="mileage-budget.js?v=v45"></script>
+<script defer src="tv.js?v=16"></script>
 </body>
 </html>

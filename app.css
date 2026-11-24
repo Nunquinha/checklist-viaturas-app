@@ -103,3 +103,5 @@
 #coverage-vehicles span{font-size:.86rem;color:var(--muted)}
 
 .operator-exports{margin:20px 0}.operator-base-title{font-size:1.1rem;margin:28px 0 12px;color:#203d30}
+
+.km-budget{margin:20px 0}.km-status{display:inline-block;padding:4px 8px;border-radius:6px;background:#e8eee9;font-size:.85em;font-weight:700}.km-low,.km-review,.km-invalid{background:#fff0c7;color:#775b00}.km-exceeded,.km-exhausted{background:#fbe0e0;color:#8a2323}#km-saldo small{display:block;font-size:.8em;margin-top:5px;color:#617167}#km-saldo .table-scroll{overflow:auto}#km-saldo table{min-width:850px}
