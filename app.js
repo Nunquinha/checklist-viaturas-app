@@ -68,8 +68,9 @@ function refreshOperatorChoices(reset=false) {
 }
 function renderOperatorAdmin(selected=[...operatorForm.querySelectorAll('[name="usualVehicle"]:checked')].map(input=>input.value)) {
   byId('operator-vehicles').innerHTML=state.vehicles.map(vehicle=>'<label class="scope-choice"><input type="checkbox" name="usualVehicle" value="'+escape(vehicle.prefix)+'" '+(selected.includes(vehicle.prefix)?'checked':'')+'> '+escape(vehicle.prefix)+(vehicle.active?'':' · Inativa')+'</label>').join('')||'<p>Cadastre uma viatura no menu Viaturas. Você também pode deixar o operador sem vínculo para cobertura.</p>';
-  const entries=operators();
-  byId('operator-list').innerHTML=entries.map((operator,index)=>'<details><summary>'+escape(operator.name)+'</summary><p>'+escape(operator.vehicles.join(', ')||'Sem viatura habitual')+'</p><div class="actions"><button type="button" data-edit="'+index+'">Editar</button><button type="button" class="delete-button" data-remove="'+index+'">Excluir</button></div></details>').join('')||'<article>Nenhum operador cadastrado.</article>';
+  const ordered=window.ChecklistOperatorExport?.ordered(operators());
+  const entries=ordered?ordered.map(row=>row.operator):operators();
+  byId('operator-list').innerHTML=entries.map((operator,index)=>(ordered && (!index || ordered[index].base!==ordered[index-1].base)?'<h2 class="operator-base-title">'+escape(ordered[index].base)+'</h2>':'')+'<details><summary>'+escape(operator.name)+'</summary><p>'+escape(operator.vehicles.join(', ')||'Sem viatura habitual')+'</p><div class="actions"><button type="button" data-edit="'+index+'">Editar</button><button type="button" class="delete-button" data-remove="'+index+'">Excluir</button></div></details>').join('')||'<article>Nenhum operador cadastrado.</article>';
   byId('operator-list').querySelectorAll('[data-edit]').forEach(button=>button.onclick=()=>{
     const operator=entries[Number(button.dataset.edit)];editingOperator=operator.id;
     operatorForm.elements.operatorName.value=operator.name;renderOperatorAdmin(operator.vehicles);

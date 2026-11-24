@@ -8,6 +8,7 @@ Interface instalável publicada no GitHub Pages. Cadastros e registros são envi
 - `app.js`: viaturas, itens, operadores e checklist diário.
 - `cloud.js`: autenticação, fila local, confirmação de envio, atualização ao abrir/retornar à tela e ao recuperar conexão.
 - `catalog-sync.js`: comparação entre a base da edição, alterações locais e versão central. Inclusões simultâneas são conciliadas; alterações incompatíveis ficam pendentes.
+- `operators-export.js`: ordenação por base/nome na tela, Excel e PDF paginado com logo do DER. Operadores sem vínculo ficam no fim.
 - `operators-import.js`: revisão e inclusão de operadores sem duplicar nomes. Prefixos ausentes não são criados automaticamente.
 - `catalog-import.js`: importação dos itens do checklist.
 - `quinzenal.js`, `ocorrencias.js`, `relatorios.js` e `xlsx.js`: fluxos e exportações existentes.
@@ -23,6 +24,6 @@ Uma edição conflitante é preservada no aparelho e identificada na tela. Use *
 
 ## Verificação
 
-Execute `node tests/catalog.test.cjs` e `node tests/sync.test.cjs`. Os testes usam uma base isolada e não criam usuários nem registros reais. Validação do servidor Apps Script permanece necessária para alterações de permissão ou de regras de negócio.
+Execute `node tests/catalog.test.cjs` , `node tests/sync.test.cjs` e `node tests/operators-export.test.cjs`. Os testes usam uma base isolada e não criam usuários nem registros reais. Validação do servidor Apps Script permanece necessária para alterações de permissão ou de regras de negócio.
 
 Ao publicar arquivos novos, atualize a versão em `index.html` e `sw.js` e inclua as dependências no cache offline.

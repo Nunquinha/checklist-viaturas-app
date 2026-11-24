@@ -101,3 +101,5 @@
 #coverage-vehicles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px}
 #coverage-vehicles>div{padding:8px 10px;border:1px solid var(--line);border-radius:8px;display:grid}
 #coverage-vehicles span{font-size:.86rem;color:var(--muted)}
+
+.operator-exports{margin:20px 0}.operator-base-title{font-size:1.1rem;margin:28px 0 12px;color:#203d30}

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#202e25">
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
-<link rel="stylesheet" href="app.css?v=v43">
+<link rel="stylesheet" href="app.css?v=v44">
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
 <button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
@@ -106,6 +106,7 @@
 <article><h2>Itens do checklist</h2><form id="catalog"><label>Nome do item<input name="title" maxlength="100" required></label><label>Quantidade esperada (opcional)<input name="expected" type="number" min="1" max="9999" step="1" inputmode="numeric"></label><fieldset><legend>Em quais viaturas este item aparece?</legend><label class="scope-choice"><input type="checkbox" name="all" checked> Toda a frota</label><div id="scope-options" hidden><p>Marque um ou mais serviços, prefixos ou uma combinação dos dois.</p><strong>Tipos de serviço</strong><div class="scope-grid" id="service-scopes"></div><strong>Viaturas específicas</strong><div class="scope-grid" id="vehicle-scopes"></div></div></fieldset><label>Foto de referência (opcional)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label><p class="muted">Use uma foto do equipamento ou do local onde ele fica. JPG, PNG ou WebP.</p><label style="display:block"><input type="checkbox" name="critical"> Marcar como item crítico</label><div class="actions"><button id="save-item">Adicionar item</button><button type="button" id="cancel-item" hidden>Cancelar edição</button></div><p id="catalog-status" role="status"></p></form><div id="items"></div></article></section>
 <section id="operadores" hidden><h1>Cadastro de Operador</h1><p>Vincule cada operador às viaturas que ele costuma assumir. Na troca, a cobertura não muda esse vínculo.</p>
 <article><form id="operator-form"><label>Nome do operador<input name="operatorName" required maxlength="80"></label><fieldset><legend>Viaturas habituais</legend><div id="operator-vehicles" class="scope-grid"></div></fieldset><div class="actions"><button id="operator-save">Adicionar operador</button><button type="button" id="operator-cancel" hidden>Cancelar edição</button></div></form></article>
+<div class="actions operator-exports"><button type="button" id="operators-excel">Gerar Excel</button><button type="button" id="operators-pdf">Gerar PDF</button></div>
 <div id="operator-list"></div></section>
 <section id="acessos" hidden><h1>Acessos</h1>
 <article><h2>Conceder ou alterar acesso</h2><form id="access-form">
@@ -123,16 +124,19 @@
 <div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
 </dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
-<script src="app.js?v=v43"></script>
-<script src="quinzenal.js?v=v43"></script>
-<script src="relatorios.js?v=v43"></script>
-<script src="xlsx.js?v=v43"></script>
-<script src="ocorrencias.js?v=v43"></script>
-<script src="catalog-sync.js?v=v43"></script>
-<script src="cloud.js?v=v43"></script>
-<script src="instalar.js?v=v43"></script>
-<script src="register-sw.js?v=v43"></script>
-<script src="catalog-import.js?v=v43"></script>
+<script src="app.js?v=v44"></script>
+<script src="quinzenal.js?v=v44"></script>
+<script src="relatorios.js?v=v44"></script>
+<script src="xlsx.js?v=v44"></script>
+<script src="ocorrencias.js?v=v44"></script>
+<script src="catalog-sync.js?v=v44"></script>
+<script src="cloud.js?v=v44"></script>
+<script src="instalar.js?v=v44"></script>
+<script src="register-sw.js?v=v44"></script>
+<script src="catalog-import.js?v=v44"></script>
 </html>
 
-<script src="operators-import.js?v=v43"></script>
+<script src="operators-import.js?v=v44"></script>
+
+<script src="vendor/jspdf-4.2.1.umd.min.js"></script>
+<script src="operators-export.js?v=v44"></script>
