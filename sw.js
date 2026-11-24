@@ -1,8 +1,8 @@
-const cacheName = 'der-checklist-shell-v42';
+const cacheName = 'der-checklist-shell-v43';
 const version = cacheName.split('-').at(-1);
-const scripts = ['quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
+const scripts = ['app.js','register-sw.js','catalog-import.js','catalog-sync.js','operators-import.js','quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
 const appFiles = ['./index.html',...scripts.map(name=>'./'+name+'?v='+version),
-  './logo-der.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+  './app.css?v='+version,'./logo-der.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(appFiles)).then(()=>self.skipWaiting()));

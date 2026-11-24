@@ -73,7 +73,12 @@
     const changed = ['vehicles','items','operators'].some(key=>previous[key]!==next[key]);
     if (changed && !canEditCatalog()) throw new Error('Este perfil não pode atualizar cadastros.');
     next.dirty = Boolean(previous.dirty || changed);
+    if (changed && !previous.dirty) next.catalogBase=ChecklistCatalogSync.snapshot(previous);
     write(next);
+    if (changed) {
+      updateStatus('Cadastros salvos no aparelho · aguardando envio','offline');
+      setTimeout(refreshPendingQueue,0);
+    }
     schedule();
   }
 
@@ -103,8 +108,11 @@
       if (request!==queueRequest) return;
       const count = [state.records,fortnight,incident].reduce((sum,records)=>
         sum+records.filter(record=>!record.cloudSaved).length,0);
-      queue.hidden = count===0;
-      queue.textContent = count===1?'1 lançamento aguardando envio':count+' lançamentos aguardando envio';
+      const parts=[];
+      if(state.dirty)parts.push('Cadastros aguardando envio');
+      if(count)parts.push(count===1?'1 lançamento aguardando envio':count+' lançamentos aguardando envio');
+      queue.hidden = !parts.length;
+      queue.textContent = parts.join(' · ');
     } catch {
       if (request===queueRequest) queue.hidden = true;
     }
@@ -204,6 +212,12 @@
       return;
     }
     syncing = true;
+    const syncSuffix=suffix(), syncToken=session.token;
+    const rpcSync=async(action,body)=>{
+      const result=await rpc(action,body,syncToken);
+      if(suffix()!==syncSuffix || !active())throw Error('A conta mudou durante a sincronização.');
+      return result;
+    };
     syncRequested = false;
     syncButton.disabled = logoutButton.disabled = true;
     updateStatus('Sincronizando com o Drive…');
@@ -211,7 +225,7 @@
     let again = false;
     try {
       const version = state.catalogLoaded?state.version:null;
-      const {user,catalog:central,renewedSession} = await rpc('bootstrap',{version,rememberVehicle:true});
+      const {user,catalog:central,renewedSession} = await rpcSync('bootstrap',{version,rememberVehicle:true});
       if (session.user.role!==user.role || session.user.prefix!==user.prefix) {
         const updated = {...session,user,...renewedSession};
         localStorage.setItem(SESSION_KEY,JSON.stringify(updated));
@@ -226,12 +240,32 @@
       }
       const local = state;
       if (local.dirty) {
-        const {version,vehicles,items,operators} = local;
-        const saved = await rpc('saveCatalog',{version,vehicles,items,operators});
+        let draft={version:local.version,...ChecklistCatalogSync.snapshot(local)};
+        let remote=central, saved;
+        for(let attempt=0;attempt<3;attempt++) {
+          if(remote && remote.version!==draft.version) {
+            const merged=ChecklistCatalogSync.merge(local.catalogBase,local,remote);
+            if(merged.conflicts.length)throw Error('Cadastros com alterações simultâneas ou pendências antigas: '+
+              merged.conflicts.map(row=>row.name).slice(0,4).join(', ')+
+              '. A cópia deste aparelho foi preservada. Exporte os pendentes para revisão.');
+            draft=merged.catalog;
+          }
+          try { saved=await rpcSync('saveCatalog',draft); break; }
+          catch(failure) {
+            if(!failure.message.startsWith('Os cadastros mudaram'))throw failure;
+            if(attempt===2)throw Error('A base está recebendo outras alterações. Seus cadastros estão preservados e serão reenviados.');
+            remote=await rpcSync('catalog');
+          }
+        }
         again = ['vehicles','items','operators'].some(key=>local[key]!==state[key]);
-        const next = {...state,version:saved.version,dirty:again};
+        const during=again?ChecklistCatalogSync.merge(ChecklistCatalogSync.snapshot(local),state,saved):null;
+        const next = {...state,...(!again?ChecklistCatalogSync.snapshot(saved):
+          during.conflicts.length?{}:ChecklistCatalogSync.snapshot(during.catalog)),
+          version:again&&during.conflicts.length?local.version:saved.version,catalogLoaded:true,dirty:again};
+        if(again)next.catalogBase=ChecklistCatalogSync.snapshot(during.conflicts.length?local:saved);else delete next.catalogBase;
         write(next);
         state = next;
+        if(!again && !handoverStarted && !fortnightStarted)refresh();
       } else {
         if (!state.dirty && central) {
           const catalogChanged = central.version!==state.version || !state.catalogLoaded ||
@@ -250,7 +284,7 @@
 
       for (const record of state.records.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
-        await rpc('saveRecord',{kind:'daily',record:body});
+        await rpcSync('saveRecord',{kind:'daily',record:body});
         const next = {...state,records:state.records.map(entry=>entry.id===record.id?{...entry,cloudSaved:true}:entry)};
         write(next);
         state = next;
@@ -258,12 +292,12 @@
       const [localFortnight,localIncident] = await Promise.all([inspections(),incidents()]);
       for (const record of localFortnight.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
-        await rpc('saveRecord',{kind:'fortnight',record:body});
+        await rpcSync('saveRecord',{kind:'fortnight',record:body});
         if (!deletedFortnightIds.has(record.id)) await inspections({...record,cloudSaved:true});
       }
       for (const record of localIncident.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
-        await rpc('saveRecord',{kind:'incident',record:body});
+        await rpcSync('saveRecord',{kind:'incident',record:body});
         if (!deletedIncidentIds.has(record.id)) await incidents({...record,cloudSaved:true});
       }
 
@@ -278,7 +312,10 @@
           removeEvidence('inspections',localFortnight.map(record=>record.id)),
           removeEvidence('incidents',localIncident.map(record=>record.id))
         ]);
-        updateStatus('Dados sincronizados');
+        const [pendingFortnight,pendingIncident]=await Promise.all([inspections(),incidents()]);
+        again=state.dirty || state.records.some(row=>!row.cloudSaved) ||
+          pendingFortnight.some(row=>!row.cloudSaved) || pendingIncident.some(row=>!row.cloudSaved);
+        updateStatus(again?'Enviando alterações pendentes…':'Dados sincronizados',again?'offline':'online');
         retryDelay = 5000;
         return;
       }
@@ -289,7 +326,7 @@
       const incidentIds = new Set(localIncident.map(record=>record.id));
       do {
         const dailyIds = new Set(state.records.map(record=>record.id));
-        const batch = await rpc('listRecords',{cursor:cursor ?? null,checkpoint:checkpoint ?? null});
+        const batch = await rpcSync('listRecords',{cursor:cursor ?? null,checkpoint:checkpoint ?? null});
         if (batch.deletedFortnightIds?.length) {
           batch.deletedFortnightIds.forEach(id=>deletedFortnightIds.add(id));
           await removeEvidence('inspections',batch.deletedFortnightIds);
@@ -324,17 +361,21 @@
         write(next);
         state = next;
       }
-      updateStatus('Dados sincronizados');
+      const [pendingFortnight,pendingIncident]=await Promise.all([inspections(),incidents()]);
+      again ||= state.dirty || state.records.some(record=>!record.cloudSaved) ||
+        pendingFortnight.some(record=>!record.cloudSaved) || pendingIncident.some(record=>!record.cloudSaved);
+      updateStatus(again?'Enviando alterações pendentes…':'Dados sincronizados',again?'offline':'online');
       retryDelay = 5000;
       if (!byId('historico').hidden) { historyView(); refreshFortnightHistory(); }
       if (!byId('historico-ocorrencias').hidden) refreshIncidentHistory();
       again ||= state.dirty || state.records.some(record=>!record.cloudSaved);
     } catch (failure) {
+      if(suffix()!==syncSuffix)return;
       if (!navigator.onLine) {
         showOfflineStatus();
       } else {
         updateStatus('Sincronização pendente','offline');
-        if (failure.message.startsWith('Conexão indisponível')) {
+        if ((failure.message.startsWith('Conexão indisponível') || failure.message.startsWith('A base está recebendo'))) {
           retryTimer = setTimeout(schedule,retryDelay);
           retryDelay = Math.min(retryDelay*2,60000);
         }
@@ -441,8 +482,20 @@
     error();
     changeSession(null);
   };
+  const exportPending=byId('export-pending-catalog');
+  exportPending.onclick=()=>{
+    const payload={format:'checklist-catalog-draft-v1',exportedAt:new Date().toISOString(),
+      account:session?.user?.email || '',version:state.version,dirty:state.dirty,
+      catalog:ChecklistCatalogSync.snapshot(state),base:state.catalogBase || null};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const link=document.createElement('a'),url=URL.createObjectURL(blob);
+    link.href=url;link.download='Checklist-DER-cadastros-do-aparelho.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
   syncButton.onclick = sync;
   window.addEventListener('online',schedule);
+  window.addEventListener('pageshow',schedule);
+  window.addEventListener('focus',schedule);
+  setInterval(()=>{if(document.visibilityState==='visible' && active())schedule()},30000);
   window.addEventListener('offline',()=>{
     if (active()) showOfflineStatus();
   });
