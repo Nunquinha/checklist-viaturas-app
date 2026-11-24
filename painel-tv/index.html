@@ -103,7 +103,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <section id="km-balance" class="panel mileage" role="tabpanel" aria-labelledby="tab-km-balance" hidden>
       <div class="table-head"><h2>KM disponível por viatura</h2></div>
       <div class="filters"><label>Buscar viatura<input id="budget-search" type="search" placeholder="Prefixo ou placa"></label><label>Base<select id="budget-base"><option value="">Todas as bases</option></select></label><p id="budget-summary" role="status"></p></div>
-      <div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período do limite</th><th>Limite</th><th>Rodados</th><th>KM disponíveis</th><th>Situação</th></tr></thead><tbody id="budget-rows"></tbody></table></div>
+      <div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período do limite</th><th>Limite</th><th>Rodados no período</th><th>KM disponíveis</th><th>Situação</th></tr></thead><tbody id="budget-rows"></tbody></table></div>
       <p class="empty muted">Configure o limite, o período e o odômetro inicial no app, em Viaturas → Editar viatura. O saldo usa apenas os checklists recebidos pela base central. Leituras inconsistentes precisam de revisão.</p>
     </section>
     <section id="overview" class="panel mileage" role="tabpanel" aria-labelledby="tab-overview" hidden>
@@ -126,7 +126,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
   </dialog>
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
-<script defer src="mileage-budget.js?v=v45"></script>
-<script defer src="tv.js?v=16"></script>
+<script defer src="mileage-budget.js?v=v46"></script>
+<script defer src="tv.js?v=17"></script>
 </body>
 </html>

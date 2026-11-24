@@ -709,10 +709,10 @@ function startPanel() {
         if (session()?.token!==active.token) return;
         head ??= batch.records[0]?.record.id;
         for (const {kind,record} of batch.records) {
-          if (kind!=='daily' || !Array.isArray(record.results)) continue;
+          if (kind!=='daily') continue;
           const at = Date.parse(record.inspected || record.exchange || record.at);
           if (!Number.isFinite(at)) continue;
-          const results = record.results.map(({id,title,critical,value,expected,found,note})=>
+          const results = (Array.isArray(record.results)?record.results:[]).map(({id,title,critical,value,expected,found,note})=>
             ({id,title,critical,value,expected,found,note}));
           nextRecords.set(record.id,{id:record.id,prefix:record.prefix,at,results,mode:record.mode,solo:record.solo,prior:record.prior,km:record.km});
         }
