@@ -21,11 +21,14 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 @media(max-width:720px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.kpi{padding:9px;font-size:12px}.intro{margin-top:22px}table{min-width:620px}}
 .km-budget-status{font-weight:700}.km-budget-review,.km-budget-invalid,.km-budget-low{color:var(--amber)}.km-budget-exceeded,.km-budget-exhausted{color:var(--red)}#budget-rows small{display:block;color:var(--muted);font-size:12px;margin-top:4px}#budget-rows td:first-child{width:120px}#budget-rows td:nth-child(2){white-space:normal;min-width:160px}
 </style>
+<link rel="stylesheet" href="panel-options.css?v=1">
+<script src="panel-theme.js?v=1"></script>
 </head>
 <body>
 <main>
   <header>
     <div class="brand"><img src="logo-der.jpg" alt="DER"><div><strong>Checklist DER</strong><small>Painel de conformidade</small></div></div>
+    <label class="theme-picker">Cor do painel <select id="panel-theme"><option value="blue">Azul</option><option value="green">Verde DER</option><option value="graphite">Grafite</option><option value="light">Claro</option></select></label>
   </header>
   <div class="intro"><h1>Não conformidades da frota</h1>
     <p id="demo-notice" class="demo-notice" hidden><strong>Demonstração</strong> · Viaturas e registros fictícios. <a href="./painel-tv/">Abrir painel de produção</a></p>
@@ -101,7 +104,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <p class="empty muted" id="km-note"></p>
     </section>
     <section id="km-balance" class="panel mileage" role="tabpanel" aria-labelledby="tab-km-balance" hidden>
-      <div class="table-head"><h2>KM disponível por viatura</h2></div>
+      <div class="table-head"><h2>KM disponível por viatura</h2><div class="toolbar"><button id="budget-pdf" type="button" disabled>Gerar PDF</button><button id="budget-excel" type="button" disabled>Gerar Excel</button></div></div>
       <div class="filters"><label>Buscar viatura<input id="budget-search" type="search" placeholder="Prefixo ou placa"></label><label>Base<select id="budget-base"><option value="">Todas as bases</option></select></label><p id="budget-summary" role="status"></p></div>
       <div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período do limite</th><th>Limite</th><th>Rodados no período</th><th>KM disponíveis</th><th>Situação</th></tr></thead><tbody id="budget-rows"></tbody></table></div>
       <p class="empty muted">Configure o limite, o período e o odômetro inicial no app, em Viaturas → Editar viatura. O saldo usa apenas os checklists recebidos pela base central. Leituras inconsistentes precisam de revisão.</p>
@@ -128,5 +131,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
 <script defer src="mileage-budget.js?v=v46"></script>
 <script defer src="tv.js?v=17"></script>
+<script defer src="xlsx.js?v=1"></script>
+<script defer src="panel-exports.js?v=1"></script>
 </body>
 </html>
