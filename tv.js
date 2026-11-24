@@ -311,7 +311,7 @@ function startPanel() {
   let records = new Map(), latest = new Map(), pending = [], resolved = [], page = 0;
   const reports = {};
   const requestForm = get('request-code'), verifyForm = get('verify-code');
-  const permitted = user => ['owner','manager','viewer','engineer'].includes(user?.role);
+  const permitted = user => ['owner','manager'].includes(user?.role);
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
   const kmBase = get('km-base'), budgetBase=get('budget-base');
   const pendingBase = get('pending-base'), trendBase = get('trend-base');
@@ -691,7 +691,7 @@ function startPanel() {
       const user=bootstrap.user;
       if (!permitted(user)) {
         status('Painel com acesso restrito');
-        hideData('Entre com uma conta autorizada a consultar o painel.','login');
+        hideData('Painel exclusivo da Administração e Gestão. Entre com uma conta desses perfis.','login');
         return;
       }
       const scope = JSON.stringify([user.role,user.prefix]);
@@ -699,7 +699,7 @@ function startPanel() {
         hideData('Carregando os registros disponíveis para este acesso.');
         accessScope = scope;
       }
-      budgetAllowed=user.admin===true || user.role==='engineer';
+      budgetAllowed=permitted(user);
       if(bootstrap.catalog){budgetVehicles=(bootstrap.catalog.vehicles||[]).filter(vehicle=>!user.prefix||vehicle.prefix===user.prefix).map(({prefix,plate,active,kmBudget})=>({prefix,plate,active,kmBudget}));budgetVersion=bootstrap.catalog.version}
       if (!syncedAt) status('Lendo o histórico do Checklist Diário…');
       let cursor = null, head;
