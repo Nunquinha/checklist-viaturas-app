@@ -4,7 +4,7 @@ const ChecklistFleet = (() => {
   const base = prefix => /^ITG-\d{3}$/.test(prefix) ? prefix[4] : '';
   const name = code => bases[code] || (code ? 'Base '+code : 'Base não identificada');
   const selected = () => byId('fleet-base').value;
-  const headers = ['Base','Prefixo','Placa','Tipo de serviço','Limite total (km)','Km disponíveis'];
+  const headers = ['Base','Prefixo','Placa','Tipo de serviço','Limite total (km)','km disponíveis'];
   const baseRank = code => code in bases ? Number(code) : 100 + (Number(code) || 0);
 
   function ordered(vehicles,filter='') {
