@@ -31,3 +31,13 @@ assert.equal(km.summarize(vehicle,[...rows,{id:'deferred',prefix:'ITG-101',at:no
 assert.equal(km.fleet([vehicle,{...vehicle,prefix:'ITG-121',active:false}],rows,now).length,1);
 const original=JSON.stringify(rows);km.summarize(vehicle,rows,now);assert.equal(JSON.stringify(rows),original);
 console.log('PASS: exact odometer differences, idempotent resends, offline ordering, solo/completed checklists, Brasilia period boundaries, future dates, invalid/decreasing readings, overruns and missing configuration.');
+
+const daily=km.dailyAllowance(km.summarize(vehicle,rows,now),now);
+assert.deepEqual(daily,{days:7,daily:114.28});
+assert.deepEqual(km.dailyAllowance(km.summarize(vehicle,rows,now),at('2026-11-30')),{days:1,daily:800});
+assert.equal(km.dailyAllowance(km.summarize(vehicle,rows,now),at('2026-12-01')).daily,null);
+assert.equal(km.dailyAllowance(km.summarize({...vehicle,kmBudget:{...vehicle.kmBudget,end:''}},rows,now),now).daily,null);
+assert.equal(km.dailyAllowance(km.summarize(vehicle,[],now),now).daily,null);
+assert.equal(km.dailyAllowance(km.summarize(vehicle,[reading('over','2026-11-24',11200)],now),now).daily,0);
+assert.equal(km.dailyAllowance(km.summarize(vehicle,rows,now),Date.parse('2026-11-25T01:00:00Z')).days,7);
+console.log('PASS: daily allowance, inclusive Brasilia dates, conservative rounding, no end date, expired and exceeded balances.');

@@ -16,7 +16,7 @@
     if(!value)return null;
     const limit=whole(value.limit),initial=whole(value.initial),start=dateStart(value.start),end=value.end?dateStart(value.end):null;
     if(limit===null || limit===0 || initial===null || start===null || (value.end&&(end===null||end<start)))
-      throw Error('Confira o limite, o odômetro inicial e as datas do controle de KM.');
+      throw Error('Confira o limite, o odômetro inicial e as datas do controle de km.');
     return {limit,initial,start:value.start,end:value.end||'',from:start,until:end===null?Infinity:end+86400000};
   }
   function readingAt(record){
@@ -59,7 +59,13 @@
     return vehicles.filter(row=>row.active!==false).map(row=>summarize(row,records,now))
       .sort((a,b)=>a.prefix.localeCompare(b.prefix,'pt-BR',{numeric:true}));
   }
-  const api={whole,config,summarize,fleet,readingAt};
+  function dailyAllowance(row,now=Date.now()){
+    if(!row.budget?.end || row.remaining===null || now<row.budget.from || now>=row.budget.until)return {days:null,daily:null};
+    const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date(now));
+    const days=Math.round((row.budget.until-dateStart(today))/86400000);
+    return {days,daily:Math.floor(Math.max(0,row.remaining)*100/days)/100};
+  }
+  const api={whole,config,summarize,fleet,readingAt,dailyAllowance};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   if(root)root.ChecklistMileage=api;
 })(typeof window==='undefined'?null:window);

@@ -202,7 +202,7 @@ function mileagePdf(Pdf, {totals,skipped,label}, options) {
     doc.text('Viatura',19,88);
     doc.text('Total rodado',98,88,{align:'right'});
     doc.text('Intervalos entre trocas',147,88,{align:'right'});
-    doc.text('Km desde a troca anterior',191,88,{align:'right'});
+    doc.text('km desde a troca anterior',191,88,{align:'right'});
   };
   const startPage = () => {
     header();
@@ -488,8 +488,8 @@ function startPanel() {
   function renderBudget() {
     const target=get('budget-rows');target.replaceChildren();
     if(!budgetAllowed){
-      const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=6;
-      cell.textContent='As metas de KM não estão disponíveis neste perfil. Consulte com Administração, Gestão ou Engenheiro.';row.append(cell);target.append(row);
+      const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=7;
+      cell.textContent='As metas de km não estão disponíveis neste perfil. Consulte com Administração, Gestão ou Engenheiro.';row.append(cell);target.append(row);
       get('budget-summary').textContent='Acesso conforme o perfil da conta.';return;
     }
     const all=window.ChecklistMileage.fleet(budgetVehicles,[...records.values()]);
@@ -501,13 +501,18 @@ function startPanel() {
       const row=document.createElement('tr');
       for(const value of [item.prefix,item.budget?day(item.budget.start)+' a '+day(item.budget.end):'—',
         km(item.budget?.limit??null),km(item.used),km(item.remaining)])addText(row,'td',value);
+      const allowance=window.ChecklistMileage.dailyAllowance(item),dailyCell=document.createElement('td');
+      dailyCell.textContent=allowance.daily===null?'—':number.format(allowance.daily)+' km/dia';
+      if(allowance.days!==null)addText(dailyCell,'small',allowance.days+' dias restantes, incluindo hoje');
+      else if(item.budget&&!item.budget.end)addText(dailyCell,'small','Informe a data final');
+      row.append(dailyCell);
       const statusCell=document.createElement('td');addText(statusCell,'span',item.label,'km-budget-status km-budget-'+item.status);
       if(item.closed)addText(statusCell,'small','Período encerrado');
       if(item.issues.length)addText(statusCell,'small',item.issues[0]);
       if(item.lastKm!==null)addText(statusCell,'small','Última leitura: '+number.format(item.lastKm)+' km');
       row.append(statusCell);target.append(row);
     }
-    if(!selected.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=6;cell.textContent='Nenhuma viatura disponível para os filtros selecionados.';row.append(cell);target.append(row)}
+    if(!selected.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=7;cell.textContent='Nenhuma viatura disponível para os filtros selecionados.';row.append(cell);target.append(row)}
     get('budget-summary').textContent=all.filter(row=>row.budget).length+' metas configuradas · '+all.filter(row=>row.remaining!==null&&row.remaining<=0).length+' limites atingidos ou excedidos.';
   }
 

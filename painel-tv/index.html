@@ -51,7 +51,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
       <button type="button" role="tab" id="tab-materials" aria-controls="materials" aria-selected="false" tabindex="-1">Reposição</button>
       <button type="button" role="tab" id="tab-resolved" aria-controls="resolved" aria-selected="false" tabindex="-1">Resoluções</button>
       <button type="button" role="tab" id="tab-mileage" aria-controls="mileage" aria-selected="false" tabindex="-1">Quilometragem</button>
-      <button type="button" role="tab" id="tab-km-balance" aria-controls="km-balance" aria-selected="false" tabindex="-1">KM disponível</button>
+      <button type="button" role="tab" id="tab-km-balance" aria-controls="km-balance" aria-selected="false" tabindex="-1">km disponível</button>
       <button type="button" role="tab" id="tab-overview" aria-controls="overview" aria-selected="false" tabindex="-1">Visão por base</button>
     </div>
     <section id="pending-section" class="panel" role="tabpanel" aria-labelledby="tab-pending-section">
@@ -100,13 +100,13 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
         <button id="download-km-pdf" type="button" disabled>Baixar resumo da frota em PDF</button>
       </div>
       <p class="empty stale" id="km-pdf-error" role="alert" hidden></p>
-      <div class="table-scroll"><table id="km-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Total rodado</th><th scope="col">Intervalos entre trocas</th><th scope="col">Km desde a troca anterior</th></tr></thead><tbody id="km-rows"></tbody></table></div>
+      <div class="table-scroll"><table id="km-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Total rodado</th><th scope="col">Intervalos entre trocas</th><th scope="col">km desde a troca anterior</th></tr></thead><tbody id="km-rows"></tbody></table></div>
       <p class="empty muted" id="km-note"></p>
     </section>
     <section id="km-balance" class="panel mileage" role="tabpanel" aria-labelledby="tab-km-balance" hidden>
-      <div class="table-head"><h2>KM disponível por viatura</h2><div class="toolbar"><button id="budget-pdf" type="button" disabled>Gerar PDF</button><button id="budget-excel" type="button" disabled>Gerar Excel</button></div></div>
+      <div class="table-head"><h2>km disponível por viatura</h2><div class="toolbar"><button id="budget-pdf" type="button" disabled>Gerar PDF</button><button id="budget-excel" type="button" disabled>Gerar Excel</button></div></div>
       <div class="filters"><label>Buscar viatura<input id="budget-search" type="search" placeholder="Prefixo ou placa"></label><label>Base<select id="budget-base"><option value="">Todas as bases</option></select></label><p id="budget-summary" role="status"></p></div>
-      <div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período do limite</th><th>Limite</th><th>Rodados no período</th><th>KM disponíveis</th><th>Situação</th></tr></thead><tbody id="budget-rows"></tbody></table></div>
+      <div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período do limite</th><th>Limite</th><th>Rodados no período</th><th>km disponíveis</th><th>km disponíveis por dia</th><th>Situação</th></tr></thead><tbody id="budget-rows"></tbody></table></div>
       <p class="empty muted">Configure o limite, o período e o odômetro inicial no app, em Viaturas → Editar viatura. O saldo usa apenas os checklists recebidos pela base central. Leituras inconsistentes precisam de revisão.</p>
     </section>
     <section id="overview" class="panel mileage" role="tabpanel" aria-labelledby="tab-overview" hidden>
@@ -129,9 +129,9 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
   </dialog>
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
-<script defer src="mileage-budget.js?v=v46"></script>
-<script defer src="tv.js?v=18"></script>
+<script defer src="mileage-budget.js?v=v47"></script>
+<script defer src="tv.js?v=19"></script>
 <script defer src="xlsx.js?v=1"></script>
-<script defer src="panel-exports.js?v=1"></script>
+<script defer src="panel-exports.js?v=2"></script>
 </body>
 </html>

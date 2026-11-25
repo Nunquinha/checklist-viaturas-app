@@ -20,6 +20,10 @@ window.ChecklistMileageUI=(()=>{
     const checked=ChecklistMileage.config(value);
     return {limit:checked.limit,initial:checked.initial,start:checked.start,end:checked.end};
   }
+  function dailyDisplay(row){
+    const value=ChecklistMileage.dailyAllowance(row);
+    return value.daily===null?'—':number.format(value.daily)+' km/dia<small>'+value.days+' dias restantes, incluindo hoje</small>';
+  }
   function render(){
     const target=byId('km-balance-rows');if(!target)return;
     const source=window.checklistCloud?.enabled?(state.records||[]).filter(row=>row.cloudSaved===true):(state.records||[]);
@@ -30,10 +34,10 @@ window.ChecklistMileageUI=(()=>{
     target.innerHTML=visible.map(row=>'<tr><td><strong>'+escape(row.prefix)+'</strong><small>'+escape(row.plate)+'</small></td>'+
       '<td>'+escape(row.budget?day(row.budget.start)+' a '+day(row.budget.end):'—')+'</td>'+
       '<td>'+display(row.budget?.limit??null)+'</td><td>'+display(row.used)+'</td>'+
-      '<td><strong>'+display(row.remaining)+'</strong></td><td><span class="km-status km-'+row.status+'">'+escape(row.label)+'</span>'+
+      '<td><strong>'+display(row.remaining)+'</strong></td><td>'+dailyDisplay(row)+'</td><td><span class="km-status km-'+row.status+'">'+escape(row.label)+'</span>'+
       (row.closed?'<small>Período encerrado</small>':'')+(row.issues.length?'<small>'+escape(row.issues[0])+'</small>':'')+
-      (row.lastKm!==null?'<small>Última leitura: '+display(row.lastKm)+'</small>':'')+'</td></tr>').join('')||'<tr><td colspan="6">Nenhuma viatura encontrada.</td></tr>';
-    byId('km-balance-summary').textContent=rows.filter(row=>row.budget).length+' viaturas com controle de KM configurado · '+
+      (row.lastKm!==null?'<small>Última leitura: '+display(row.lastKm)+'</small>':'')+'</td></tr>').join('')||'<tr><td colspan="7">Nenhuma viatura encontrada.</td></tr>';
+    byId('km-balance-summary').textContent=rows.filter(row=>row.budget).length+' viaturas com controle de km configurado · '+
       rows.filter(row=>row.remaining!==null&&row.remaining<=0).length+' com limite atingido ou excedido.';
   }
   enabled.onchange=toggle;byId('km-balance-search').oninput=render;fill();render();

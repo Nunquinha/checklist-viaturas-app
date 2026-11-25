@@ -243,7 +243,7 @@ fleet.onsubmit=event=>{
   const email=fleet.elements.vehicleEmail.value.trim().toLowerCase(), plate=fleet.elements.plate.value.trim().toUpperCase();
   if(state.vehicles.some(vehicle=>vehicle.prefix===prefix&&vehicle.prefix!==editingVehicle))return alert('Este prefixo já está cadastrado.');
   if(email&&state.vehicles.some(vehicle=>vehicle.prefix!==editingVehicle&&vehicle.email?.toLowerCase()===email))return alert('Este e-mail já está vinculado a outra viatura.');
-  if(!window.ChecklistMileageUI)return alert('Aguarde o controle de KM carregar e tente novamente.');
+  if(!window.ChecklistMileageUI)return alert('Aguarde o controle de km carregar e tente novamente.');
   let kmBudget;try{kmBudget=window.ChecklistMileageUI.read()}catch(error){return alert(error.message)}
   const vehicles=editingVehicle?state.vehicles.map(vehicle=>vehicle.prefix===editingVehicle?{...vehicle,email,plate,kmBudget}:vehicle):[...state.vehicles,{prefix,email,plate,kmBudget,active:true}];
   if(save({...state,vehicles})){resetFleet();refresh();byId('notice').textContent='Cadastro da viatura salvo no aparelho. Aguarde a confirmação de sincronização.';}
