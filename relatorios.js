@@ -130,7 +130,7 @@ function showIndividualFortnightReport(record,trigger) {
 function itemIssues(record) {
   return (record.results||[]).filter(item=>isNonconforming(item.value)||
     (item.found!=null&&item.expected!=null&&item.found!==item.expected)).map(item=>{
-    const count=item.found==null?'':item.expected==null?' ('+item.found+' encontrados)':' ('+item.found+' de '+item.expected+')';
+    const count=item.general||item.found==null?'':item.expected==null?' ('+item.found+' encontrados)':' ('+item.found+' de '+item.expected+')';
     return item.title+count+(item.note?' — '+item.note:'');
   }).join(', ');
 }

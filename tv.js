@@ -157,7 +157,7 @@ function nonconformityPdf(Pdf, pending, options) {
       const count = item.count===1?'Primeiro registro':item.count+' checklists seguidos';
       const age = elapsedTime(now-item.first);
       const dates = 'Em aberto há '+age+' · Desde '+date(item.first)+' · Último registro '+date(item.last);
-      const amount = item.found!=null
+      const amount = !item.general && item.found!=null
         ? ' · '+(item.expected==null?item.found+' encontrados':item.found+' de '+item.expected+' exigidos')
         : '';
       const notes = doc.splitTextToSize('Justificativa: '+(item.note || 'Sem justificativa no registro'),172);
@@ -561,7 +561,7 @@ function startPanel() {
         const title = detail.appendChild(document.createElement('div'));
         addText(title,'strong',item.title || 'Item sem nome');
         if (item.critical) addText(title,'span','Crítico','badge critical');
-        if (item.found!=null) addText(detail,'span',item.expected==null
+        if (!item.general && item.found!=null) addText(detail,'span',item.expected==null
           ? 'Quantidade encontrada: '+item.found
           : item.found+' de '+item.expected+' exigidos','line');
         const missing = shortage(item);
@@ -660,7 +660,7 @@ function startPanel() {
       addText(entry,'strong',item.title || 'Item sem nome');
       const value = failed(item)?'Não conforme':item.value==='OK'?'Conforme':item.value;
       addText(entry,'span',value || 'Sem resultado',failed(item)?'line critical':'line');
-      if (item.found!=null) addText(entry,'span',item.expected==null ? 'Quantidade encontrada: '+item.found
+      if (!item.general && item.found!=null) addText(entry,'span',item.expected==null ? 'Quantidade encontrada: '+item.found
         : item.found+' de '+item.expected+' exigidos','line');
       if (shortage(item)) addText(entry,'span',shortage(item)+' a repor','line age');
       if (item.note) addText(entry,'span',item.note,'line');

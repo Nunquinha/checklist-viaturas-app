@@ -529,7 +529,7 @@ function historyView() {
       (record.responsible?'<p>Responsável: '+escape(record.responsible)+'</p>':'')+
       (!solo&&record.missing?'<p>Ausente: '+(record.missing==='outgoing'?'quem entrega':'quem recebe')+'</p>':'')+
       (record.results.some(item=>item.critical&&isNonconforming(item.value))?'<p class="warning">Problema em item crítico</p>':'')+
-      (record.results.length?'<ul>'+record.results.map(item=>'<li>'+escape(item.title)+' — '+escape(item.value)+(item.found!=null?' · '+escape(item.found)+(item.expected!=null?' de '+escape(item.expected):' encontrados'):'')+(item.note?' · '+escape(item.note):'')+'</li>').join('')+'</ul>':'')+
+      (record.results.length?'<ul>'+record.results.map(item=>'<li>'+escape(item.title)+' — '+escape(item.value)+(!item.general&&item.found!=null?' · '+escape(item.found)+(item.expected!=null?' de '+escape(item.expected):' encontrados'):'')+(item.note?' · '+escape(item.note):'')+'</li>').join('')+'</ul>':'')+
       Object.entries(record.signatures).map(([role,url])=>'<p>'+ (solo?'Operador':role==='outgoing'?'Quem entrega':'Quem recebe')+'<img class="record-image" alt="Assinatura registrada" src="'+escape(url)+'"></p>').join('')+
       (record.mode==='deferred'&&!done?'<button type="button" data-record="'+index+'">Fazer checklist agora</button>':'')+'</details>';
   }).join(''):'<article>Nenhuma passagem registrada.</article>';
