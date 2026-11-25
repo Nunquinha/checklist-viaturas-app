@@ -162,10 +162,16 @@ function refresh() {
   window.ChecklistMileageUI?.render();
   renderOperatorAdmin();
   refreshOperatorChoices();
-  for(const [area,list] of [['vehicles',state.vehicles],['items',state.items]]) {
-    byId(area).innerHTML=list.map((entry,index)=>'<details><summary>'+escape(entry.prefix||entry.title)+(entry.active?'':' · inativo')+'</summary><p>'+escape(entry.prefix?[decode(entry.prefix),entry.plate].filter(Boolean).join(' · '):itemScopes(entry).map(scopeLabel).join(', '))+(entry.critical?' · Crítico':'')+'</p><button type="button" data-index="'+index+'">'+(entry.active?'Desativar':'Reativar')+'</button></details>').join('');
+  ChecklistFleet.syncFilter(state.vehicles);
+  const fleetRows=ChecklistFleet.ordered(state.vehicles,ChecklistFleet.selected());
+  for(const [area,list] of [['vehicles',fleetRows],['items',state.items]]) {
+    byId(area).innerHTML=list.map((entry,index)=>{
+      const group = area==='vehicles' && (!index || ChecklistFleet.base(entry.prefix)!==ChecklistFleet.base(list[index-1].prefix))
+        ? '<h3>'+escape(ChecklistFleet.name(ChecklistFleet.base(entry.prefix)))+'</h3>' : '';
+      return group+'<details><summary>'+escape(entry.prefix||entry.title)+(entry.active?'':' · inativo')+'</summary><p>'+escape(entry.prefix?[decode(entry.prefix),entry.plate].filter(Boolean).join(' · '):itemScopes(entry).map(scopeLabel).join(', '))+(entry.critical?' · Crítico':'')+'</p><button type="button" data-index="'+index+'">'+(entry.active?'Desativar':'Reativar')+'</button></details>';
+    }).join('') || (area==='vehicles' ? '<p>Nenhuma viatura cadastrada nesta base.</p>' : '');
     byId(area).querySelectorAll('button').forEach(button=>button.onclick=()=>{
-      const next={...state,[area]:list.map((entry,index)=>index===Number(button.dataset.index)?{...entry,active:!entry.active}:entry)};
+      const next={...state,[area]:state[area].map(entry=>entry===list[Number(button.dataset.index)]?{...entry,active:!entry.active}:entry)};
       if(save(next)){refresh(); renderChecks();}
     });
     byId(area).querySelectorAll('details').forEach((entry,index)=>{

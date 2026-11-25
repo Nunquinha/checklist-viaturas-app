@@ -1,6 +1,6 @@
-const cacheName = 'der-checklist-shell-v47';
+const cacheName = 'der-checklist-shell-v48';
 const version = cacheName.split('-').at(-1);
-const scripts = ['mileage-budget.js','mileage-ui.js','operators-export.js','app.js','register-sw.js','catalog-import.js','catalog-sync.js','operators-import.js','quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
+const scripts = ['fleet-export.js','mileage-budget.js','mileage-ui.js','operators-export.js','app.js','register-sw.js','catalog-import.js','catalog-sync.js','operators-import.js','quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
 const appFiles = ['./index.html',...scripts.map(name=>'./'+name+'?v='+version),
   './app.css?v='+version,'./vendor/jspdf-4.2.1.umd.min.js','./logo-der.jpg','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
