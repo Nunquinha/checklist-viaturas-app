@@ -4,7 +4,7 @@ const ChecklistFleet = (() => {
   const base = prefix => /^ITG-\d{3}$/.test(prefix) ? prefix[4] : '';
   const name = code => bases[code] || (code ? 'Base '+code : 'Base não identificada');
   const selected = () => byId('fleet-base').value;
-  const headers = ['Base','Prefixo','Placa','Tipo de serviço','Situação','Limite do contrato (km)'];
+  const headers = ['Base','Prefixo','Placa','Tipo de serviço','Limite total (km)','Km disponíveis'];
   const baseRank = code => code in bases ? Number(code) : 100 + (Number(code) || 0);
 
   function ordered(vehicles,filter='') {
@@ -19,20 +19,19 @@ const ChecklistFleet = (() => {
     select.value = codes.includes(previous) ? previous : '';
   }
 
-  function cells(vehicle) {
-    const limit = vehicle.kmBudget?.limit;
+  function cells(vehicle,balance) {
     return [name(base(vehicle.prefix)),vehicle.prefix,vehicle.plate || '—',services[vehicle.prefix[5]] || '—',
-      vehicle.active ? 'Ativa' : 'Inativa',Number.isSafeInteger(Number(limit)) && Number(limit)>0 ? Number(limit) : '—'];
+      balance.budget?.limit ?? '—',balance.remaining ?? '—'];
   }
 
-  async function pdf(rows,filter) {
+  async function pdf(rows,filter,table) {
     const response = await fetch('logo-der.jpg');
     if (!response.ok) throw Error('Logo DER indisponível.');
     const logo = new Uint8Array(await response.arrayBuffer());
     const doc = new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});
     doc.setProperties({title:'Cadastro de viaturas por base - DER CGR.02',author:'DER - CGR.02'});
-    const green = '#203d30', muted = '#56675d', columns = ['Prefixo','Placa','Tipo de serviço','Situação','Limite (km)'];
-    const x = [17,46,75,135,163];
+    const green = '#203d30', muted = '#56675d', columns = headers.slice(1);
+    const x = [17,46,75,131,163];
     const now = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}).format(new Date());
     let y;
     function pageHeading() {
@@ -45,7 +44,7 @@ const ChecklistFleet = (() => {
       doc.setFont('helvetica','normal').setTextColor(muted).setFontSize(9);
       const active = rows.filter(vehicle=>vehicle.active).length;
       doc.text((filter?name(filter):'Todas as bases')+' | '+rows.length+' viaturas | '+active+' ativas | '+(rows.length-active)+' inativas',14,51);
-      doc.text('Emitido em '+now,14,57);
+      doc.text('Emitido em '+now+' | — indica valor indisponível',14,57);
       y=63;
     }
     function groupHeading(label) {
@@ -58,7 +57,7 @@ const ChecklistFleet = (() => {
     }
     pageHeading();
     let group;
-    for (const vehicle of rows) {
+    for (const [index,vehicle] of rows.entries()) {
       const current = base(vehicle.prefix);
       if (y+(current===group?8:26)>276) {
         doc.addPage();
@@ -70,7 +69,7 @@ const ChecklistFleet = (() => {
       }
       group=current;
       doc.setFont('helvetica','normal').setTextColor(green).setFontSize(9);
-      cells(vehicle).slice(1).forEach((value,index)=>doc.text(typeof value==='number'?value.toLocaleString('pt-BR'):value,x[index],y+5.2));
+      table[index].slice(1).forEach((value,index)=>doc.text(typeof value==='number'?value.toLocaleString('pt-BR'):value,x[index],y+5.2));
       doc.setLineWidth(.15).setDrawColor('#dae2dc').line(14,y+8,196,y+8);
       y+=8;
     }
@@ -94,7 +93,11 @@ const ChecklistFleet = (() => {
         button.disabled=true;
         try {
           const isPdf = format==='pdf';
-          const data = isPdf ? await pdf(rows,filter) : createWorkbook('Viaturas por base',headers,rows.map(cells));
+          const records = state.records || [];
+          const confirmed = window.checklistCloud?.enabled ? records.filter(record=>record.cloudSaved===true) : records;
+          const now = Date.now();
+          const table = rows.map(vehicle=>cells(vehicle,ChecklistMileage.summarize(vehicle,confirmed,now)));
+          const data = isPdf ? await pdf(rows,filter,table) : createWorkbook('Viaturas por base',headers,table);
           const type = isPdf?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
           const date = new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date());
           const url=URL.createObjectURL(new Blob([data],{type}));
@@ -110,3 +113,4 @@ const ChecklistFleet = (() => {
   document.addEventListener('DOMContentLoaded',mount);
   return {base,name,selected,ordered,syncFilter};
 })();
+
