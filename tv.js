@@ -525,36 +525,63 @@ function startPanel() {
       if (filter.value==='shortage' && !shortage(item)) return false;
       return !query || [item.prefix,item.title,item.note].some(value=>normalize(value).includes(query));
     });
-    const pages = Math.max(1,Math.ceil(visible.length/pageSize));
-    page = (page%pages+pages)%pages;
-    const rows = document.createDocumentFragment();
-    for (const item of visible.slice(page*pageSize,(page+1)*pageSize)) {
-      const row = rows.appendChild(document.createElement('tr'));
-      row.insertCell().append(vehicleButton(item.prefix));
-      const details = row.insertCell();
-      addText(details,'strong',item.title || 'Item sem nome');
-      if (item.critical) addText(details,'span','Crítico','badge critical');
-      if (item.found!=null) addText(details,'span',item.expected==null
-        ? 'Quantidade encontrada: '+item.found
-        : item.found+' de '+item.expected+' exigidos','line');
-      if (shortage(item)) addText(details,'span',shortage(item)+' a repor','line age');
-      addText(details,'span',item.note || 'Registro sem justificativa','line');
-      const first = row.insertCell();
-      addText(first,'span',Date.now()-item.first<60000?'Agora':'Há '+elapsed(Date.now()-item.first),'age');
-      addText(first,'time',date.format(item.first),'line');
-      const repetition = row.insertCell();
-      if (item.count>1) {
-        addText(repetition,'strong',item.count+' checklists seguidos','repeat');
-        addText(repetition,'span','Último: '+date.format(item.last),'line');
-      } else {
-        addText(repetition,'span','Primeiro registro');
-      }
+    const groups = new Map();
+    for (const item of visible) {
+      if (!groups.has(item.prefix)) groups.set(item.prefix,[]);
+      groups.get(item.prefix).push(item);
     }
-    get('rows').replaceChildren(rows);
+    const vehicles = [...groups].sort(([a],[b])=>a.localeCompare(b,'pt-BR',{numeric:true}));
+    const pages = Math.max(1,Math.ceil(vehicles.length/pageSize));
+    page = (page%pages+pages)%pages;
+    const target = get('rows');
+    const open = new Set([...target.querySelectorAll('details[open]')].map(group=>group.dataset.prefix));
+    const focused = document.activeElement?.closest('#rows > details > summary')?.parentElement.dataset.prefix;
+    const rows = document.createDocumentFragment();
+    const now = Date.now();
+    const age = at => now-at<60000 ? 'Agora' : 'Há '+elapsed(now-at);
+
+    for (const [prefix,items] of vehicles.slice(page*pageSize,(page+1)*pageSize)) {
+      const vehicle = rows.appendChild(document.createElement('details'));
+      vehicle.dataset.prefix = prefix;
+      vehicle.open = open.has(prefix);
+      const summary = vehicle.appendChild(document.createElement('summary'));
+      const critical = items.filter(item=>item.critical).length;
+      addText(summary,'strong',prefix,'pending-prefix');
+      addText(summary,'span',items.length+(items.length===1?' pendência':' pendências'));
+      if (critical) addText(summary,'span',critical+(critical===1?' crítica':' críticas'),'badge critical');
+      addText(summary,'span','Mais antiga: '+age(Math.min(...items.map(item=>item.first))),'pending-age');
+      const body = vehicle.appendChild(document.createElement('div'));
+      body.className = 'pending-body';
+      const checks = body.appendChild(document.createElement('ul'));
+      checks.className = 'pending-checks';
+      const ordered = [...items].sort((a,b)=>Number(Boolean(b.critical))-Number(Boolean(a.critical)) || a.first-b.first);
+
+      for (const item of ordered) {
+        const detail = checks.appendChild(document.createElement('li'));
+        const title = detail.appendChild(document.createElement('div'));
+        addText(title,'strong',item.title || 'Item sem nome');
+        if (item.critical) addText(title,'span','Crítico','badge critical');
+        if (item.found!=null) addText(detail,'span',item.expected==null
+          ? 'Quantidade encontrada: '+item.found
+          : item.found+' de '+item.expected+' exigidos','line');
+        const missing = shortage(item);
+        if (missing) addText(detail,'span',missing+' a repor','line age');
+        if (item.note) addText(detail,'span',item.note,'line');
+        addText(detail,'span','Desde '+date.format(item.first)+' · '+(item.count>1
+          ? item.count+' checklists seguidos · Último: '+date.format(item.last)
+          : 'Primeiro registro'),'line');
+      }
+      const lastChecklist = vehicleButton(prefix);
+      lastChecklist.textContent = 'Ver último checklist';
+      body.append(lastChecklist);
+    }
+    target.replaceChildren(rows);
+    if (focused) [...target.children].find(group=>group.dataset.prefix===focused)
+      ?.querySelector('summary')?.focus({preventScroll:true});
     get('pagination').hidden = pages===1;
     get('pager').textContent = (page+1)+' / '+pages;
-    get('result-count').textContent = visible.length===pending.length ? '' : '('+visible.length+' de '+pending.length+')';
-    get('table').hidden = visible.length===0;
+    get('result-count').textContent = vehicles.length ? '· '+vehicles.length+(vehicles.length===1?' viatura':' viaturas') : '';
+    target.hidden = vehicles.length===0;
     get('empty').hidden = visible.length>0;
     get('empty').textContent = pending.length ? 'Nenhuma pendência corresponde aos filtros.'
       : records.size ? 'Nenhuma não conformidade em aberto.' : 'Nenhum checklist diário disponível para este acesso.';

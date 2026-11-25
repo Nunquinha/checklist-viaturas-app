@@ -20,6 +20,19 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 .sections{display:flex;gap:6px;margin:0 0 12px;border-bottom:1px solid var(--line);overflow-x:auto;padding:4px}.sections button{border:0;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font-size:15px;white-space:nowrap;font-weight:650}.sections button:hover{background:#18364e;color:var(--ink)}.sections button[aria-selected=true]{color:var(--ink);background:#15334a;border-bottom-color:var(--blue)}.material-vehicles{white-space:normal!important}.material-vehicles button{margin:0 6px 5px 0}.mileage .filters label{max-width:380px}.mileage .filters p{color:var(--muted)}#pending-section,#materials,#resolved,#mileage{scroll-margin-top:16px}
 @media(max-width:720px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.kpi{padding:9px;font-size:12px}.intro{margin-top:22px}table{min-width:620px}}
 .km-budget-status{font-weight:700}.km-budget-review,.km-budget-invalid,.km-budget-low{color:var(--amber)}.km-budget-exceeded,.km-budget-exhausted{color:var(--red)}#budget-rows small{display:block;color:var(--muted);font-size:12px;margin-top:4px}#budget-rows td:first-child{width:120px}#budget-rows td:nth-child(2){white-space:normal;min-width:160px}
+#rows{padding:0 18px 14px}
+#rows>details{border-top:1px solid var(--line)}
+#rows>details>summary{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;cursor:pointer;list-style:none;padding:13px 6px}
+#rows>details>summary::-webkit-details-marker{display:none}
+#rows>details>summary::before{content:"";width:7px;height:7px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(-45deg);margin-right:4px}
+#rows>details[open]>summary::before{transform:rotate(45deg)}
+#rows .pending-prefix{min-width:6ch}
+#rows .pending-age{margin-left:auto;color:var(--muted);font-size:.86em}
+#rows .pending-body{padding:0 6px 14px}
+#rows .pending-checks{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+#rows .pending-checks li{border:1px solid var(--line);border-radius:8px;padding:9px 12px;overflow-wrap:anywhere}
+#rows .pending-checks .line{font-size:.9em;margin-top:3px}
+@media(max-width:520px){#rows .pending-age{margin-left:0}}
 </style>
 <link rel="stylesheet" href="panel-options.css?v=1">
 <script src="panel-theme.js?v=1"></script>
@@ -67,9 +80,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
         <div class="toolbar" id="pagination" hidden><button id="previous" type="button" aria-label="Página anterior">‹</button><span id="pager"></span><button id="next" type="button" aria-label="Próxima página">›</button></div>
       </div>
       <p class="empty stale" id="pdf-error" role="alert" hidden></p>
-      <div class="table-scroll">
-        <table id="table"><thead><tr><th scope="col">Viatura</th><th scope="col">O que precisa de atenção</th><th scope="col">Desde quando</th><th scope="col">Repetição</th></tr></thead><tbody id="rows"></tbody></table>
-      </div>
+      <div id="rows"></div>
       <p class="empty" id="empty" hidden></p>
     </section>
     <section id="materials" class="panel mileage" role="tabpanel" aria-labelledby="tab-materials" hidden>
@@ -130,7 +141,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
 <script defer src="mileage-budget.js?v=v47"></script>
-<script defer src="tv.js?v=19"></script>
+<script defer src="tv.js?v=20"></script>
 <script defer src="xlsx.js?v=1"></script>
 <script defer src="panel-exports.js?v=2"></script>
 </body>
