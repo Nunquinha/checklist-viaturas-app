@@ -1,4 +1,4 @@
-const cacheName = 'der-checklist-shell-v50';
+const cacheName = 'der-checklist-shell-v51';
 const version = cacheName.split('-').at(-1);
 const scripts = ['fleet-export.js','mileage-budget.js','mileage-ui.js','operators-export.js','app.js','register-sw.js','catalog-import.js','catalog-sync.js','operators-import.js','quinzenal.js','relatorios.js','xlsx.js','ocorrencias.js','cloud.js','instalar.js'];
 const appFiles = ['./index.html',...scripts.map(name=>'./'+name+'?v='+version),

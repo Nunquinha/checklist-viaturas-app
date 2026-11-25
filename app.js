@@ -284,6 +284,10 @@ catalog.onsubmit=async event=>{
   const items=original?state.items.map(entry=>entry.id===item.id?{...entry,title:item.title,scopes:item.scopes,expected:item.expected,critical:item.critical,...(file?{photo:item.photo}:{})}:entry):[...state.items,item];
   if(save({...state,items})){resetCatalog();refresh();renderChecks();byId('catalog-status').textContent=original?'Alterações salvas.':'Item adicionado.';}
 };
+const vehicleDailyChecks = [
+  {id:'daily-vehicle-condition',title:'Condição da viatura',general:true},
+  {id:'daily-vehicle-cleanliness',title:'Limpeza da viatura',general:true}
+];
 function renderChecks() {
   const prefix=fields.vehicle.value;
   const prior=shown.map(item=>({id:item.id,value:fields['check-'+item.id]?.value,note:fields['note-'+item.id]?.value,found:fields['found-'+item.id]?.value}));
@@ -291,7 +295,8 @@ function renderChecks() {
   const emptyMessage=prefix?'Nenhum item ativo para '+prefix+'. Verifique a abrangência no Cadastro do Checklist.':
     state.vehicles.some(vehicle=>vehicle.active)?'Selecione a viatura acima para carregar os itens cadastrados para ela.':
       'Cadastre ou reative uma viatura no menu Viaturas para carregar os itens.';
-  shown=itemsForVehicle(prefix);
+  const equipment = itemsForVehicle(prefix);
+  shown = equipment.length ? [...vehicleDailyChecks,...equipment] : [];
   byId('checks').innerHTML=shown.length?shown.map(item=>'<fieldset><legend>'+escape(item.title)+(item.critical?' <span class="daily-critical">Crítico</span>':'')+'</legend>'+
     (item.expected==null?'':'<p class="daily-requirement"><span class="daily-expected">Quantidade exigida: '+escape(item.expected)+'</span></p>')+
     '<div class="choices">'+['Conforme','Não Conforme'].map(value=>'<label><input type="radio" name="check-'+item.id+'" value="'+value+'">'+value+'</label>').join('')+
@@ -302,6 +307,7 @@ function renderChecks() {
   });
   byId('checks').querySelectorAll('fieldset').forEach((group,index)=>{
     const item=shown[index], previous=prior.find(result=>result.id===item.id);
+    if (item.general) return;
     const label=document.createElement('label'), found=document.createElement('input');
     label.className='daily-quantity';
     label.textContent='Quantidade encontrada';
@@ -482,9 +488,9 @@ handover.onsubmit=event=>{
   if(solo&&(!operator||!reason))return alert('Selecione quem fez o checklist e informe a justificativa.');
   if(!shown.length)return alert('Cadastre pelo menos um item para esta viatura.');
   if(Object.values(pads).some(pad=>!pad.ink))return alert('Colete as assinaturas antes de salvar.');
-  const results=shown.map(({photo,...item})=>{
+  const results=shown.map(({photo,general,...item})=>{
     const value=data['check-'+item.id], exception=isNonconforming(value);
-    const found=exception?Number(data['found-'+item.id]):item.expected??null;
+    const found=exception && !general ? Number(data['found-'+item.id]) : item.expected??null;
     return {...item,value,found,note:exception?data['note-'+item.id].trim():''};
   });
   if(results.some(item=>isNonconforming(item.value)&&!item.note))return alert('Informe o motivo de cada não conformidade.');
