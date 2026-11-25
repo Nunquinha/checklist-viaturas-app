@@ -490,8 +490,8 @@ handover.onsubmit=event=>{
   if(Object.values(pads).some(pad=>!pad.ink))return alert('Colete as assinaturas antes de salvar.');
   const results=shown.map(({photo,general,...item})=>{
     const value=data['check-'+item.id], exception=isNonconforming(value);
-    const found=exception && !general ? Number(data['found-'+item.id]) : item.expected??null;
-    return {...item,value,found,note:exception?data['note-'+item.id].trim():''};
+    const found=exception ? (general ? 0 : Number(data['found-'+item.id])) : item.expected??null;
+    return {...item,...(general ? {general:true} : {}),value,found,note:exception?data['note-'+item.id].trim():''};
   });
   if(results.some(item=>isNonconforming(item.value)&&!item.note))return alert('Informe o motivo de cada não conformidade.');
   const startedAt=handoverStarted??Date.now();
