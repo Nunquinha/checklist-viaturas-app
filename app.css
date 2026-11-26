@@ -105,3 +105,18 @@
 .operator-exports{margin:20px 0}.operator-base-title{font-size:1.1rem;margin:28px 0 12px;color:#203d30}
 
 .km-budget{margin:20px 0}.km-status{display:inline-block;padding:4px 8px;border-radius:6px;background:#e8eee9;font-size:.85em;font-weight:700}.km-low,.km-review,.km-invalid{background:#fff0c7;color:#775b00}.km-exceeded,.km-exhausted{background:#fbe0e0;color:#8a2323}#km-saldo small{display:block;font-size:.8em;margin-top:5px;color:#617167}#km-saldo .table-scroll{overflow:auto}#km-saldo table{min-width:850px}
+
+.daily-report-overview .report-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.daily-report-vehicle{border-left:3px solid #446858;background:#f1f5f2;padding:5px 9px}
+.daily-report-record .report-visit-data{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.daily-issue-table{margin-top:10px;table-layout:fixed}
+.daily-issue-table th:first-child{width:36%}
+.daily-issue-table th:nth-child(2){width:22%}
+.daily-issue-table td,.daily-issue-table th{overflow-wrap:anywhere}
+.daily-issue-table td:nth-child(2),.daily-issue-table thead th:nth-child(2){text-align:center}
+@media screen and (max-width:600px){.daily-report-overview .report-stats,.daily-report-record .report-visit-data{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{
+  .daily-report-record{break-inside:auto}
+  .daily-report-record .report-visit-head,.daily-report-record .report-visit-data,.daily-issue-table tr{break-inside:avoid}
+  .daily-report-vehicle,.daily-report-record .report-visit-head,.daily-report-record .report-visit-data,.daily-issue-table thead{break-after:avoid}
+}

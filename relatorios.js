@@ -127,28 +127,56 @@ function showIndividualFortnightReport(record,trigger) {
     notes+tools+evidence('Registro fotográfico',photos)+evidence('Assinaturas',signatures,'report-evidence-signatures'),trigger);
 }
 
+const dailyReportIssues = record => (record.results||[]).filter(item=>isNonconforming(item.value)||
+  (item.found!=null&&item.expected!=null&&item.found!==item.expected));
+
 function itemIssues(record) {
-  return (record.results||[]).filter(item=>isNonconforming(item.value)||
-    (item.found!=null&&item.expected!=null&&item.found!==item.expected)).map(item=>{
+  return dailyReportIssues(record).map(item=>{
     const count=item.general||item.found==null?'':item.expected==null?' ('+item.found+' encontrados)':' ('+item.found+' de '+item.expected+')';
     return item.title+count+(item.note?' — '+item.note:'');
   }).join(', ');
 }
 
 function reportRecord(record) {
-  const date = time(record.inspected||record.exchange);
+  const at = record.inspected||record.exchange;
   const solo = isSoloChecklist(record);
-  const names = solo?record.operator:[record.outgoing,record.incoming].filter(Boolean).join(' → ');
-  const discrepancies = itemIssues(record);
-  const details = [
-    solo?'Checklist sozinho':null,
-    record.reason&&(solo?'Justificativa: ':'Ausência: ')+record.reason,
-    record.lateReason&&'Atraso: '+record.lateReason,
-    discrepancies&&'Não conformidades: '+discrepancies
+  const issues = dailyReportIssues(record);
+  const readings = record.km!=='' && record.km!=null && Number.isFinite(Number(record.km))
+    ? Number(record.km).toLocaleString('pt-BR')+' km' : '—';
+  const fields = [
+    ...(solo ? [['Operador',record.operator||record.outgoing]] : [['Quem entrega',record.outgoing],['Quem recebe',record.incoming]]),
+    ['Odômetro',readings],['Combustível',record.fuel],['Duração',duration(record.durationMs)]
   ];
-  return '<article class="report-record"><strong>'+escape(record.prefix)+' · '+date+'</strong>'+
-    '<p>'+escape(names||'Operador não registrado')+' · '+duration(record.durationMs)+'</p>'+
-    details.filter(Boolean).map(detail=>'<p>'+escape(detail)+'</p>').join('')+'</article>';
+  const notes = [
+    [solo?'Justificativa':'Ausência',record.reason],
+    ['Justificativa do atraso',record.lateReason]
+  ].filter(([,value])=>value);
+  return '<article class="report-record daily-report-record"><div class="report-visit-head"><div><strong>'+
+    escape(at?time(at):'Data não registrada')+'</strong><p>'+(solo?'Checklist individual':'Troca de turno')+'</p></div>'+
+    '<span class="report-visit-status'+(issues.length?' report-visit-issue':'')+'">'+
+    (issues.length?issues.length+(issues.length===1?' não conformidade':' não conformidades'):
+      record.results?.length?'Sem não conformidades':'Sem itens registrados')+
+    '</span></div><dl class="report-visit-data">'+fields.map(([label,value])=>
+      '<div><dt>'+label+'</dt><dd>'+escape(value||'—')+'</dd></div>').join('')+'</dl>'+
+    notes.map(([label,value])=>'<p><strong>'+label+'</strong> '+escape(value)+'</p>').join('')+
+    (issues.length?'<table class="report-visit-table daily-issue-table"><thead><tr><th scope="col">Não conformidade</th>'+
+      '<th scope="col">Encontrado / exigido</th><th scope="col">Justificativa</th></tr></thead><tbody>'+
+      issues.map(item=>'<tr><th scope="row">'+escape(item.title||'Item sem nome')+
+        '</th><td>'+escape(item.general||item.found==null?'—':item.expected==null?item.found:item.found+' / '+item.expected)+
+        '</td><td>'+escape(item.note||'—')+'</td></tr>').join('')+'</tbody></table>':'')+'</article>';
+}
+
+function dailyVehicleReports(records) {
+  const groups = new Map();
+  for (const record of records) {
+    if (!groups.has(record.prefix)) groups.set(record.prefix,[]);
+    groups.get(record.prefix).push(record);
+  }
+  return [...groups].sort(([a],[b])=>historyOrder.compare(a,b)).map(([prefix,entries])=>
+    '<h3 class="report-people daily-report-vehicle">'+escape(prefix)+' · '+entries.length+
+    (entries.length===1?' registro':' registros')+'</h3>'+
+    [...entries].sort((a,b)=>Date.parse(b.inspected||b.exchange)-Date.parse(a.inspected||a.exchange)).map(reportRecord).join('')
+  ).join('');
 }
 
 function fortnightReportDetails(record) {
@@ -211,6 +239,10 @@ byId('prepare-report').onclick = async event => {
     const {daily,records,period,vehicle,operator,engineer,title} = report;
     const fields = [['Período',period],['Viatura',vehicle],['Operador',operator]];
     const stats = [[daily?'Registros':'Vistorias',records.length],['Tempo médio',reportDuration(records)]];
+    if(daily) {
+      stats.splice(1,0,['Viaturas',new Set(records.map(record=>record.prefix)).size],
+        ['Com não conformidades',records.filter(record=>dailyReportIssues(record).length).length]);
+    }
     if(!daily) {
       fields.push(['Engenheiro',engineer]);
       const attended = records.filter(record=>record.attended).length;
@@ -222,14 +254,14 @@ byId('prepare-report').onclick = async event => {
         ['Com itens conferidos',checked.length+' de '+records.length],
         ['Pendências dos itens',tools.length?tools.filter(toolHasIssue).length:'—']);
     }
-    const summary = '<section class="report-overview"><h2 class="report-section-title">Resumo dos registros selecionados</h2>'+
+    const summary = '<section class="report-overview'+(daily?' daily-report-overview':'')+'"><h2 class="report-section-title">Resumo dos registros selecionados</h2>'+
       '<div class="report-stats">'+stats.map(([label,value])=>'<div class="report-stat"><span>'+label+
       '</span><strong>'+escape(value)+'</strong></div>').join('')+'</div></section>';
     const details=!records.length?'<p>Nenhum registro nos filtros selecionados.</p>':daily?
-      records.map(reportRecord).join(''):groupedFortnightRecords(records);
+      dailyVehicleReports(records):groupedFortnightRecords(records);
     const coverage = !daily&&records.length ? fortnightVehicleSummary(records) : '';
     openReport('Relatório de '+title.toLocaleLowerCase('pt-BR'),fields,
-      summary+coverage+'<h2 class="report-section-title">'+(daily?'Registros do período':'Detalhamento por engenheiro')+'</h2>'+details,
+      summary+coverage+'<h2 class="report-section-title">'+(daily?'Registros por viatura':'Detalhamento por engenheiro')+'</h2>'+details,
       button,'Filtros aplicados');
   } catch {
     byId('notice').textContent = 'Não foi possível preparar o relatório. Tente novamente.';
