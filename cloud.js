@@ -123,7 +123,7 @@
 
   window.checklistCloud = {
     enabled:true,canOpen,persist,schedule,showAccess,recordSaved,
-    get canReport(){ return active() && !isVehicleSession() && session.user.role!=='engineer'; },
+    get canReport(){ return active() && !isVehicleSession(); },
     get canExportExcel(){ return active() && !isVehicleSession(); },
     get canReadHistory(){ return active() && !isVehicleSession(); },
     get canDeleteCatalog(){ return active() && Boolean(session.user.owner); },
