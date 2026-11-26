@@ -120,3 +120,14 @@
   .daily-report-record .report-visit-head,.daily-report-record .report-visit-data,.daily-issue-table tr{break-inside:avoid}
   .daily-report-vehicle,.daily-report-record .report-visit-head,.daily-report-record .report-visit-data,.daily-issue-table thead{break-after:avoid}
 }
+
+.engineer-preview-note{display:none}
+.engineer-preview .engineer-preview-note{display:block}
+.engineer-preview :is(#handover-instructions,#handover-pair,#operator-hint,#signatures,#progress,#review-daily,#submit,
+  #review-fortnight,#save-fortnight,#review-incident,#save-incident,#fortnight-progress){display:none}
+.engineer-preview :is(#handover,#fortnight-form,#incident-form) .handover-option,
+.engineer-preview #inspection>.grid,
+.engineer-preview :is(#checks,#fortnight-tools) .choices,
+.engineer-preview #fortnight-form :is(label:has([name="operator"]),.attendance-field,article:nth-of-type(n+3)),
+.engineer-preview #incident-form article:nth-of-type(2){display:none}
+.engineer-preview #incident-form label[inert]{opacity:.7}

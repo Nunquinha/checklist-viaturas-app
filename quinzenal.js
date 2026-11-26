@@ -186,6 +186,7 @@ for (const field of ['operator','engineer']) {
 
 fortnight.onsubmit = async event => {
   event.preventDefault();
+  if (window.checklistCloud?.isEngineerPreview) return;
   const button = byId('save-fortnight');
   if (button.disabled) return;
   const values = new FormData(fortnight);

@@ -480,6 +480,7 @@ fields.coverage.onchange=()=>refreshOperatorChoices();
 handover.addEventListener('change',event=>{if(event.target!==fields.vehicle){if(!event.target.name?.startsWith('note-'))buildPads([]);update();}});
 handover.onsubmit=event=>{
   event.preventDefault();
+  if (window.checklistCloud?.isEngineerPreview) return;
   const data=Object.fromEntries(new FormData(handover)), now=new Date().toISOString();
   const solo=fields.solo.checked;
   const outgoing=(data.outgoing||'').trim(), incoming=(data.incoming||'').trim();

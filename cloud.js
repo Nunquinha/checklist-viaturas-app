@@ -64,7 +64,7 @@
     if (isVehicleSession()) return ['troca','quinzenal','ocorrencias'].includes(page);
     if (page==='acessos') return Boolean(session.user.owner);
     if (readingOnly()) return ['historico','historico-quinzenal'].includes(page) ||
-      (session.user.role==='engineer' && catalogPages.includes(page)) ||
+      (session.user.role==='engineer' && (catalogPages.includes(page) || ['troca','ocorrencias','quinzenal'].includes(page))) ||
       (page==='historico-ocorrencias' && session.user.role==='viewer');
     return canEditCatalog() || !catalogPages.includes(page);
   };
@@ -143,6 +143,7 @@
       deletedFortnightIds.add(id);
       await removeEvidence('inspections',[id]);
     },
+    get isEngineerPreview(){ return active() && session.user.role==='engineer'; },
     get canFileIncident(){ return active() && !readingOnly(); },
     get vehicle(){ return active() ? session.user.prefix : null; },
     get storageSuffix(){ return suffix(); }
@@ -152,6 +153,7 @@
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
+    document.body.classList.toggle('engineer-preview',window.checklistCloud.isEngineerPreview);
     clearTimeout(retryTimer);
     retryTimer = undefined;
     retryDelay = 5000;

@@ -24,7 +24,11 @@ function refreshIncidentChoices() {
   incidentFields.operator.innerHTML = option('','Selecione o operador')+
     eligible.map(operator=>option(operator.name,operator.name+(operator.vehicles.includes(prefix)?'':' · Substituto'))).join('');
   incidentFields.operator.value = eligible.some(operator=>operator.name===operatorName)?operatorName:'';
-  incidentForm.hidden = window.checklistCloud?.canFileIncident===false;
+  const preview = window.checklistCloud?.isEngineerPreview;
+  incidentForm.hidden = window.checklistCloud?.canFileIncident===false && !preview;
+  for (const label of incidentForm.querySelectorAll('label')) {
+    label.inert = Boolean(preview && !label.contains(incidentFields.vehicle));
+  }
 }
 
 incidentFields.vehicle.onchange = () => {
