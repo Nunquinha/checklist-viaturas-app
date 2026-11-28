@@ -321,7 +321,7 @@ function startPanel() {
   let records = new Map(), latest = new Map(), pending = [], resolved = [], page = 0;
   const reports = {};
   const requestForm = get('request-code'), verifyForm = get('verify-code');
-  const permitted = user => ['owner','manager'].includes(user?.role);
+  const permitted = user => ['owner','manager'].includes(user?.role) || (kmView && user?.role==='engineer');
   const search = get('search'), filter = get('filter'), vehicleDialog = get('vehicle-dialog');
   const kmBase = get('km-base'), budgetBase=get('budget-base');
   const pendingBase = get('pending-base'), trendBase = get('trend-base');
@@ -769,7 +769,7 @@ function startPanel() {
       const user=bootstrap.user;
       if (!permitted(user)) {
         status('Painel com acesso restrito');
-        hideData('Painel exclusivo da Administração e Gestão. Entre com uma conta desses perfis.','login');
+        hideData(kmView?'Entre com uma conta de Administração, Gestão ou Engenharia.':'Painel exclusivo da Administração e Gestão.','login');
         return;
       }
       const scope = JSON.stringify([user.role,user.prefix]);
@@ -778,6 +778,7 @@ function startPanel() {
         accessScope = scope;
       }
       budgetAllowed=permitted(user);
+      switchView.hidden=kmView && user.role==='engineer';
       if(bootstrap.catalog){budgetVehicles=(bootstrap.catalog.vehicles||[]).filter(vehicle=>!user.prefix||vehicle.prefix===user.prefix).map(({prefix,plate,active,kmBudget})=>({prefix,plate,active,kmBudget}));budgetVersion=bootstrap.catalog.version}
       const mileageScope=kmView && user.email ? JSON.stringify([user.email,scope]) : null;
       if (mileageScope && !syncedAt && restoreMileage(mileageScope)) {
