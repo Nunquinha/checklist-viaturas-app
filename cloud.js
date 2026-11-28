@@ -52,7 +52,47 @@
   }
 
   const suffix = () => session ? ':'+session.user.email+':'+(session.user.prefix || '')+':'+session.user.role : '';
-  const write = next => localStorage.setItem('checklist-cloud-data-v1'+suffix(),JSON.stringify(next));
+  let archivedSuffix = null;
+  const write = next => {
+    const accountKey = suffix();
+    const records = archivedSuffix===accountKey ? next.records.filter(record=>!record.cloudSaved) : next.records;
+    localStorage.setItem('checklist-cloud-data-v1'+accountKey,JSON.stringify({...next,records}));
+  };
+
+  async function dailyHistory(accountKey,entries) {
+    const db = await new Promise((resolve,reject)=>{
+      const request = indexedDB.open('der-checklist-daily-history'+accountKey,1);
+      request.onupgradeneeded = () => request.result.createObjectStore('records',{keyPath:'id'});
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      return await new Promise((resolve,reject)=>{
+        const transaction = db.transaction('records','readwrite');
+        const records = transaction.objectStore('records');
+        for (const entry of entries) records.put(entry);
+        const list = archivedSuffix===accountKey ? null : records.getAll();
+        transaction.oncomplete = () => resolve(list?.result);
+        transaction.onabort = () => reject(transaction.error || Error('Não foi possível guardar o histórico neste navegador.'));
+      });
+    } finally { db.close(); }
+  }
+
+  async function restoreDailyHistory(accountKey) {
+    if (archivedSuffix===accountKey) return;
+    const retained = isVehicleSession() ? [] : await dailyHistory(accountKey,state.records.filter(record=>record.cloudSaved));
+    if (suffix()!==accountKey || !active()) throw Error('A conta mudou durante a sincronização.');
+    const records = new Map(retained.map(record=>[record.id,record]));
+    for (const record of state.records) {
+      if (!isVehicleSession() || !record.cloudSaved) records.set(record.id,record);
+    }
+    const next = {...state,records:[...records.values()].sort((a,b)=>b.id.localeCompare(a.id))};
+    archivedSuffix = accountKey;
+    try { write(next); }
+    catch (error) { archivedSuffix=null; throw error; }
+    state = next;
+  }
+
   const active = () => Boolean(session?.token && (session.expires>Date.now() ||
     (session.user.role==='vehicle' && session.expires===null)));
   const readingOnly = () => ['viewer','engineer'].includes(session?.user.role);
@@ -153,6 +193,7 @@
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
+    archivedSuffix = null;
     document.body.classList.toggle('engineer-preview',window.checklistCloud.isEngineerPreview);
     clearTimeout(retryTimer);
     retryTimer = undefined;
@@ -226,6 +267,7 @@
     error();
     let again = false;
     try {
+      await restoreDailyHistory(syncSuffix);
       const version = state.catalogLoaded?state.version:null;
       const {user,catalog:central,renewedSession} = await rpcSync('bootstrap',{version,rememberVehicle:true});
       if (session.user.role!==user.role || session.user.prefix!==user.prefix) {
@@ -287,6 +329,8 @@
       for (const record of state.records.filter(record=>!record.cloudSaved)) {
         const {cloudSaved,...body} = record;
         await rpcSync('saveRecord',{kind:'daily',record:body});
+        if (!isVehicleSession()) await dailyHistory(syncSuffix,[{...record,cloudSaved:true}]);
+        if (suffix()!==syncSuffix || !active()) return;
         const next = {...state,records:state.records.map(entry=>entry.id===record.id?{...entry,cloudSaved:true}:entry)};
         write(next);
         state = next;
@@ -322,6 +366,8 @@
         return;
       }
 
+      updateStatus('Atualizando histórico do Drive…');
+      refreshPendingQueue();
       let cursor, head, reachedCheckpoint = false;
       const checkpoint = state.historyCheckpoint;
       const fortnightIds = new Set(localFortnight.map(record=>record.id));
@@ -352,6 +398,8 @@
           }
         }
         if (daily.length) {
+          await dailyHistory(syncSuffix,daily);
+          if (suffix()!==syncSuffix || !active()) return;
           const next = {...state,records:[...daily,...state.records].sort((a,b)=>b.id.localeCompare(a.id))};
           write(next);
           state = next;
