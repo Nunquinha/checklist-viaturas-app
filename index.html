@@ -6,24 +6,32 @@
 <meta name="theme-color" content="#202e25">
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
-<link rel="stylesheet" href="app.css?v=v61">
+<link rel="stylesheet" href="app.css?v=v62">
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
 <button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
 <div class="brand"><img src="logo-der.jpg" alt="DER"><div><strong>Checklist de Viaturas</strong><small>Operação de campo · CGR.02</small></div></div>
-<div class="nav-label">OPERAÇÃO</div>
 <nav aria-label="Menu principal">
+<div class="nav-group" role="group" aria-labelledby="nav-group-0">
+<div class="nav-label" id="nav-group-0">Operação</div>
 <button type="button" data-page="troca" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h15l-4-4M20 17H5l4 4M19 7l-4 4M5 17l4-4"/></svg>Checklist Diário</button>
+<button type="button" data-page="quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4m8-4v4m-7 8 2 2 4-4"/></svg>Checklist Quinzenal</button>
+<button type="button" data-page="ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3zm0 6v5m0 3v.1"/></svg>Ocorrências no turno</button>
+</div>
+<div class="nav-group" role="group" aria-labelledby="nav-group-1">
+<div class="nav-label" id="nav-group-1">Acompanhamento</div>
 <button type="button" data-page="historico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico de trocas</button>
 <button type="button" data-page="historico-quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Histórico quinzenal</button>
-<button type="button" data-page="ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3zm0 6v5m0 3v.1"/></svg>Ocorrências no turno</button>
 <button type="button" data-page="historico-ocorrencias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5zM8 9h8M8 12h8M8 15h5"/></svg>Histórico de ocorrências</button>
 <button type="button" data-page="km-saldo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a9 9 0 1 1 16 0M12 12l5-5"/></svg>Saldo de km</button>
+</div>
+<div class="nav-group" role="group" aria-labelledby="nav-group-2">
+<div class="nav-label" id="nav-group-2">Cadastros e acessos</div>
 <button type="button" data-page="viaturas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v-5l2-5h12l2 5v5M4 13h16M6 17v2m12-2v2M7 15h1m8 0h1"/></svg>Viaturas</button>
 <button type="button" data-page="cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>Cadastro do Checklist</button>
 <button type="button" data-page="operadores"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>Cadastro de Operador</button>
-<button type="button" data-page="quinzenal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4m8-4v4m-7 8 2 2 4-4"/></svg>Checklist Quinzenal</button>
 <button type="button" data-page="acessos" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></svg>Acessos</button>
+</div>
 </nav><div class="sidebar-foot" id="sidebar-status">© 2026 Vinicius Vaz Vieira · Checklist DER</div>
 </aside>
 <div class="workspace" id="workspace">
@@ -128,23 +136,23 @@
 <div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
 </dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
-<script src="mileage-budget.js?v=v61"></script>
-<script src="fleet-export.js?v=v61"></script>
-<script src="app.js?v=v61"></script>
-<script src="quinzenal.js?v=v61"></script>
-<script src="relatorios.js?v=v61"></script>
-<script src="xlsx.js?v=v61"></script>
-<script src="ocorrencias.js?v=v61"></script>
-<script src="catalog-sync.js?v=v61"></script>
-<script src="cloud.js?v=v61"></script>
-<script src="instalar.js?v=v61"></script>
-<script src="register-sw.js?v=v61"></script>
-<script src="catalog-import.js?v=v61"></script>
+<script src="mileage-budget.js?v=v62"></script>
+<script src="fleet-export.js?v=v62"></script>
+<script src="app.js?v=v62"></script>
+<script src="quinzenal.js?v=v62"></script>
+<script src="relatorios.js?v=v62"></script>
+<script src="xlsx.js?v=v62"></script>
+<script src="ocorrencias.js?v=v62"></script>
+<script src="catalog-sync.js?v=v62"></script>
+<script src="cloud.js?v=v62"></script>
+<script src="instalar.js?v=v62"></script>
+<script src="register-sw.js?v=v62"></script>
+<script src="catalog-import.js?v=v62"></script>
 </html>
 
-<script src="operators-import.js?v=v61"></script>
+<script src="operators-import.js?v=v62"></script>
 
 <script src="vendor/jspdf-4.2.1.umd.min.js"></script>
-<script src="operators-export.js?v=v61"></script>
+<script src="operators-export.js?v=v62"></script>
 
-<script src="mileage-ui.js?v=v61"></script>
+<script src="mileage-ui.js?v=v62"></script>
