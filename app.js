@@ -18,6 +18,16 @@ function referencePhoto(item) {
   };
   return button;
 }
+function placeChecklistReference(group,item,quantitySelector) {
+  const photo=referencePhoto(item);
+  if (!photo) return;
+  const meta=document.createElement('div');
+  meta.className='check-reference-row';
+  const quantity=group.querySelector(quantitySelector);
+  if (quantity) meta.append(quantity);
+  meta.append(photo);
+  group.querySelector('legend').after(meta);
+}
 const initial = {
   vehicles:[{prefix:'ITG-324',plate:'',active:true}],
   items:[{id:'1',title:'Pneus — exemplo',scope:'all',critical:true,active:true},{id:'2',title:'Luzes e sinalização — exemplo',scope:'all',critical:true,active:true},{id:'3',title:'Cabo e gancho — exemplo',scope:'s:2',critical:true,active:true}],
@@ -316,8 +326,7 @@ function renderChecks() {
     found.value=previous?.found||'';
     label.append(found);
     group.querySelector('.daily-note').before(label);
-    const preview=referencePhoto(item);
-    if(preview)group.querySelector('legend').after(preview);
+    placeChecklistReference(group,item,'.daily-requirement');
   });
   update();
 }
