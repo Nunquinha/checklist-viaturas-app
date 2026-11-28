@@ -129,6 +129,16 @@ function derPdf(Pdf, {logo, now, demo, date}, title, summary) {
   return {doc,font,header,finish};
 }
 
+function pdfReferencePhoto(doc,source,x,y,size) {
+  if (!source) return;
+  try {
+    const image=doc.getImageProperties(source);
+    const scale=size/Math.max(image.width,image.height);
+    const w=image.width*scale,h=image.height*scale;
+    doc.addImage(source,image.fileType,x+(size-w)/2,y+(size-h)/2,w,h);
+  } catch { /* One unreadable reference image should not prevent the report. */ }
+}
+
 function nonconformityPdf(Pdf, pending, options) {
   const {now,date} = options;
   const grouped = new Map();
@@ -152,7 +162,8 @@ function nonconformityPdf(Pdf, pending, options) {
     let first = true;
     for (const item of items) {
       font(11,true);
-      const title = doc.splitTextToSize((item.title || 'Item sem nome')+(item.critical?' · Crítico':''),172);
+      const photo=options.photos?.get(item.id), x=photo?43:19, width=191-x;
+      const title = doc.splitTextToSize((item.title || 'Item sem nome')+(item.critical?' · Crítico':''),width);
       font(9);
       const count = item.count===1?'Primeiro registro':item.count+' checklists seguidos';
       const age = elapsedTime(now-item.first);
@@ -160,8 +171,10 @@ function nonconformityPdf(Pdf, pending, options) {
       const amount = !item.general && item.found!=null
         ? ' · '+(item.expected==null?item.found+' encontrados':item.found+' de '+item.expected+' exigidos')
         : '';
-      const notes = doc.splitTextToSize('Justificativa: '+(item.note || 'Sem justificativa no registro'),172);
-      const height = 8+title.length*4.6+(notes.length+2)*4;
+      const lines=[...doc.splitTextToSize(dates,width),
+        ...doc.splitTextToSize(count+amount+(shortage(item)?' · '+shortage(item)+' a repor':''),width),
+        ...doc.splitTextToSize('Justificativa: '+(item.note || 'Sem justificativa no registro'),width)];
+      const height = Math.max(photo?24:0,8+title.length*4.6+lines.length*4);
       if (y+height+(first?12:0)>278) {
         doc.addPage();
         header();
@@ -170,16 +183,13 @@ function nonconformityPdf(Pdf, pending, options) {
       }
       if (first) { y = vehicle(prefix,y); first = false; }
       font(11,true,item.critical?'#8e302a':'#26382e');
-      doc.text(title,19,y);
-      y += title.length*4.6;
+      pdfReferencePhoto(doc,photo,19,y-3,19);
+      doc.text(title,x,y);
       font(9);
-      doc.text(dates,19,y);
-      doc.text(count+amount+(shortage(item)?' · '+shortage(item)+' a repor':''),19,y+4);
-      doc.text(notes,19,y+8,{lineHeightFactor:1.26});
-      y += (notes.length+2)*4+3;
+      doc.text(lines,x,y+title.length*4.6,{lineHeightFactor:1.26});
+      y += height;
       doc.setDrawColor('#dfe5df');
-      doc.line(19,y-2,191,y-2);
-      y += 5;
+      doc.line(19,y-5,191,y-5);
     }
   }
   return finish();
@@ -250,7 +260,7 @@ function panelTablePdf(Pdf, report, options) {
   const {doc,font,header,finish} = derPdf(Pdf,options,report.title,report.summary);
   header();
   let y = 60;
-  for (const {title,columns,widths,rows} of report.tables) {
+  for (const {title,columns,widths,rows,photos} of report.tables) {
     const printHead = () => {
       font(11,true);
       doc.text(title,15,y);
@@ -266,24 +276,27 @@ function panelTablePdf(Pdf, report, options) {
     printHead();
     for (const [index,row] of rows.entries()) {
       font(9);
-      const cells = row.map((value,i)=>doc.splitTextToSize(String(value),widths[i]-4));
+      const photo=photos?.[index], inset=photo?21:0;
+      const cells = row.map((value,i)=>doc.splitTextToSize(String(value),widths[i]-4-(i===0?inset:0)));
       let lines = Math.max(...cells.map(cell=>cell.length));
       let start = 0;
       while (start<lines) {
-        if (y+Math.min(lines-start,3)*4+3>276) { doc.addPage(); header(); y = 60; printHead(); }
+        if (y+Math.max(!start&&photo?20:0,Math.min(lines-start,3)*4+3)>276) { doc.addPage(); header(); y = 60; printHead(); }
         const take = Math.min(lines-start,Math.floor((273-y)/4)+1);
+        const height=Math.max(take*4+4,!start&&photo?21:0);
         if (index%2) {
           doc.setFillColor('#f7f9f7');
-          doc.rect(15,y-3.5,180,take*4+4,'F');
+          doc.rect(15,y-3.5,180,height,'F');
         }
         font(9);
         let x = 17;
+        if (!start) pdfReferencePhoto(doc,photo,x,y-2,17);
         cells.forEach((cell,i)=>{
           const part = cell.slice(start,start+take);
-          if (part.length) doc.text(part,x,y,{lineHeightFactor:1.26});
+          if (part.length) doc.text(part,x+(i===0?inset:0),y,{lineHeightFactor:1.26});
           x += widths[i];
         });
-        y += take*4+4;
+        y += height;
         start += take;
       }
     }
@@ -405,6 +418,27 @@ function startPanel() {
     return button;
   }
 
+  function referenceThumbnail(id,title) {
+      const source=materialPhotos.get(id);
+      if (source) {
+        const button=document.createElement('button');
+        button.type='button';
+        button.className='material-thumbnail';
+        button.setAttribute('aria-label','Ampliar foto de '+title);
+        const img=button.appendChild(document.createElement('img'));
+        img.loading='lazy';img.decoding='async';img.alt='';img.src=source;
+        button.onclick=()=>{
+          const full=get('material-photo-full');
+          get('material-photo-title').textContent=title;
+          full.alt='Foto de referência de '+title;
+          full.src=source;
+          get('material-photo-dialog').showModal();
+        };
+        return button;
+      }
+      return null;
+  }
+
   function renderMaterials() {
     const searchText = get('material-search').value.trim();
     const query = normalize(searchText);
@@ -416,22 +450,8 @@ function startPanel() {
       const cell=row.insertCell();
       const label=cell.appendChild(document.createElement('div'));
       label.className='material-label';
-      const source=materialPhotos.get(material.id);
-      if (source) {
-        const button=label.appendChild(document.createElement('button'));
-        button.type='button';
-        button.className='material-thumbnail';
-        button.setAttribute('aria-label','Ampliar foto de '+material.title);
-        const img=button.appendChild(document.createElement('img'));
-        img.loading='lazy';img.decoding='async';img.alt='';img.src=source;
-        button.onclick=()=>{
-          const full=get('material-photo-full');
-          get('material-photo-title').textContent=material.title;
-          full.alt='Foto de referência de '+material.title;
-          full.src=source;
-          get('material-photo-dialog').showModal();
-        };
-      }
+      const photo=referenceThumbnail(material.id,material.title);
+      if (photo) label.append(photo);
       addText(label,'strong',material.title);
       addText(row.insertCell(),'strong',number.format(material.total),'age');
       const vehicles = row.insertCell();
@@ -450,7 +470,7 @@ function startPanel() {
       : 'Nenhum material a repor para essa busca.';
     reports.materials = materials.length ? {title:'Relatório de reposição',
       summary:'Materiais: '+materials.length+(searchText?' · Busca: '+searchText.slice(0,80):''),
-      tables:[{title:'Materiais a repor',columns:['Material','Total a repor','Viaturas e quantidade'],widths:[53,27,100],
+      tables:[{title:'Materiais a repor',columns:['Material','Total a repor','Viaturas e quantidade'],widths:[63,27,90],photos:materials.map(item=>materialPhotos.get(item.id)),
         rows:materials.map(item=>[item.title,number.format(item.total),
           item.vehicles.map(vehicle=>vehicle.prefix+' ('+number.format(vehicle.amount)+')').join(' · ')])}]} : null;
     get('download-materials-pdf').disabled = !reports.materials;
@@ -598,7 +618,11 @@ function startPanel() {
 
       for (const item of ordered) {
         const detail = checks.appendChild(document.createElement('li'));
-        const title = detail.appendChild(document.createElement('div'));
+        const header = detail.appendChild(document.createElement('div'));
+        header.className = 'material-label';
+        const photo = referenceThumbnail(item.id,item.title || 'Item sem nome');
+        if (photo) header.append(photo);
+        const title = header.appendChild(document.createElement('div'));
         addText(title,'strong',item.title || 'Item sem nome');
         if (item.critical) addText(title,'span','Crítico','badge critical');
         if (!item.general && item.found!=null) addText(detail,'span',item.expected==null
@@ -971,7 +995,7 @@ function startPanel() {
   get('download-pdf').onclick = () => {
     const items = pending;
     return downloadReport(get('download-pdf'),get('pdf-error'),'nao-conformidades',
-      (Pdf,options)=>nonconformityPdf(Pdf,items,options),()=>pending.length);
+      (Pdf,options)=>nonconformityPdf(Pdf,items,{...options,photos:materialPhotos}),()=>pending.length);
   };
   get('download-km-pdf').onclick = () => {
     const data = mileagePeriod(get('km-period').value,Date.now());
