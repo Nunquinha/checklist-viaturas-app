@@ -721,7 +721,7 @@ function startPanel() {
     records = nextRecords;
   }
 
-  const mileageCacheKey='checklist-der-km-v1';
+  const dashboardCacheKey=kmView?'checklist-der-km-v1':'checklist-der-panel-v1';
   function mileageProgress(message) {
     const notice=get('km-loading');
     notice.textContent=message||'';
@@ -732,9 +732,9 @@ function startPanel() {
   }
   function restoreMileage(scope) {
     try {
-      const stored=JSON.parse(sessionStorage.getItem(mileageCacheKey));
+      const stored=JSON.parse(sessionStorage.getItem(dashboardCacheKey));
       if (stored?.scope!==scope || !Array.isArray(stored.records) || !Number.isFinite(stored.syncedAt)) return false;
-      const cached=new Map(stored.records.map(record=>[record.id,{...record,results:[]}]));
+      const cached=new Map(stored.records.map(record=>[record.id,{...record,results:kmView?[]:record.results||[]}]));
       loadRecords(cached);
       checkpoint=stored.checkpoint;
       syncedAt=stored.syncedAt;
@@ -743,9 +743,43 @@ function startPanel() {
   }
   function cacheMileage(scope) {
     try {
-      const rows=[...records.values()].map(({id,prefix,at,mode,solo,prior,km})=>({id,prefix,at,mode,solo,prior,km}));
-      sessionStorage.setItem(mileageCacheKey,JSON.stringify({scope,syncedAt,checkpoint,records:rows}));
+      const rows=[...records.values()].map(({id,prefix,at,mode,solo,prior,km,results})=>({id,prefix,at,mode,solo,prior,km,...(kmView?{}:{results})}));
+      sessionStorage.setItem(dashboardCacheKey,JSON.stringify({scope,syncedAt,checkpoint,records:rows}));
     } catch { /* The panel remains usable without a browser cache. */ }
+  }
+
+  function panelRecord(record) {
+    const raw=record.inspected || record.exchange || record.at;
+    const at=typeof raw==='number'?raw:Date.parse(raw);
+    if (!Number.isFinite(at)) return null;
+    const results=(kmView?[]:Array.isArray(record.results)?record.results:[]).map(
+      ({id,title,critical,value,expected,found,note})=>({id,title,critical,value,expected,found,note}));
+    return {id:record.id,prefix:record.prefix,at,results,mode:record.mode,solo:record.solo,prior:record.prior,km:record.km};
+  }
+
+  async function readChecklistArchive(user) {
+    if (!user.email) return null;
+    const key=':'+user.email+':'+(user.prefix||'')+':'+user.role;
+    try {
+      const saved=JSON.parse(localStorage.getItem('checklist-cloud-data-v1'+key));
+      const head=saved?.historyCheckpoint;
+      if (!head) return null;
+      const rows=await new Promise((resolve,reject)=>{
+        const opening=indexedDB.open('der-checklist-daily-history'+key);
+        opening.onupgradeneeded=()=>opening.transaction.abort();
+        opening.onerror=()=>reject(opening.error);
+        opening.onsuccess=()=>{
+          const db=opening.result;
+          if (!db.objectStoreNames.contains('records')) { db.close(); resolve([]); return; }
+          const tx=db.transaction('records','readonly');
+          const request=tx.objectStore('records').getAll();
+          tx.oncomplete=()=>{db.close();resolve(request.result);};
+          tx.onabort=()=>{db.close();reject(tx.error);};
+        };
+      });
+      const valid=rows.filter(record=>record.cloudSaved && (!user.prefix||record.prefix===user.prefix)).map(panelRecord).filter(Boolean);
+      return valid.length ? {head,records:new Map(valid.map(record=>[record.id,record]))} : null;
+    } catch { return null; }
   }
 
   async function refresh() {
@@ -780,12 +814,23 @@ function startPanel() {
       budgetAllowed=permitted(user);
       switchView.hidden=kmView && user.role==='engineer';
       if(bootstrap.catalog){budgetVehicles=(bootstrap.catalog.vehicles||[]).filter(vehicle=>!user.prefix||vehicle.prefix===user.prefix).map(({prefix,plate,active,kmBudget})=>({prefix,plate,active,kmBudget}));budgetVersion=bootstrap.catalog.version}
-      const mileageScope=kmView && user.email ? JSON.stringify([user.email,scope]) : null;
+      const mileageScope=user.email ? JSON.stringify([user.email,scope]) : null;
       if (mileageScope && !syncedAt && restoreMileage(mileageScope)) {
         render();
-        mileageProgress('Últimos dados recebidos às '+clock.format(syncedAt)+'. Buscando atualizações.');
+        if (kmView) mileageProgress('Últimos dados recebidos às '+clock.format(syncedAt)+'. Buscando atualizações.');
+        status('Atualizando · últimos dados de '+clock.format(syncedAt));
       }
-      if (!syncedAt) status('Lendo o histórico do Checklist Diário…');
+      if (!checkpoint) {
+        const archived=await readChecklistArchive(user);
+        if(session()?.token!==active.token)return;
+        if (archived) {
+          loadRecords(archived.records);
+          checkpoint=archived.head;
+          render();
+          status('Exibindo histórico salvo neste navegador · atualizando pelo Drive.');
+        }
+      }
+      if (!syncedAt && !checkpoint) status('Lendo o histórico do Checklist Diário…');
       let batches=0;
       let cursor = null, head;
       const nextRecords = new Map(records);
@@ -795,14 +840,12 @@ function startPanel() {
         head ??= batch.records[0]?.record.id;
         for (const {kind,record} of batch.records) {
           if (kind!=='daily') continue;
-          const at = Date.parse(record.inspected || record.exchange || record.at);
-          if (!Number.isFinite(at)) continue;
-          const results = (kmView?[]:Array.isArray(record.results)?record.results:[]).map(({id,title,critical,value,expected,found,note})=>
-            ({id,title,critical,value,expected,found,note}));
-          nextRecords.set(record.id,{id:record.id,prefix:record.prefix,at,results,mode:record.mode,solo:record.solo,prior:record.prior,km:record.km});
+          const row=panelRecord(record);
+          if (row) nextRecords.set(row.id,row);
         }
         cursor = batch.cursor;
-        if (kmView && !syncedAt && cursor>0 && ++batches%2===0 && nextRecords.size) {
+        if (!kmView && !checkpoint && cursor>0) get('gate-message').textContent='Lendo o histórico · '+nextRecords.size+' checklists recebidos.';
+        if (kmView && !syncedAt && !checkpoint && cursor>0 && ++batches%2===0 && nextRecords.size) {
           loadRecords(nextRecords);
           render();
           mileageProgress('Carregando histórico: '+nextRecords.size+' checklists recebidos. Os valores abaixo são parciais.');

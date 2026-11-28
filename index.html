@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#202e25">
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
-<link rel="stylesheet" href="app.css?v=v63">
+<link rel="stylesheet" href="app.css?v=v64">
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
 <button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
@@ -111,7 +111,7 @@
 <div class="actions"><button type="button" id="incident-report">PDF consolidado</button></div>
 <p id="incident-count" class="muted" role="status"></p><div id="incident-records" aria-live="polite"></div></section>
 <section id="km-saldo" hidden><h1>km disponível por viatura</h1><p>Limite do período menos os quilômetros registrados no Checklist Diário. Reenvios do mesmo registro não descontam novamente.</p>
-<article><label>Buscar viatura<input id="km-balance-search" type="search" placeholder="Prefixo ou placa"></label><p id="km-balance-summary" role="status"></p><p><a href="./painel-tv/?view=km" target="_blank" rel="noopener">Abrir painel de km</a></p><div class="table-scroll"><table><thead><tr><th>Viatura</th><th>Período configurado</th><th>Limite</th><th>Rodados no período</th><th>km disponíveis</th><th>km disponíveis por dia</th><th>Situação</th></tr></thead><tbody id="km-balance-rows"></tbody></table></div><p class="muted">Configure o limite e o odômetro inicial em Viaturas → Editar viatura. Leituras inconsistentes ficam para revisão e não geram um saldo definitivo. O painel usa o histórico recebido pela conta e inclui somente os registros já enviados à base central.</p></article></section>
+<article class="km-screen"><div class="km-cards" id="km-balance-summary" role="status"></div><div class="grid km-screen-filters"><label>Buscar viatura<input id="km-balance-search" type="search" placeholder="Prefixo ou placa"></label><label>Base<select id="km-balance-base"><option value="">Todas as bases</option><option value="1">Itapetininga</option><option value="2">Capão Bonito</option><option value="4">Itapeva</option><option value="5">Sorocaba</option><option value="8">Tatuí</option></select></label></div><div class="table-scroll"><table><thead><tr><th>Viatura</th><th>km disponíveis</th><th>Limite</th><th>Rodados no período</th><th>Período configurado</th><th>km disponíveis por dia</th><th>Situação</th></tr></thead><tbody id="km-balance-rows"></tbody></table></div><p class="muted">Configure o limite e o odômetro inicial em Viaturas → Editar viatura. Leituras inconsistentes ficam para revisão e não geram um saldo definitivo. O painel usa o histórico recebido pela conta e inclui somente os registros já enviados à base central.</p></article></section>
 <section id="viaturas" hidden><h1>Viaturas</h1><p>Cadastre o prefixo, a placa e o e-mail usado no celular da viatura.</p>
 <article><form id="fleet"><div class="grid"><label>Prefixo<input name="prefix" placeholder="ITG-324" maxlength="7" required></label><label>Placa (opcional)<input name="plate" maxlength="8" placeholder="ABC1D23"></label></div><label>E-mail da VTR<input name="vehicleEmail" type="email" maxlength="254" autocomplete="off" placeholder="E-mail usado no celular da viatura"></label><p class="muted" id="vehicle-email-hint">Cada e-mail fica vinculado a um único prefixo.</p><p id="decoded"></p><fieldset class="km-budget"><legend>Controle de km do contrato</legend><label class="scope-choice"><input type="checkbox" id="km-budget-enabled"> Configurar limite de km desta viatura</label><div id="km-budget-fields" hidden><div class="grid"><label>Limite de km no período<input name="kmLimit" type="number" min="1" step="1" inputmode="numeric"></label><label>Odômetro no início do período<input name="kmInitial" type="number" min="0" step="1" inputmode="numeric"></label><label>Data inicial<input name="kmStart" type="date"></label><label>Data final (opcional)<input name="kmEnd" type="date"></label></div><p class="muted">Informe o limite previsto e o odômetro correspondente à data inicial. Pode usar o mês, o contrato inteiro ou um período específico. Sem data final, o controle continua até você alterar a configuração.</p></div></fieldset><div class="actions"><button id="fleet-save">Adicionar viatura</button><button type="button" id="fleet-cancel" hidden>Cancelar edição</button></div></form></article><article><h2>Viaturas por base</h2><label>Base<select id="fleet-base"><option value="">Todas as bases</option></select></label><div class="actions"><button type="button" id="fleet-pdf">Baixar PDF</button><button type="button" id="fleet-excel">Baixar Excel</button></div><div id="vehicles"></div></article></section>
 <section id="cadastros" hidden><h1>Cadastro do Checklist</h1><p>Configure os itens que aparecem na conferência.</p>
@@ -136,23 +136,23 @@
 <div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
 </dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
-<script src="mileage-budget.js?v=v63"></script>
-<script src="fleet-export.js?v=v63"></script>
-<script src="app.js?v=v63"></script>
-<script src="quinzenal.js?v=v63"></script>
-<script src="relatorios.js?v=v63"></script>
-<script src="xlsx.js?v=v63"></script>
-<script src="ocorrencias.js?v=v63"></script>
-<script src="catalog-sync.js?v=v63"></script>
-<script src="cloud.js?v=v63"></script>
-<script src="instalar.js?v=v63"></script>
-<script src="register-sw.js?v=v63"></script>
-<script src="catalog-import.js?v=v63"></script>
+<script src="mileage-budget.js?v=v64"></script>
+<script src="fleet-export.js?v=v64"></script>
+<script src="app.js?v=v64"></script>
+<script src="quinzenal.js?v=v64"></script>
+<script src="relatorios.js?v=v64"></script>
+<script src="xlsx.js?v=v64"></script>
+<script src="ocorrencias.js?v=v64"></script>
+<script src="catalog-sync.js?v=v64"></script>
+<script src="cloud.js?v=v64"></script>
+<script src="instalar.js?v=v64"></script>
+<script src="register-sw.js?v=v64"></script>
+<script src="catalog-import.js?v=v64"></script>
 </html>
 
-<script src="operators-import.js?v=v63"></script>
+<script src="operators-import.js?v=v64"></script>
 
 <script src="vendor/jspdf-4.2.1.umd.min.js"></script>
-<script src="operators-export.js?v=v63"></script>
+<script src="operators-export.js?v=v64"></script>
 
-<script src="mileage-ui.js?v=v63"></script>
+<script src="mileage-ui.js?v=v64"></script>

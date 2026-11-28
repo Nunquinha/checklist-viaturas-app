@@ -137,3 +137,5 @@
 .engineer-preview .daily-draft-banner{display:none}
 
 .sidebar nav>.nav-group{display:grid;gap:4px}.sidebar nav>.nav-group:not(:has(>button:not([hidden]))){display:none}.sidebar nav>.nav-group:not(:first-child)>.nav-label{margin-top:10px}
+
+.km-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.km-cards>div{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#f3f7f4}.km-cards strong{font-size:1.35rem;font-variant-numeric:tabular-nums}.km-cards span{font-size:.85rem;color:var(--muted)}.km-screen-filters{margin:8px 0}.km-balance-value{white-space:nowrap;font-variant-numeric:tabular-nums}@media(max-width:540px){.km-cards>div{padding:7px}.km-cards span{font-size:.75rem}}

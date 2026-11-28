@@ -30,16 +30,20 @@ window.ChecklistMileageUI=(()=>{
     const scope=window.checklistCloud?.vehicle;
     const vehicles=(state.vehicles||[]).filter(row=>!scope||row.prefix===scope);
     const rows=ChecklistMileage.fleet(vehicles,source),query=byId('km-balance-search').value.trim().toUpperCase();
-    const visible=rows.filter(row=>(row.prefix+' '+row.plate).toUpperCase().includes(query));
+    const base=byId('km-balance-base').value;
+    const visible=rows.filter(row=>(!base||ChecklistFleet.base(row.prefix)===base) && (row.prefix+' '+row.plate).toUpperCase().includes(query));
     target.innerHTML=visible.map(row=>'<tr><td><strong>'+escape(row.prefix)+'</strong><small>'+escape(row.plate)+'</small></td>'+
-      '<td>'+escape(row.budget?day(row.budget.start)+' a '+day(row.budget.end):'—')+'</td>'+
+      '<td class="km-balance-value"><strong>'+display(row.remaining)+'</strong></td>'+
       '<td>'+display(row.budget?.limit??null)+'</td><td>'+display(row.used)+'</td>'+
-      '<td><strong>'+display(row.remaining)+'</strong></td><td>'+dailyDisplay(row)+'</td><td><span class="km-status km-'+row.status+'">'+escape(row.label)+'</span>'+
+      '<td>'+escape(row.budget?day(row.budget.start)+' a '+day(row.budget.end):'—')+'</td><td>'+dailyDisplay(row)+'</td><td><span class="km-status km-'+row.status+'">'+escape(row.label)+'</span>'+
       (row.closed?'<small>Período encerrado</small>':'')+(row.issues.length?'<small>'+escape(row.issues[0])+'</small>':'')+
       (row.lastKm!==null?'<small>Última leitura: '+display(row.lastKm)+'</small>':'')+'</td></tr>').join('')||'<tr><td colspan="7">Nenhuma viatura encontrada.</td></tr>';
-    byId('km-balance-summary').textContent=rows.filter(row=>row.budget).length+' viaturas com controle de km configurado · '+
-      rows.filter(row=>row.remaining!==null&&row.remaining<=0).length+' com limite atingido ou excedido.';
+    byId('km-balance-summary').innerHTML=[
+      ['Viaturas na lista',visible.length],
+      ['Com limite configurado',visible.filter(row=>row.budget).length],
+      ['Limite atingido ou excedido',visible.filter(row=>row.remaining!==null&&row.remaining<=0).length]
+    ].map(([label,value])=>'<div><strong>'+number.format(value)+'</strong><span>'+label+'</span></div>').join('');
   }
-  enabled.onchange=toggle;byId('km-balance-search').oninput=render;fill();render();
+  enabled.onchange=toggle;byId('km-balance-search').oninput=render;byId('km-balance-base').onchange=render;fill();render();
   return {fill,read,render,reset:()=>fill()};
 })();
