@@ -42,6 +42,8 @@ function refreshFortnightTools(prefix) {
     const exception = field.querySelector('.fortnight-exception');
     for (const input of field.querySelectorAll('[type="radio"]')) input.onchange = () => {
       const issue = toolHasIssue({status:fortnightFields['tool-status-'+index].value});
+      const quantity=fortnightFields['tool-count-'+index];
+      if (issue && quantity?.disabled && Number(tools[index].expected)===1 && quantity.value==='') quantity.value='0';
       exception.hidden = !issue;
       for (const control of exception.querySelectorAll('input')) { control.disabled = !issue; control.required = issue; }
       const checked = area.querySelectorAll('[type="radio"]:checked').length;

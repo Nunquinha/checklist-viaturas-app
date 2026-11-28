@@ -339,7 +339,12 @@ function update() {
     const note=fields['note-'+item.id], found=fields['found-'+item.id];
     const exception=isNonconforming(value);
     controls[0].required=true;
-    if(found){found.parentElement.hidden=!exception;found.disabled=!exception;found.required=exception;}
+    if (found) {
+      if (exception && found.disabled && Number(item.expected)===1 && found.value==='') found.value='0';
+      found.parentElement.hidden=!exception;
+      found.disabled=!exception;
+      found.required=exception;
+    }
     note.parentElement.hidden=!exception;
     note.required=exception;
     if(value)answered++;
