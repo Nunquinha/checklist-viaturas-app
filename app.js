@@ -132,7 +132,7 @@ function page(name) {
     if(historyKind==='daily') historyView(); else refreshFortnightHistory();
   }
   if(name==='quinzenal') refreshFortnightChoices();
-  if(name==='troca') renderChecks();
+  if(name==='troca') { renderChecks(); restoreDailyDraft(); }
   byId('fortnight-coverage').hidden = true;
   refreshLaunchReviews();
   if(name==='km-saldo')window.ChecklistMileageUI?.render();
@@ -369,11 +369,16 @@ function signaturePads(container,roles) {
     preview.hidden=true;
     button.type='button';button.className='primary';button.textContent='Assinar';
     button.setAttribute('aria-label','Assinar · '+caption);
-    button.onclick=()=>openSignature(pad,caption,name,()=>{
-      preview.src=pad.canvas.toDataURL();
+    pad.showConfirmed=()=>{
+      pad.image=pad.canvas.toDataURL();
+      preview.src=pad.image;
       preview.hidden=false;
       button.textContent='Refazer assinatura';
       button.setAttribute('aria-label','Refazer assinatura · '+caption);
+    };
+    button.onclick=()=>openSignature(pad,caption,name,()=>{
+      pad.showConfirmed();
+      if (container===byId('pads')) saveDailyDraft();
     });
     wrapper.append(title,person,preview,button);
     container.append(wrapper);
@@ -473,11 +478,96 @@ for (const event of ['input','change','reset']) {
 const padImages = signatures => Object.fromEntries(Object.entries(signatures).map(([role,pad])=>[role,pad.canvas.toDataURL()]));
 const isSoloChecklist = record => record.solo===true;
 let handoverStarted=null;
-handover.addEventListener('input',()=>{handoverStarted??=Date.now();});
+const dailyDraftFields=['km','fuel','outgoing','incoming','operator','reason'];
+function dailyDraftKey() {
+  const cloud=window.checklistCloud;
+  if (cloud?.enabled) {
+    if (!cloud.storageSuffix || !cloud.canOpen('troca') || cloud.isEngineerPreview) return null;
+    return 'checklist-der-daily-draft'+cloud.storageSuffix;
+  }
+  return document.querySelector('meta[name="checklist-endpoint"]') ? null : 'checklist-der-daily-draft:local';
+}
+function draftStatus(message) {
+  const status=byId('daily-draft-status');
+  status.textContent=message;
+  status.hidden=!message;
+}
+function saveDailyDraft() {
+  const key=dailyDraftKey();
+  if (!key || !handoverStarted || !fields.vehicle.value) return;
+  const draft={
+    prefix:fields.vehicle.value,startedAt:handoverStarted,solo:fields.solo.checked,
+    coverage:fields.coverage.checked,resumed,
+    fields:Object.fromEntries(dailyDraftFields.map(name=>[name,fields[name].value])),
+    results:shown.map(({id})=>[id,fields['check-'+id].value,fields['note-'+id].value,fields['found-'+id]?.value]),
+    signatures:Object.fromEntries(Object.entries(pads).filter(([,pad])=>pad.ink&&pad.image).map(([role,pad])=>[role,pad.image]))
+  };
+  try {
+    localStorage.setItem(key,JSON.stringify(draft));
+    draftStatus('Rascunho salvo neste aparelho.');
+  } catch {
+    draftStatus('Não foi possível salvar o rascunho. Mantenha esta tela aberta até concluir.');
+  }
+}
+function restoreDailyDraft() {
+  const key=dailyDraftKey();
+  if (!key || handoverStarted) return;
+  let draft;
+  try { draft=JSON.parse(localStorage.getItem(key)); } catch { return; }
+  if (!draft || !Number.isFinite(draft.startedAt) ||
+      !Array.from(fields.vehicle.options).some(option=>option.value===draft.prefix) ||
+      (window.checklistCloud?.vehicle && window.checklistCloud.vehicle!==draft.prefix) ||
+      !itemsForVehicle(draft.prefix).length) return;
+  handoverStarted=draft.startedAt;
+  resumed=draft.resumed||null;
+  fields.vehicle.value=draft.prefix;
+  fields.vehicle.disabled=Boolean(window.checklistCloud?.vehicle||resumed);
+  byId('resuming').hidden=!resumed;
+  fields.solo.checked=Boolean(draft.solo);
+  fields.coverage.checked=Boolean(draft.coverage);
+  refreshOperatorChoices();
+  for (const name of dailyDraftFields) fields[name].value=draft.fields?.[name]||'';
+  shown=[];
+  buildPads([]);
+  renderChecks();
+  for (const [id,value,note,found] of draft.results||[]) {
+    if (!fields['check-'+id]) continue;
+    fields['check-'+id].value=value||'';
+    fields['note-'+id].value=note||'';
+    if (fields['found-'+id]) fields['found-'+id].value=found||'';
+  }
+  for (const [role,source] of Object.entries(draft.signatures||{})) {
+    const pad=pads[role];
+    if (!pad || !/^data:image\/png;base64,/.test(source)) continue;
+    const image=new Image();
+    image.onload=()=>{
+      if (dailyDraftKey()!==key || pads[role]!==pad || pad.ink) return;
+      pad.canvas=document.createElement('canvas');
+      pad.canvas.width=image.naturalWidth;
+      pad.canvas.height=image.naturalHeight;
+      pad.canvas.getContext('2d').drawImage(image,0,0);
+      pad.ink=true;
+      pad.showConfirmed();
+      refreshLaunchReviews();
+    };
+    image.src=source;
+  }
+  update();
+  refreshLaunchReviews();
+  draftStatus('Rascunho recuperado. Continue de onde parou.');
+}
+handover.addEventListener('input',event=>{
+  handoverStarted??=Date.now();
+  if (event.target.type!=='radio' && event.target.type!=='checkbox' && event.target.tagName!=='SELECT') saveDailyDraft();
+});
 handover.addEventListener('input',event=>{if(event.target.name?.startsWith('found-'))update();});
 fields.vehicle.onchange=()=>{fields.coverage.checked=false;refreshOperatorChoices(true);byId('checks').replaceChildren();shown=[];buildPads([]);renderChecks();};
 fields.coverage.onchange=()=>refreshOperatorChoices();
 handover.addEventListener('change',event=>{if(event.target!==fields.vehicle){if(!event.target.name?.startsWith('note-'))buildPads([]);update();}});
+handover.addEventListener('change',()=>{
+  handoverStarted??=Date.now();
+  saveDailyDraft();
+});
 handover.onsubmit=event=>{
   event.preventDefault();
   if (window.checklistCloud?.isEngineerPreview) return;
@@ -508,10 +598,13 @@ handover.onsubmit=event=>{
     return operator&&!operator.vehicles.includes(record.prefix);
   });
   if(!save({...state,records:[record,...state.records]}))return;
+  const draftKey=dailyDraftKey();
+  if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
+  draftStatus('');
   handover.reset();handoverStarted=null;resumed=null;fields.vehicle.disabled=Boolean(window.checklistCloud?.vehicle);byId('resuming').hidden=true;
   shown=[];buildPads([]);refresh();renderChecks();page('historico');
-  if(window.checklistCloud) window.checklistCloud.recordSaved('Checklist diário salvo');
-  else byId('notice').textContent='Passagem salva neste navegador.';
+  if(window.checklistCloud) window.checklistCloud.recordSaved('Checklist diário concluído e salvo');
+  else byId('notice').textContent='Checklist diário concluído e salvo neste aparelho.';
 };
 function historyView() {
   refreshHistoryOptions('daily',state.records);

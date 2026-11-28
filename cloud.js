@@ -221,6 +221,7 @@
     fields.vehicle.disabled = fortnightFields.vehicle.disabled = Boolean(session?.user.prefix);
     // A disabled input is omitted by FormData; the record also uses the locked VTR.
     handover.reset();
+    draftStatus('');
     resetIncident();
     handoverStarted = fortnightStarted = null;
     resumed = null;
@@ -247,7 +248,7 @@
     account.dataset.connection = connection;
     if (text==='Dados sincronizados' && savedNotice) {
       const notice = byId('notice');
-      if (notice.textContent===savedNotice) notice.textContent = 'Lançamento enviado ao Drive.';
+      if (notice.textContent===savedNotice) notice.textContent = savedNotice.startsWith('Checklist diário concluído') ? 'Checklist diário concluído e enviado ao Drive.' : 'Lançamento enviado ao Drive.';
       savedNotice = '';
     }
   }
@@ -330,6 +331,7 @@
           if (catalogChanged && !handoverStarted && !fortnightStarted) {
             refresh();
             renderChecks();
+            restoreDailyDraft();
             refreshFortnightChoices();
             if (!incidentFields.description.value) refreshIncidentChoices();
           }
