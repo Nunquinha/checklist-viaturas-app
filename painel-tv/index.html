@@ -69,13 +69,13 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <button id="retry" type="button" hidden>Atualizar painel</button>
   </section>
   <div id="dashboard" hidden>
+    <p id="km-loading" class="empty muted" role="status" hidden></p>
     <section class="kpis" aria-label="Indicadores da frota">
       <div class="kpi"><strong id="affected"></strong><span>Viaturas com pendências</span></div>
       <div class="kpi"><strong id="pending"></strong><span>Pendências em aberto</span></div>
       <div class="kpi"><strong id="critical"></strong><span>Pendências críticas</span></div>
       <button class="kpi" id="open-km-month" type="button" aria-controls="mileage"><strong id="km-month"></strong><span>Quilômetros rodados no mês</span></button>
     </section>
-    <p id="km-loading" class="empty muted" role="status" hidden></p>
     <div class="sections" id="sections" role="tablist" aria-label="Áreas do painel">
       <button type="button" role="tab" id="tab-pending-section" aria-controls="pending-section" aria-selected="true" tabindex="0">Pendências</button>
       <button type="button" role="tab" id="tab-materials" aria-controls="materials" aria-selected="false" tabindex="-1">Reposição</button>
@@ -163,7 +163,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
 <script defer src="mileage-budget.js?v=v47"></script>
-<script defer src="tv.js?v=27"></script>
+<script defer src="tv.js?v=28"></script>
 <script defer src="xlsx.js?v=1"></script>
 <script defer src="panel-exports.js?v=2"></script>
 </body>

@@ -379,7 +379,8 @@ function startPanel() {
     resolved = [];
     for (const key of ['materials','resolved','overview']) delete reports[key];
     checkpoint = null;
-    if (kmView) mileageProgress('');
+    historyPartial = false;
+    mileageProgress('');
     syncedAt = null;
     page = 0;
     get('rows').replaceChildren();
@@ -540,7 +541,7 @@ function startPanel() {
       : 'Sem trechos calculáveis no período';
     get('km-filtered-metric').textContent=totals.length?number.format(kilometers(totals))+' km':'—';
     get('km-vehicles-metric').textContent=number.format(totals.length);
-    if (kmView && !get('km-loading').hidden) get('download-km-pdf').disabled=true;
+    if (historyPartial || (kmView && !get('km-loading').hidden)) get('download-km-pdf').disabled=true;
     get('km-note').textContent = 'Diferença entre odômetros consecutivos da mesma viatura, atribuída à data da última leitura.'+
       (skipped?' '+skipped+' '+(skipped===1?'trecho sem leituras válidas':'trechos sem leituras válidas')+'.':'');
   }
@@ -733,6 +734,7 @@ function startPanel() {
     if (!vehicleDialog.open) vehicleDialog.showModal();
   }
 
+  let historyPartial = false;
   function render() {
     get('download-pdf').disabled = pending.length===0;
     get('affected').textContent = new Set(pending.map(item=>item.prefix)).size;
@@ -886,7 +888,7 @@ function startPanel() {
       if (!syncedAt && !checkpoint) status('Lendo o histórico do Checklist Diário…');
       let batches=0;
       let cursor = null, head;
-      const nextRecords = new Map(records);
+      const nextRecords = historyPartial ? new Map() : new Map(records);
       do {
         const batch = await rpc(active.token,'listRecords',{cursor,checkpoint:checkpoint ?? null});
         if (session()?.token!==active.token) return;
@@ -898,17 +900,19 @@ function startPanel() {
         }
         cursor = batch.cursor;
         if (!kmView && !checkpoint && cursor>0) get('gate-message').textContent='Lendo o histórico · '+nextRecords.size+' checklists recebidos.';
-        if (kmView && !syncedAt && !checkpoint && cursor>0 && ++batches%2===0 && nextRecords.size) {
-          loadRecords(nextRecords);
+        if (!syncedAt && !checkpoint && cursor>0 && nextRecords.size && (++batches===1 || batches%8===0)) {
+          historyPartial = true;
+          mileageProgress('Dados parciais · '+nextRecords.size+' checklists recebidos. Carregando o restante em segundo plano.');
+          loadRecords(new Map(nextRecords));
           render();
-          mileageProgress('Carregando histórico: '+nextRecords.size+' checklists recebidos. Os valores abaixo são parciais.');
         }
       } while (cursor>0);
       loadRecords(nextRecords);
       checkpoint = head ?? checkpoint;
       syncedAt = Date.now();
       if (mileageScope) cacheMileage(mileageScope);
-      if (kmView) mileageProgress('');
+      historyPartial = false;
+      mileageProgress('');
       status('Atualizado às '+clock.format(syncedAt)+' · atualização automática a cada 60 s');
       render();
     } catch (error) {
@@ -917,7 +921,8 @@ function startPanel() {
         hideData('Entre novamente para acessar o painel.','login');
       } else {
         status(syncedAt?'Sem atualização · últimos dados recebidos às '+clock.format(syncedAt):'Não foi possível consultar a base.',true);
-        if (!syncedAt) hideData('Confira a conexão e tente atualizar o painel.','retry');
+        if (historyPartial) mileageProgress('Dados parciais. Use o botão de atualização para retomar a leitura.');
+        else if (!syncedAt) hideData('Confira a conexão e tente atualizar o painel.','retry');
         else if (kmView) mileageProgress('Exibindo os últimos dados recebidos. Não foi possível atualizar agora.');
       }
     } finally {
@@ -964,6 +969,11 @@ function startPanel() {
   get('retry').onclick = refresh;
   async function downloadReport(button, error, filename, create, hasData) {
     const activeToken = sessionToken;
+    if (historyPartial) {
+      error.textContent = 'Aguarde a leitura completa do histórico para baixar o relatório.';
+      error.hidden = false;
+      return;
+    }
     button.disabled = true;
     error.hidden = true;
     try {
