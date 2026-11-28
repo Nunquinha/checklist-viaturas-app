@@ -37,7 +37,7 @@ function materialsToReplace(pending) {
     const amount = shortage(item);
     if (!amount) continue;
     const key = item.id || normalize(item.title).trim();
-    const material = materials.get(key) || {title:item.title || 'Item sem nome',total:0,vehicles:[],at:0};
+    const material = materials.get(key) || {id:item.id,title:item.title || 'Item sem nome',total:0,vehicles:[],at:0};
     if (item.last>=material.at) {
       material.title = item.title || material.title;
       material.at = item.last;
@@ -318,6 +318,7 @@ function startPanel() {
   const pageSize = 12;
   let sessionToken, accessScope, checkpoint, refreshing = false, syncedAt = null;
   let budgetVehicles=[],budgetVersion=null,budgetAllowed=false;
+  let materialPhotos=new Map();
   let records = new Map(), latest = new Map(), pending = [], resolved = [], page = 0;
   const reports = {};
   const requestForm = get('request-code'), verifyForm = get('verify-code');
@@ -356,6 +357,10 @@ function startPanel() {
   function hideData(message, action) {
     records = new Map();
     budgetVehicles=[];budgetVersion=null;budgetAllowed=false;
+    materialPhotos.clear();
+    const photoDialog=get('material-photo-dialog');
+    if (photoDialog.open) photoDialog.close();
+    get('material-photo-full').removeAttribute('src');
     latest = new Map();
     pending = [];
     resolved = [];
@@ -408,7 +413,26 @@ function startPanel() {
     const rows = document.createDocumentFragment();
     for (const material of materials) {
       const row = rows.appendChild(document.createElement('tr'));
-      addText(row.insertCell(),'strong',material.title);
+      const cell=row.insertCell();
+      const label=cell.appendChild(document.createElement('div'));
+      label.className='material-label';
+      const source=materialPhotos.get(material.id);
+      if (source) {
+        const button=label.appendChild(document.createElement('button'));
+        button.type='button';
+        button.className='material-thumbnail';
+        button.setAttribute('aria-label','Ampliar foto de '+material.title);
+        const img=button.appendChild(document.createElement('img'));
+        img.loading='lazy';img.decoding='async';img.alt='';img.src=source;
+        button.onclick=()=>{
+          const full=get('material-photo-full');
+          get('material-photo-title').textContent=material.title;
+          full.alt='Foto de referência de '+material.title;
+          full.src=source;
+          get('material-photo-dialog').showModal();
+        };
+      }
+      addText(label,'strong',material.title);
       addText(row.insertCell(),'strong',number.format(material.total),'age');
       const vehicles = row.insertCell();
       vehicles.className = 'material-vehicles';
@@ -813,6 +837,11 @@ function startPanel() {
       }
       budgetAllowed=permitted(user);
       switchView.hidden=kmView && user.role==='engineer';
+      if (bootstrap.catalog && !kmView) {
+        materialPhotos=new Map((bootstrap.catalog.items||[]).filter(item=>
+          typeof item.photo==='string' && /^data:image\/(jpeg|png|webp);base64,/i.test(item.photo))
+          .map(item=>[item.id,item.photo]));
+      }
       if(bootstrap.catalog){budgetVehicles=(bootstrap.catalog.vehicles||[]).filter(vehicle=>!user.prefix||vehicle.prefix===user.prefix).map(({prefix,plate,active,kmBudget})=>({prefix,plate,active,kmBudget}));budgetVersion=bootstrap.catalog.version}
       const mileageScope=user.email ? JSON.stringify([user.email,scope]) : null;
       if (mileageScope && !syncedAt && restoreMileage(mileageScope)) {

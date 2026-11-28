@@ -45,6 +45,10 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 .km-only #km-table :is(th,td):nth-child(3){display:none}
 .km-only .table-head,.km-only .filters{padding:12px 16px}
 @media(max-width:540px){.km-only #km-table :is(th,td){padding:8px;font-size:.85rem;white-space:normal}.km-only #km-table .vehicle-link{white-space:nowrap}}
+.material-label{display:flex;align-items:center;gap:10px;overflow-wrap:anywhere}
+.material-thumbnail{flex:none;display:grid;place-items:center;width:66px;height:50px;padding:3px;background:#fff;border-color:var(--line)}
+.material-thumbnail img{display:block;width:100%;height:100%;object-fit:contain}
+#material-photo-full{display:block;width:100%;max-height:65vh;object-fit:contain;background:#fff;border-radius:8px}
 </style>
 <link rel="stylesheet" href="panel-options.css?v=1">
 <script src="panel-theme.js?v=1"></script>
@@ -152,10 +156,14 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
     <header><div><small>Último Checklist Diário</small><h2 id="vehicle-title"></h2></div><form method="dialog"><button autofocus>Fechar</button></form></header>
     <section><p id="vehicle-summary"></p><h3>Itens conferidos</h3><ul id="vehicle-results"></ul></section>
   </dialog>
+<dialog id="material-photo-dialog" aria-labelledby="material-photo-title">
+  <header><h2 id="material-photo-title"></h2><form method="dialog"><button>Fechar</button></form></header>
+  <section><img id="material-photo-full" alt=""></section>
+</dialog>
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
 <script defer src="mileage-budget.js?v=v47"></script>
-<script defer src="tv.js?v=25"></script>
+<script defer src="tv.js?v=26"></script>
 <script defer src="xlsx.js?v=1"></script>
 <script defer src="panel-exports.js?v=2"></script>
 </body>
