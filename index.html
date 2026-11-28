@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#202e25">
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
-<link rel="stylesheet" href="app.css?v=v59">
+<link rel="stylesheet" href="app.css?v=v60">
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
 <button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
@@ -41,7 +41,7 @@
 <div id="notice" role="status"></div>
 <section id="troca">
 <h1>Passar a viatura</h1><p class="engineer-preview-note">Modo de consulta. Selecione a viatura para ver os itens do Checklist Diário.</p><p id="handover-instructions">Na troca de turno, confiram juntos e assinem. Meta: até 10 min.</p>
-<p id="daily-draft-status" class="muted" role="status" hidden></p>
+<div class="daily-draft-banner" role="status"><strong id="daily-draft-title">Checklist da passagem de turno</strong><span id="daily-draft-status">Preencha na próxima passagem de turno.</span></div>
 <form id="handover">
 <article><h2>1. Identifique a troca</h2>
 <label>Viatura<select name="vehicle" required></select></label><p id="vehicle-info"></p>
@@ -128,23 +128,23 @@
 <div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
 </dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
-<script src="mileage-budget.js?v=v59"></script>
-<script src="fleet-export.js?v=v59"></script>
-<script src="app.js?v=v59"></script>
-<script src="quinzenal.js?v=v59"></script>
-<script src="relatorios.js?v=v59"></script>
-<script src="xlsx.js?v=v59"></script>
-<script src="ocorrencias.js?v=v59"></script>
-<script src="catalog-sync.js?v=v59"></script>
-<script src="cloud.js?v=v59"></script>
-<script src="instalar.js?v=v59"></script>
-<script src="register-sw.js?v=v59"></script>
-<script src="catalog-import.js?v=v59"></script>
+<script src="mileage-budget.js?v=v60"></script>
+<script src="fleet-export.js?v=v60"></script>
+<script src="app.js?v=v60"></script>
+<script src="quinzenal.js?v=v60"></script>
+<script src="relatorios.js?v=v60"></script>
+<script src="xlsx.js?v=v60"></script>
+<script src="ocorrencias.js?v=v60"></script>
+<script src="catalog-sync.js?v=v60"></script>
+<script src="cloud.js?v=v60"></script>
+<script src="instalar.js?v=v60"></script>
+<script src="register-sw.js?v=v60"></script>
+<script src="catalog-import.js?v=v60"></script>
 </html>
 
-<script src="operators-import.js?v=v59"></script>
+<script src="operators-import.js?v=v60"></script>
 
 <script src="vendor/jspdf-4.2.1.umd.min.js"></script>
-<script src="operators-export.js?v=v59"></script>
+<script src="operators-export.js?v=v60"></script>
 
-<script src="mileage-ui.js?v=v59"></script>
+<script src="mileage-ui.js?v=v60"></script>

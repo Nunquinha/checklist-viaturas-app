@@ -487,10 +487,9 @@ function dailyDraftKey() {
   }
   return document.querySelector('meta[name="checklist-endpoint"]') ? null : 'checklist-der-daily-draft:local';
 }
-function draftStatus(message) {
-  const status=byId('daily-draft-status');
-  status.textContent=message;
-  status.hidden=!message;
+function draftStatus(message='',title=message?'Checklist pendente':'Checklist da passagem de turno') {
+  byId('daily-draft-title').textContent=title;
+  byId('daily-draft-status').textContent=message||'Preencha na próxima passagem de turno.';
 }
 function saveDailyDraft() {
   const key=dailyDraftKey();
@@ -600,7 +599,7 @@ handover.onsubmit=event=>{
   if(!save({...state,records:[record,...state.records]}))return;
   const draftKey=dailyDraftKey();
   if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
-  draftStatus('');
+  draftStatus('Preencha o próximo na passagem de turno.','Checklist concluído');
   handover.reset();handoverStarted=null;resumed=null;fields.vehicle.disabled=Boolean(window.checklistCloud?.vehicle);byId('resuming').hidden=true;
   shown=[];buildPads([]);refresh();renderChecks();page('historico');
   if(window.checklistCloud) window.checklistCloud.recordSaved('Checklist diário concluído e salvo');

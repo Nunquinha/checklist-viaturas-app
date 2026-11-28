@@ -131,3 +131,7 @@
 .engineer-preview #fortnight-form :is(label:has([name="operator"]),.attendance-field,article:nth-of-type(n+3)),
 .engineer-preview #incident-form article:nth-of-type(2){display:none}
 .engineer-preview #incident-form label[inert]{opacity:.7}
+
+.daily-draft-banner{display:grid;gap:2px;margin:12px 0;padding:10px 14px;border-left:4px solid #3d6a54;border-radius:8px;background:#edf4ef;color:#294635}
+.daily-draft-banner span{font-size:.9rem}
+.engineer-preview .daily-draft-banner{display:none}
