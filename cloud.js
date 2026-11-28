@@ -17,6 +17,7 @@
   let session, email, syncing = false, scheduled = false, syncRequested = false;
   let retryTimer, retryDelay = 5000;
   let queueRequest = 0;
+  let savedNotice = '';
 
   function rpc(action,body = {},token = session?.token) {
     const request = {action,body,token:token || null};
@@ -132,9 +133,10 @@
 
   function recordSaved(label) {
     const message = byId('notice');
-    message.textContent = label+' no aparelho. '+(navigator.onLine
-      ? 'O app vai sincronizar automaticamente.'
-      : 'Sem conexão. Será enviado quando o app estiver aberto e a internet voltar.');
+    savedNotice = label+' no aparelho. '+(navigator.onLine
+      ? 'Aguarde a confirmação do envio.'
+      : 'Quando tiver sinal, abra o app neste mesmo aparelho.');
+    message.textContent = savedNotice;
     message.scrollIntoView({block:'nearest'});
     refreshPendingQueue();
     schedule();
@@ -150,7 +152,8 @@
         sum+records.filter(record=>!record.cloudSaved).length,0);
       const parts=[];
       if(state.dirty)parts.push('Cadastros aguardando envio');
-      if(count)parts.push(count===1?'1 lançamento aguardando envio':count+' lançamentos aguardando envio');
+      if(count)parts.push(count===1?'1 lançamento salvo no aparelho, aguardando envio':count+' lançamentos salvos no aparelho, aguardando envio');
+      syncButton.textContent = count ? 'Enviar pendentes' : 'Sincronizar';
       queue.hidden = !parts.length;
       queue.textContent = parts.join(' · ');
     } catch {
@@ -193,6 +196,8 @@
     if (database) database.then(db=>db.close()).catch(()=>{});
     database = undefined;
     session = next;
+    savedNotice = '';
+    syncButton.textContent = 'Sincronizar';
     archivedSuffix = null;
     document.body.classList.toggle('engineer-preview',window.checklistCloud.isEngineerPreview);
     clearTimeout(retryTimer);
@@ -240,10 +245,15 @@
   function updateStatus(text,connection='online') {
     byId('cloud-status').textContent = text;
     account.dataset.connection = connection;
+    if (text==='Dados sincronizados' && savedNotice) {
+      const notice = byId('notice');
+      if (notice.textContent===savedNotice) notice.textContent = 'Lançamento enviado ao Drive.';
+      savedNotice = '';
+    }
   }
 
   function showOfflineStatus() {
-    updateStatus('Sem conexão · lançamentos ficam salvos no aparelho','offline');
+    updateStatus('Sem internet · você pode preencher e salvar','offline');
   }
 
   async function sync() {
