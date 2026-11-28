@@ -361,6 +361,7 @@ function startPanel() {
     resolved = [];
     for (const key of ['materials','resolved','overview']) delete reports[key];
     checkpoint = null;
+    if (kmView) mileageProgress('');
     syncedAt = null;
     page = 0;
     get('rows').replaceChildren();
@@ -495,6 +496,7 @@ function startPanel() {
       : 'Sem trechos calculáveis no período';
     get('km-filtered-metric').textContent=totals.length?number.format(kilometers(totals))+' km':'—';
     get('km-vehicles-metric').textContent=number.format(totals.length);
+    if (kmView && !get('km-loading').hidden) get('download-km-pdf').disabled=true;
     get('km-note').textContent = 'Diferença entre odômetros consecutivos da mesma viatura, atribuída à data da última leitura.'+
       (skipped?' '+skipped+' '+(skipped===1?'trecho sem leituras válidas':'trechos sem leituras válidas')+'.':'');
   }
@@ -694,6 +696,7 @@ function startPanel() {
     if (!vehicleDialog.open) {
       renderMileage();
       renderBudget();
+      if (kmView && !get('km-loading').hidden) { get('budget-pdf').disabled=true; get('budget-excel').disabled=true; }
       if (!kmView) {
         renderRows();
         renderMaterials();
@@ -716,6 +719,33 @@ function startPanel() {
       if (record.mode!=='deferred' && (!prior || record.at>prior.at || (record.at===prior.at && record.id>prior.id))) latest.set(record.prefix,record);
     }
     records = nextRecords;
+  }
+
+  const mileageCacheKey='checklist-der-km-v1';
+  function mileageProgress(message) {
+    const notice=get('km-loading');
+    notice.textContent=message||'';
+    notice.hidden=!message;
+    if (message) {
+      for (const id of ['download-km-pdf','budget-pdf','budget-excel']) get(id).disabled=true;
+    }
+  }
+  function restoreMileage(scope) {
+    try {
+      const stored=JSON.parse(sessionStorage.getItem(mileageCacheKey));
+      if (stored?.scope!==scope || !Array.isArray(stored.records) || !Number.isFinite(stored.syncedAt)) return false;
+      const cached=new Map(stored.records.map(record=>[record.id,{...record,results:[]}]));
+      loadRecords(cached);
+      checkpoint=stored.checkpoint;
+      syncedAt=stored.syncedAt;
+      return true;
+    } catch { return false; }
+  }
+  function cacheMileage(scope) {
+    try {
+      const rows=[...records.values()].map(({id,prefix,at,mode,solo,prior,km})=>({id,prefix,at,mode,solo,prior,km}));
+      sessionStorage.setItem(mileageCacheKey,JSON.stringify({scope,syncedAt,checkpoint,records:rows}));
+    } catch { /* The panel remains usable without a browser cache. */ }
   }
 
   async function refresh() {
@@ -749,7 +779,13 @@ function startPanel() {
       }
       budgetAllowed=permitted(user);
       if(bootstrap.catalog){budgetVehicles=(bootstrap.catalog.vehicles||[]).filter(vehicle=>!user.prefix||vehicle.prefix===user.prefix).map(({prefix,plate,active,kmBudget})=>({prefix,plate,active,kmBudget}));budgetVersion=bootstrap.catalog.version}
+      const mileageScope=kmView && user.email ? JSON.stringify([user.email,scope]) : null;
+      if (mileageScope && !syncedAt && restoreMileage(mileageScope)) {
+        render();
+        mileageProgress('Últimos dados recebidos às '+clock.format(syncedAt)+'. Buscando atualizações.');
+      }
       if (!syncedAt) status('Lendo o histórico do Checklist Diário…');
+      let batches=0;
       let cursor = null, head;
       const nextRecords = new Map(records);
       do {
@@ -760,15 +796,22 @@ function startPanel() {
           if (kind!=='daily') continue;
           const at = Date.parse(record.inspected || record.exchange || record.at);
           if (!Number.isFinite(at)) continue;
-          const results = (Array.isArray(record.results)?record.results:[]).map(({id,title,critical,value,expected,found,note})=>
+          const results = (kmView?[]:Array.isArray(record.results)?record.results:[]).map(({id,title,critical,value,expected,found,note})=>
             ({id,title,critical,value,expected,found,note}));
           nextRecords.set(record.id,{id:record.id,prefix:record.prefix,at,results,mode:record.mode,solo:record.solo,prior:record.prior,km:record.km});
         }
         cursor = batch.cursor;
+        if (kmView && !syncedAt && cursor>0 && ++batches%2===0 && nextRecords.size) {
+          loadRecords(nextRecords);
+          render();
+          mileageProgress('Carregando histórico: '+nextRecords.size+' checklists recebidos. Os valores abaixo são parciais.');
+        }
       } while (cursor>0);
       loadRecords(nextRecords);
       checkpoint = head ?? checkpoint;
       syncedAt = Date.now();
+      if (mileageScope) cacheMileage(mileageScope);
+      if (kmView) mileageProgress('');
       status('Atualizado às '+clock.format(syncedAt)+' · atualização automática a cada 60 s');
       render();
     } catch (error) {
@@ -778,6 +821,7 @@ function startPanel() {
       } else {
         status(syncedAt?'Sem atualização · últimos dados recebidos às '+clock.format(syncedAt):'Não foi possível consultar a base.',true);
         if (!syncedAt) hideData('Confira a conexão e tente atualizar o painel.','retry');
+        else if (kmView) mileageProgress('Exibindo os últimos dados recebidos. Não foi possível atualizar agora.');
       }
     } finally {
       refreshing = false;
