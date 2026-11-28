@@ -33,6 +33,18 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 #rows .pending-checks li{border:1px solid var(--line);border-radius:8px;padding:9px 12px;overflow-wrap:anywhere}
 #rows .pending-checks .line{font-size:.9em;margin-top:3px}
 @media(max-width:520px){#rows .pending-age{margin-left:0}}
+.km-view-metrics{display:none}
+.km-only main{max-width:1160px}
+.km-only .intro{margin:23px 0 14px}
+.km-only .kpis,.km-only #km-total{display:none}
+.km-only .sections{margin:0 0 12px}
+.km-only .km-view-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.km-view-metrics>div{border:1px solid var(--line);border-radius:9px;padding:8px 12px}
+.km-view-metrics strong{display:block;font-size:clamp(1.15rem,3vw,1.7rem);font-variant-numeric:tabular-nums}
+.km-only #km-table{min-width:0}
+.km-only #km-table :is(th,td):nth-child(3){display:none}
+.km-only .table-head,.km-only .filters{padding:12px 16px}
+@media(max-width:540px){.km-only #km-table :is(th,td){padding:8px;font-size:.85rem;white-space:normal}.km-only #km-table .vehicle-link{white-space:nowrap}}
 </style>
 <link rel="stylesheet" href="panel-options.css?v=1">
 <script src="panel-theme.js?v=1"></script>
@@ -41,9 +53,9 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 <main>
   <header>
     <div class="brand"><img src="logo-der.jpg" alt="DER"><div><strong>Checklist DER</strong><small>Painel de conformidade</small></div></div>
-    <label class="theme-picker">Cor do painel <select id="panel-theme"><option value="blue">Azul</option><option value="green">Verde DER</option><option value="graphite">Grafite</option><option value="light">Claro</option></select></label>
+    <div class="toolbar"><a id="switch-panel-view" href="./painel-tv/?view=km">Painel de km</a><label class="theme-picker">Cor do painel <select id="panel-theme"><option value="blue">Azul</option><option value="green">Verde DER</option><option value="graphite">Grafite</option><option value="light">Claro</option></select></label></div>
   </header>
-  <div class="intro"><h1>Não conformidades da frota</h1>
+  <div class="intro"><h1 id="panel-heading">Não conformidades da frota</h1>
     <p id="demo-notice" class="demo-notice" hidden><strong>Demonstração</strong> · Viaturas e registros fictícios. <a href="./painel-tv/">Abrir painel de produção</a></p>
   </div>
   <section id="gate" class="panel" hidden>
@@ -111,6 +123,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
         <button id="download-km-pdf" type="button" disabled>Baixar resumo da frota em PDF</button>
       </div>
       <p class="empty stale" id="km-pdf-error" role="alert" hidden></p>
+      <div class="km-view-metrics"><div><small>Rodados no período</small><strong id="km-filtered-metric">—</strong></div><div><small>Viaturas com km apurados</small><strong id="km-vehicles-metric">0</strong></div></div>
       <div class="table-scroll"><table id="km-table"><thead><tr><th scope="col">Viatura</th><th scope="col">Total rodado</th><th scope="col">Intervalos entre trocas</th><th scope="col">km desde a troca anterior</th></tr></thead><tbody id="km-rows"></tbody></table></div>
       <p class="empty muted" id="km-note"></p>
     </section>
@@ -141,7 +154,7 @@ dialog{width:min(760px,calc(100% - 28px));max-height:86vh;border:1px solid #3b59
 </main>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
 <script defer src="mileage-budget.js?v=v47"></script>
-<script defer src="tv.js?v=21"></script>
+<script defer src="tv.js?v=22"></script>
 <script defer src="xlsx.js?v=1"></script>
 <script defer src="panel-exports.js?v=2"></script>
 </body>

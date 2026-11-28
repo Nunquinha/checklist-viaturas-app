@@ -300,7 +300,17 @@ function startPanel() {
   const get = id => document.getElementById(id);
   const sessionKey = 'checklist-cloud-session-v1';
   const endpoint = document.querySelector('meta[name="checklist-endpoint"]').content;
-  const demo = new URLSearchParams(location.search).get('demo')==='1';
+  const view = new URLSearchParams(location.search);
+  const demo = view.get('demo')==='1';
+  const kmView = view.get('view')==='km';
+  document.body.classList.toggle('km-only',kmView);
+  const switchView=get('switch-panel-view');
+  switchView.href='./painel-tv/'+(kmView?(demo?'?demo=1':''):(demo?'?demo=1&view=km':'?view=km'));
+  switchView.textContent=kmView?'Painel completo':'Painel de km';
+  if (kmView) {
+    get('panel-heading').textContent='Quilometragem da frota';
+    document.title='Checklist DER | Quilometragem da frota';
+  }
   const zone = 'America/Sao_Paulo';
   const date = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:zone});
   const clock = new Intl.DateTimeFormat('pt-BR',{timeStyle:'medium',timeZone:zone});
@@ -472,7 +482,9 @@ function startPanel() {
     const rows = document.createDocumentFragment();
     for (const entry of totals) {
       const row = rows.appendChild(document.createElement('tr'));
-      row.insertCell().append(vehicleButton(entry.prefix));
+      const prefixCell=row.insertCell();
+      if (kmView) addText(prefixCell,'strong',entry.prefix);
+      else prefixCell.append(vehicleButton(entry.prefix));
       addText(row.insertCell(),'strong',number.format(entry.total)+' km');
       addText(row.insertCell(),'span',entry.count);
       addText(row.insertCell(),'span',number.format(entry.last)+' km');
@@ -481,6 +493,8 @@ function startPanel() {
     get('km-table').hidden = totals.length===0;
     get('km-total').textContent = totals.length ? number.format(kilometers(totals))+' km no período'
       : 'Sem trechos calculáveis no período';
+    get('km-filtered-metric').textContent=totals.length?number.format(kilometers(totals))+' km':'—';
+    get('km-vehicles-metric').textContent=number.format(totals.length);
     get('km-note').textContent = 'Diferença entre odômetros consecutivos da mesma viatura, atribuída à data da última leitura.'+
       (skipped?' '+skipped+' '+(skipped===1?'trecho sem leituras válidas':'trechos sem leituras válidas')+'.':'');
   }
@@ -678,12 +692,14 @@ function startPanel() {
     get('gate').hidden = true;
     get('refresh-now').hidden = demo;
     if (!vehicleDialog.open) {
-      renderRows();
-      renderMaterials();
-      renderResolved();
       renderMileage();
       renderBudget();
-      renderOverview();
+      if (!kmView) {
+        renderRows();
+        renderMaterials();
+        renderResolved();
+        renderOverview();
+      }
     }
   }
 
@@ -876,7 +892,18 @@ function startPanel() {
   get('material-search').oninput = renderMaterials;
   get('resolved-period').onchange = renderResolved;
   get('resolved-search').oninput = renderResolved;
-  const tabs = [...get('sections').querySelectorAll('[role="tab"]')];
+  const allTabs = [...get('sections').querySelectorAll('[role="tab"]')];
+  const tabs = kmView ? allTabs.filter(tab=>['tab-mileage','tab-km-balance'].includes(tab.id)) : allTabs;
+  if (kmView) {
+    for (const tab of allTabs) {
+      if (tabs.includes(tab)) continue;
+      tab.hidden = true;
+      tab.setAttribute('aria-selected','false');
+      tab.tabIndex = -1;
+      get(tab.getAttribute('aria-controls')).hidden = true;
+    }
+    activateTab(get('tab-mileage'));
+  }
   function activateTab(selected) {
     for (const tab of tabs) {
       const active = tab===selected;
