@@ -332,6 +332,7 @@ function update() {
   byId('handover-instructions').textContent=solo?'Confira a viatura, informe o motivo e assine.':'Na troca de turno, confiram juntos e assinem. Meta: até 10 min.';
   byId('handover-signatures-title').textContent=solo?'3. Sua assinatura':'3. Assinaturas';
   fields.km.required=fields.fuel.required=true;
+  checkOdometer();
   let answered=0, critical=false;
   shown.forEach(item=>{
     const controls=[...handover.querySelectorAll('[name="check-'+item.id+'"]')];
@@ -572,6 +573,27 @@ handover.addEventListener('change',()=>{
   handoverStarted??=Date.now();
   saveDailyDraft();
 });
+function latestOdometer(prefix) {
+  let previous=state.lastDailyOdometer?.[prefix];
+  for (const record of state.records) {
+    if (record.prefix!==prefix || record.mode==='deferred' || String(record.km??'').trim()==='') continue;
+    const km=Number(record.km), at=Date.parse(record.inspected||record.exchange);
+    if (Number.isSafeInteger(km) && km>=0 && Number.isFinite(at) && (!previous || at>previous.at)) previous={km,at};
+  }
+  return previous;
+}
+function checkOdometer() {
+  const previous=latestOdometer(fields.vehicle.value||window.checklistCloud?.vehicle||resumed?.prefix);
+  const difference=previous ? fields.km.valueAsNumber-previous.km : NaN;
+  const message=difference<0 ? 'Informe um odômetro igual ou maior que a leitura anterior ('+previous.km+' km).' :
+    difference>200 ? 'Atenção: '+difference+' km acima da última leitura ('+previous.km+' km). Confira o odômetro.' : '';
+  const notice=byId('odometer-notice');
+  notice.textContent=message;
+  notice.hidden=!message;
+  fields.km.setCustomValidity(difference<0?message:'');
+  return {difference,message};
+}
+fields.km.addEventListener('input',checkOdometer);
 handover.onsubmit=event=>{
   event.preventDefault();
   if (window.checklistCloud?.isEngineerPreview) return;
@@ -589,6 +611,9 @@ handover.onsubmit=event=>{
     return {...item,...(general ? {general:true} : {}),value,found,note:exception?data['note-'+item.id].trim():''};
   });
   if(results.some(item=>isNonconforming(item.value)&&!item.note))return alert('Informe o motivo de cada não conformidade.');
+  const odometer=checkOdometer();
+  if (odometer.difference<0) { fields.km.reportValidity(); return; }
+  if (odometer.difference>200 && !confirm(odometer.message+' A leitura está correta?')) { fields.km.focus(); return; }
   const startedAt=handoverStarted??Date.now();
   const savedSignatures=padImages(pads);
   // Use the existing single-signer format so installations can sync with either server revision.
@@ -601,7 +626,8 @@ handover.onsubmit=event=>{
     const operator=operators().find(entry=>entry.name===record[role]);
     return operator&&!operator.vehicles.includes(record.prefix);
   });
-  if(!save({...state,records:[record,...state.records]}))return;
+  const lastDailyOdometer={...state.lastDailyOdometer,[record.prefix]:{km:Number(record.km),at:Date.parse(now)}};
+  if(!save({...state,lastDailyOdometer,records:[record,...state.records]}))return;
   const draftKey=dailyDraftKey();
   if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
   draftStatus('Preencha o próximo na passagem de turno.','Checklist concluído');
@@ -613,12 +639,14 @@ handover.onsubmit=event=>{
 function historyView() {
   refreshHistoryOptions('daily',state.records);
   const visible=state.records.map((record,index)=>({record,index})).filter(({record})=>historyIncludes(record,'daily'));
-  byId('records').innerHTML=visible.length?visible.map(({record,index})=>{
+  const target=byId('records');
+  const openRecords=new Set([...target.querySelectorAll('details[open][data-history-id]')].map(detail=>detail.dataset.historyId));
+  target.innerHTML=visible.length?visible.map(({record,index})=>{
     const done=state.records.some(other=>other.prior===record.id);
     const solo=isSoloChecklist(record);
     const status=solo?'Checklist sozinho':record.mode==='deferred'?(done?'Checklist registrado depois':'Aguardando checklist'):record.mode==='absent'?'Pendente de ciência':'Concluído';
     const people=solo?'Operador: '+escape(record.operator):'Entrega: '+escape(record.outgoing)+'<br>Recebe: '+escape(record.incoming);
-    return '<details><summary>'+escape(record.prefix)+' · '+status+'<br><span class="muted">'+time(record.exchange)+'</span></summary><p>'+people+'</p>'+
+    return '<details data-history-id="'+escape(record.id)+'"'+(openRecords.has(record.id)?' open':'')+'><summary>'+escape(record.prefix)+' · '+status+'<br><span class="muted">'+time(record.exchange)+'</span></summary><p>'+people+'</p>'+
       (record.inspected?'<p>Conferência: '+time(record.inspected)+' · '+escape(record.km)+' km · '+escape(record.fuel)+'</p>':'')+
       (record.coverage?.length?'<p>Operador substituto: '+record.coverage.map(role=>escape(record[role])).join(', ')+'</p>':'')+
       (record.reason?'<p>Justificativa: '+escape(record.reason)+'</p>':'')+

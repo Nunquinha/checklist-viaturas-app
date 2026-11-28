@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#202e25">
 <link rel="manifest" href="manifest.webmanifest">
 <title>DER · Checklist de viaturas</title>
-<link rel="stylesheet" href="app.css?v=v64">
+<link rel="stylesheet" href="app.css?v=v65">
 <div class="shell" id="shell">
 <aside class="sidebar" id="sidebar">
 <button class="menu-toggle" type="button" id="close-menu">Fechar menu</button>
@@ -61,7 +61,7 @@
 <label id="handover-solo-reason" hidden>Justificativa breve<textarea name="reason" rows="2" maxlength="500" placeholder="Por que o checklist foi feito sozinho?"></textarea></label>
 <div id="resuming" class="tag" hidden>Conferência após a troca</div></article>
 <article id="inspection"><div class="split"><h2>2. Confira a viatura</h2><span id="progress" class="tag"></span></div>
-<div class="grid"><label>Quilometragem<input name="km" type="number" min="0" step="1" inputmode="numeric"></label><label>Combustível<select name="fuel"><option value="">Selecione</option><option>Cheio</option><option>¾</option><option>½</option><option>¼</option><option>Reserva</option></select></label></div>
+<div class="grid"><label>Quilometragem<input name="km" type="number" min="0" step="1" inputmode="numeric" aria-describedby="odometer-notice"><small id="odometer-notice" role="status" hidden></small></label><label>Combustível<select name="fuel"><option value="">Selecione</option><option>Cheio</option><option>¾</option><option>½</option><option>¼</option><option>Reserva</option></select></label></div>
 <h3 id="daily-items-title">Itens da viatura</h3><div id="checks" role="group" aria-labelledby="daily-items-title"></div><p id="critical" class="warning" hidden>Atenção: problema registrado em item crítico.</p></article>
 <article id="signatures"><h2 id="handover-signatures-title">3. Assinaturas</h2><p>Toque em Assinar para abrir a tela de assinatura.</p><div class="grid" id="pads"></div></article>
 <div class="launch-review" id="review-daily" role="status"></div><button class="primary" id="submit">Salvar passagem</button>
@@ -136,23 +136,23 @@
 <div class="actions"><button type="button" id="signature-cancel">Cancelar</button><button type="button" id="signature-clear">Limpar</button><button type="button" class="primary" id="signature-confirm" disabled>Confirmar</button></div>
 </dialog>
 <dialog id="install-dialog" aria-labelledby="install-title"><h2 id="install-title">Instalar Checklist DER</h2><p id="install-instructions"></p><form method="dialog"><button>Fechar</button></form></dialog>
-<script src="mileage-budget.js?v=v64"></script>
-<script src="fleet-export.js?v=v64"></script>
-<script src="app.js?v=v64"></script>
-<script src="quinzenal.js?v=v64"></script>
-<script src="relatorios.js?v=v64"></script>
-<script src="xlsx.js?v=v64"></script>
-<script src="ocorrencias.js?v=v64"></script>
-<script src="catalog-sync.js?v=v64"></script>
-<script src="cloud.js?v=v64"></script>
-<script src="instalar.js?v=v64"></script>
-<script src="register-sw.js?v=v64"></script>
-<script src="catalog-import.js?v=v64"></script>
+<script src="mileage-budget.js?v=v65"></script>
+<script src="fleet-export.js?v=v65"></script>
+<script src="app.js?v=v65"></script>
+<script src="quinzenal.js?v=v65"></script>
+<script src="relatorios.js?v=v65"></script>
+<script src="xlsx.js?v=v65"></script>
+<script src="ocorrencias.js?v=v65"></script>
+<script src="catalog-sync.js?v=v65"></script>
+<script src="cloud.js?v=v65"></script>
+<script src="instalar.js?v=v65"></script>
+<script src="register-sw.js?v=v65"></script>
+<script src="catalog-import.js?v=v65"></script>
 </html>
 
-<script src="operators-import.js?v=v64"></script>
+<script src="operators-import.js?v=v65"></script>
 
 <script src="vendor/jspdf-4.2.1.umd.min.js"></script>
-<script src="operators-export.js?v=v64"></script>
+<script src="operators-export.js?v=v65"></script>
 
-<script src="mileage-ui.js?v=v64"></script>
+<script src="mileage-ui.js?v=v65"></script>
